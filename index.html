@@ -4,20 +4,32 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Forensic Intelligence Workspace for target analysis." />
-    <title>Miami Metro | Forensic Workspace</title>
+    <title>Miami Metro | Forensic Terminal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- Plastic Wrap & Blood Spatter Ambience -->
+    <!-- Forensic Ambience & CRT Scanlines -->
+    <div class="crt-overlay"></div>
     <div class="plastic-wrap"></div>
     <div class="forensic-grid"></div>
     <div class="blood-spatter spatter-a"></div>
     <div class="blood-spatter spatter-b"></div>
     
-    <main class="shell">
+    <!-- Initial Boot Sequence -->
+    <div id="bootScreen" class="boot-screen">
+      <div class="boot-text">
+        <p>> INITIALIZING MIAMI METRO SECURE PROTOCOL...</p>
+        <p>> BYPASSING FIREWALLS [OK]</p>
+        <p>> LOADING FORENSIC DB [OK]</p>
+        <p>> PREPARING SLIDES...</p>
+        <p class="blink">_</p>
+      </div>
+    </div>
+
+    <main class="shell hidden" id="mainShell">
       <header class="hero panel pop-in">
         <div class="hero-copy">
           <span class="eyebrow">
@@ -26,7 +38,7 @@
           </span>
           <h1>Track the pattern. Isolate the evidence.</h1>
           <p>
-            The blood never lies. Enter a subject's name, alias, or MO to run a sweep across public databases, archives, and the deep web. Prepare your slides.
+            The blood never lies. Enter a subject's name, alias, or MO to run a sweep across public databases, archives, and the subterranean web. Prepare your slides.
           </p>
         </div>
         <div class="hero-stats" id="heroStats"></div>
@@ -55,8 +67,8 @@
             <label>
               <span>Analysis Depth</span>
               <select id="depthSelect" name="depth">
-                <option value="standard">Surface Sweep</option>
-                <option value="deep">Deep Tissue Scan</option>
+                <option value="standard">Surface Sweep (Fast)</option>
+                <option value="deep">Deep Tissue Scan (Thorough)</option>
               </select>
             </label>
             <label>
@@ -95,6 +107,7 @@
             <button class="focus-chip active" type="button" data-focus="scholarship">Journals</button>
             <button class="focus-chip active" type="button" data-focus="media">Surveillance</button>
             <button class="focus-chip active" type="button" data-focus="archive">Cold Files</button>
+            <button class="focus-chip active" type="button" data-focus="forum">Chatter</button>
           </div>
         </form>
         <div class="source-row" id="sourceRow" aria-label="Research sources"></div>
@@ -124,15 +137,15 @@
         <section class="panel results-panel">
           <div class="section-head results-head">
             <div>
-              <span class="eyebrow">Forensic Trail</span>
+              <span class="eyebrow">Forensic HUD</span>
               <h2 id="resultsTitle">Lab prepped. Waiting for subject.</h2>
             </div>
             <div class="results-actions">
               <button id="saveCaseButton" class="ghost-button blood-border" type="button">Store Glass Slide</button>
-              <button id="exportButton" class="ghost-button" type="button">Extract Evidence (JSON)</button>
+              <button id="exportButton" class="ghost-button" type="button">Extract Evidence</button>
             </div>
           </div>
-          <div id="statusBar" class="status-bar">Everything is clean. Too clean.</div>
+          <div id="statusBar" class="status-bar">SYSTEM ONLINE. EVERYTHING IS CLEAN.</div>
           <div id="summaryGrid" class="summary-grid"></div>
           <div id="resultGroups" class="result-groups"></div>
         </section>
@@ -145,7 +158,7 @@
         <div class="slide-glare"></div>
         <div class="result-meta"></div>
         <h3></h3>
-        <p class="result-snippet"></p>
+        <p class="result-snippet custom-scrollbar"></p>
         <div class="result-footer"></div>
       </article>
     </template>
