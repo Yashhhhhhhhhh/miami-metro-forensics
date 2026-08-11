@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Forensic Intelligence Workspace for target analysis." />
+    <title>Miami Metro | Forensic Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Plastic Wrap & Blood Spatter Ambience -->
+    <div class="plastic-wrap"></div>
+    <div class="forensic-grid"></div>
+    <div class="blood-spatter spatter-a"></div>
+    <div class="blood-spatter spatter-b"></div>
+    
+    <main class="shell">
+      <header class="hero panel pop-in">
+        <div class="hero-copy">
+          <span class="eyebrow">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            Forensic Analysis Division
+          </span>
+          <h1>Track the pattern. Isolate the evidence.</h1>
+          <p>
+            The blood never lies. Enter a subject's name, alias, or MO to run a sweep across public databases, archives, and the deep web. Prepare your slides.
+          </p>
+        </div>
+        <div class="hero-stats" id="heroStats"></div>
+      </header>
+
+      <section class="search-panel panel slide-up-delay-1">
+        <form id="searchForm" class="search-form">
+          <label class="search-box">
+            <span>Target Subject</span>
+            <div class="input-wrapper">
+              <svg class="search-icon" width="20" height="20" fill="none" stroke="#e63946" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input id="queryInput" name="query" type="search" placeholder="Who is on the table tonight?" autocomplete="off" spellcheck="false" />
+            </div>
+          </label>
+          <div class="controls-grid">
+            <label>
+              <span>Classification</span>
+              <select id="subjectSelect" name="subject">
+                <option value="auto">Unidentified</option>
+                <option value="person">Person of Interest</option>
+                <option value="organization">Syndicate / Corp</option>
+                <option value="topic">Modus Operandi</option>
+                <option value="place">Crime Scene (Location)</option>
+              </select>
+            </label>
+            <label>
+              <span>Analysis Depth</span>
+              <select id="depthSelect" name="depth">
+                <option value="standard">Surface Sweep</option>
+                <option value="deep">Deep Tissue Scan</option>
+              </select>
+            </label>
+            <label>
+              <span>Organize By</span>
+              <select id="sortSelect" name="sort">
+                <option value="relevance">Highest Probability</option>
+                <option value="recent">Most Recent Activity</option>
+                <option value="source">Database Origin</option>
+              </select>
+            </label>
+            <button class="primary-button slice-hover" type="submit">Run Spatter Analysis</button>
+          </div>
+          
+          <div class="advanced-grid">
+            <label>
+              <span>Exact Match</span>
+              <input id="exactPhraseInput" name="exactPhrase" type="text" placeholder='"Bay Harbor Butcher"' />
+            </label>
+            <label>
+              <span>Jurisdiction</span>
+              <input id="locationInput" name="location" type="text" placeholder="Miami, FL" />
+            </label>
+            <label>
+              <span>Cold Case (From)</span>
+              <input id="fromYearInput" name="fromYear" type="number" min="1500" max="2100" placeholder="YYYY" />
+            </label>
+            <label>
+              <span>Active (To)</span>
+              <input id="toYearInput" name="toYear" type="number" min="1500" max="2100" placeholder="YYYY" />
+            </label>
+          </div>
+          
+          <div class="focus-row" aria-label="Evidence focus">
+            <button class="focus-chip active" type="button" data-focus="reference">Records</button>
+            <button class="focus-chip active" type="button" data-focus="entity">Aliases</button>
+            <button class="focus-chip active" type="button" data-focus="scholarship">Journals</button>
+            <button class="focus-chip active" type="button" data-focus="media">Surveillance</button>
+            <button class="focus-chip active" type="button" data-focus="archive">Cold Files</button>
+          </div>
+        </form>
+        <div class="source-row" id="sourceRow" aria-label="Research sources"></div>
+      </section>
+
+      <section class="workspace-grid slide-up-delay-2">
+        <aside class="panel sidebar">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Case Files</span>
+              <h2>Trophy Box</h2>
+            </div>
+            <button id="newDossierButton" class="ghost-button icon-button" type="button" title="New Slide">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </button>
+          </div>
+          <div id="dossierList" class="dossier-list custom-scrollbar"></div>
+          <div class="notes-card">
+            <label for="notesInput">
+              <span>Inner Monologue</span>
+              <textarea id="notesInput" rows="8" class="custom-scrollbar" placeholder="Tonight's the night. Document the pattern..."></textarea>
+            </label>
+            <button id="saveNotesButton" class="ghost-button full-width" type="button">Log Field Note</button>
+          </div>
+        </aside>
+
+        <section class="panel results-panel">
+          <div class="section-head results-head">
+            <div>
+              <span class="eyebrow">Forensic Trail</span>
+              <h2 id="resultsTitle">Lab prepped. Waiting for subject.</h2>
+            </div>
+            <div class="results-actions">
+              <button id="saveCaseButton" class="ghost-button blood-border" type="button">Store Glass Slide</button>
+              <button id="exportButton" class="ghost-button" type="button">Extract Evidence (JSON)</button>
+            </div>
+          </div>
+          <div id="statusBar" class="status-bar">Everything is clean. Too clean.</div>
+          <div id="summaryGrid" class="summary-grid"></div>
+          <div id="resultGroups" class="result-groups"></div>
+        </section>
+      </section>
+    </main>
+
+    <!-- Master Template for Glass Slides -->
+    <template id="resultCardTemplate">
+      <article class="result-card glass-slide">
+        <div class="slide-glare"></div>
+        <div class="result-meta"></div>
+        <h3></h3>
+        <p class="result-snippet"></p>
+        <div class="result-footer"></div>
+      </article>
+    </template>
+    
+    <script src="app.js" defer></script>
+  </body>
+</html>
