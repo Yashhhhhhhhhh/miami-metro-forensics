@@ -1,357 +1,313 @@
-// --- 1. Master Audio Engine ---
-class AudioCore {
+// --- Mobile Viewport Fix ---
+function setVH() {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+window.addEventListener('resize', setVH);
+setVH();
+
+// --- Audio Engine (Mobile Unlocked) ---
+class AudioEngine {
     constructor() { this.ctx = null; this.unlocked = false; }
-    init() { 
-        if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
-            this.unlocked = true;
-        }
-        if(this.ctx.state === 'suspended') this.ctx.resume();
+    init() {
+        if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.unlocked = true;
     }
-    play(freq, type, duration, vol) {
+    play(freq, type, dur, vol) {
         if (!this.unlocked) return;
         try {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
+            const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
             osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
             gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
             osc.connect(gain); gain.connect(this.ctx.destination);
-            osc.start(); osc.stop(this.ctx.currentTime + duration);
+            osc.start(); osc.stop(this.ctx.currentTime + dur);
         } catch (e) {}
     }
-    click() { this.play(800, 'square', 0.05, 0.02); }
-    success() { this.play(880, 'sine', 0.1, 0.05); setTimeout(() => this.play(1318.51, 'sine', 0.2, 0.05), 100); }
-    error() { this.play(150, 'sawtooth', 0.3, 0.05); }
-    powerup() { this.play(440, 'triangle', 0.5, 0.05); setTimeout(() => this.play(880, 'sine', 0.5, 0.05), 100); }
-    freeze() { this.play(1200, 'sine', 0.8, 0.03); }
+    pop() { this.play(600, 'sine', 0.1, 0.05); }
+    success() { this.play(800, 'sine', 0.1, 0.05); setTimeout(()=>this.play(1200, 'sine', 0.2, 0.05), 100); }
+    error() { this.play(200, 'sawtooth', 0.2, 0.05); }
+    win() { [400, 500, 600, 800].forEach((f,i) => setTimeout(()=>this.play(f, 'sine', 0.3, 0.05), i*150)); }
 }
-const sfx = new AudioCore();
-document.body.addEventListener('pointerdown', () => sfx.init(), { once: true });
+const sfx = new AudioEngine();
+document.body.addEventListener('touchstart', () => sfx.init(), { once: true });
+document.body.addEventListener('click', () => sfx.init(), { once: true });
 
-// --- 2. Constellation Graphics Engine ---
-function initGraphicsEngine() {
-    const canvas = document.getElementById('particleCanvas');
+// --- Stardust Background ---
+function initStardust() {
+    const canvas = document.getElementById('stardustCanvas');
     const ctx = canvas.getContext('2d');
-    let w = canvas.width = window.innerWidth;
-    let h = canvas.height = window.innerHeight;
-    
+    let w = canvas.width = window.innerWidth; let h = canvas.height = window.innerHeight;
     window.addEventListener('resize', () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; });
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * w; this.y = Math.random() * h;
-            this.vx = (Math.random() - 0.5) * 0.8; this.vy = (Math.random() - 0.5) * 0.8;
-            this.size = Math.random() * 1.5; 
-            this.color = Math.random() > 0.8 ? '#ff003c' : '#00f0ff';
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            if(this.x < 0 || this.x > w) this.vx *= -1;
-            if(this.y < 0 || this.y > h) this.vy *= -1;
-        }
-        draw() {
-            ctx.fillStyle = this.color; ctx.globalAlpha = 0.5;
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-        }
-    }
-    const particles = Array.from({length: 80}, () => new Particle());
     
-    function animate() {
-        ctx.fillStyle = 'rgba(2, 2, 4, 1)';
-        ctx.fillRect(0, 0, w, h);
-        
-        for(let i=0; i<particles.length; i++) {
-            particles[i].update(); particles[i].draw();
-            for(let j=i+1; j<particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if(dist < 120) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = particles[i].color;
-                    ctx.globalAlpha = 1 - (dist/120);
-                    ctx.lineWidth = 0.5;
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(animate);
-    }
-    animate();
-}
+    const stars = Array.from({length: 60}, () => ({
+        x: Math.random() * w, y: Math.random() * h,
+        r: Math.random() * 1.5 + 0.5,
+        vy: -Math.random() * 0.5 - 0.2,
+        alpha: Math.random() * 0.5 + 0.2
+    }));
 
-// --- 3. UI & Progression System ---
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        stars.forEach(s => {
+            s.y += s.vy; if(s.y < 0) s.y = h;
+            ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+}
+initStardust();
+
+// --- UI & Toasts ---
 const UI = {
     toast(msg, type = 'info') {
-        const sys = document.getElementById('toastSystem');
+        const layer = document.getElementById('toastLayer');
         const t = document.createElement('div');
         t.className = `toast ${type}`; t.textContent = msg;
-        sys.appendChild(t);
-        if(type === 'error') sfx.error(); else if (type === 'success') sfx.success(); else sfx.click();
-        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+        layer.appendChild(t);
+        if (type === 'error') sfx.error(); else sfx.pop();
+        setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(()=>t.remove(), 400); }, 2500);
     },
-    switchScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    },
-    visualFeedback(targetId, type) {
-        const el = document.getElementById(targetId);
-        el.classList.remove('shake-error', 'glow-success');
-        void el.offsetWidth; // trigger reflow
-        el.classList.add(type === 'error' ? 'shake-error' : 'glow-success');
+    screen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        setTimeout(() => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            // Small delay to allow display:flex to apply before animating opacity
+            setTimeout(() => document.getElementById(id).classList.add('active'), 50);
+        }, 300); // Wait for fade out
     }
 };
 
-const Profile = {
-    data: { level: 1, exp: 0, wins: 0, name: '' },
-    init() {
-        const saved = localStorage.getItem('aetherV3');
-        if(saved) this.data = JSON.parse(saved);
-        this.updateDOM();
-    },
-    addExp(amount) {
-        this.data.exp += amount;
-        const required = this.data.level * 150;
-        if(this.data.exp >= required) {
-            this.data.level++; this.data.exp -= required;
-            UI.toast(`LEVEL UP! REACHED LEVEL ${this.data.level}`, 'success'); sfx.powerup();
-        }
-        this.save();
-    },
-    deductExp(amount) {
-        if(this.data.exp >= amount) { this.data.exp -= amount; this.save(); return true; }
-        UI.toast('INSUFFICIENT EXP FOR PROTOCOL', 'error'); return false;
-    },
-    save() { localStorage.setItem('aetherV3', JSON.stringify(this.data)); this.updateDOM(); },
-    updateDOM() {
-        document.getElementById('dispLvl').textContent = this.data.level;
-        document.getElementById('dispExp').textContent = `${this.data.exp}/${this.data.level * 150}`;
-        document.getElementById('dispWins').textContent = this.data.wins;
-        if(this.data.name && !document.getElementById('playerName').value) document.getElementById('playerName').value = this.data.name;
-    }
-};
+// --- Game Data ---
+// A pool of letters guaranteed to form many words
+const VOWELS = ['A','E','I','O','U'];
+const CONSONANTS = ['R','S','T','L','N','C','M','P','D','H'];
+const DICTIONARY = ["STAR", "ART", "RAT", "TAR", "REST", "EAR", "ARE", "ERA", "SEA", "TEA", "EAT", "ATE", "NET", "TEN", "ANT", "TAN", "MOON", "SUN", "PLANET", "SPACE", "HEART", "HEAR", "HAT", "CAT", "CAR", "ARC", "CARE", "RACE", "PACE", "CAPE", "LANE", "LEAN", "REAL", "TALE", "LATE", "MEAT", "TEAM", "MATE", "TAME", "SAME", "NAME", "MANE", "MEAN", "NEAR", "EARN", "RENT", "TEAR", "RATE", "SEAT", "EAST", "EAST", "NEST", "SENT", "TENT", "TEST"];
 
-// --- 4. The Dictionary ---
-const DICT = [
-    "QUANTUM", "NEBULA", "CYBERNETIC", "PARADOX", "SYNTHESIS", "AETHER", "ECLIPSE", "GRAVITY", "SINGULARITY", "VOID", 
-    "FRACTAL", "CHRONOS", "NEXUS", "HORIZON", "PULSAR", "QUASAR", "SPECTRE", "PHANTOM", "MATRIX", "CORTEX", "APEX", 
-    "VORTEX", "ZENITH", "ENIGMA", "OBLIVION", "ETHEREAL", "NEURAL", "KINETIC", "DYNAMIC", "STATIC", "ISOTOPE", "PLASMA", 
-    "FUSION", "FISSION", "COSMOS", "GALAXY", "STELLAR", "ASTRAL", "CELESTIAL", "ORBITAL", "METEOR", "COMET", "ASTEROID", 
-    "INFINITY", "ETERNITY", "DESTINY", "FATE", "DIMENSION", "REALM", "PORTAL"
-];
+// --- Network & Game State ---
+const APP_PREFIX = "starlight-gm-";
 
-// --- 5. Game Server Logic (Host Authority) ---
-const GameServer = {
-    state: { active: false, secretWord: '', scramble: '', time: 60, isFrozen: false, p1Score: 0, p2Score: 0, timerId: null },
-    
-    startRound() {
-        this.state.secretWord = DICT[Math.floor(Math.random() * DICT.length)];
-        this.state.scramble = this.state.secretWord.split('').sort(() => 0.5 - Math.random()).join('');
-        Network.send({ type: 'SYNC', payload: { action: 'NEW_ROUND', scramble: this.state.scramble } });
-    },
-    
-    startMatch() {
-        this.state.active = true; this.state.p1Score = 0; this.state.p2Score = 0; this.state.time = 60;
-        Network.send({ type: 'SYNC', payload: { action: 'MATCH_START' } });
-        this.startRound();
-        
-        clearInterval(this.state.timerId);
-        this.state.timerId = setInterval(() => {
-            if(!this.state.isFrozen) {
-                this.state.time--;
-                Network.send({ type: 'SYNC', payload: { action: 'TICK', time: this.state.time } });
-                if(this.state.time <= 0) this.endMatch();
-            }
-        }, 1000);
-    },
-
-    endMatch() {
-        clearInterval(this.state.timerId); this.state.active = false;
-        let winner = 'DRAW';
-        if(this.state.p1Score > this.state.p2Score) winner = 'P1';
-        if(this.state.p2Score > this.state.p1Score) winner = 'P2';
-        Network.send({ type: 'SYNC', payload: { action: 'MATCH_END', winner, p1: this.state.p1Score, p2: this.state.p2Score } });
-    },
-
-    evaluateGuess(guess, player) {
-        if(!this.state.active) return;
-        if(guess === this.state.secretWord) {
-            if(player === 'P1') this.state.p1Score += 100; else this.state.p2Score += 100;
-            Network.send({ type: 'SYNC', payload: { action: 'SCORE_UPDATE', p1: this.state.p1Score, p2: this.state.p2Score, solver: player } });
-            this.startRound();
-        } else {
-            Network.sendTo(player, { type: 'SYNC', payload: { action: 'GUESS_REJECTED' } });
-        }
-    },
-
-    triggerPowerup(type, player) {
-        if(type === 'FREEZE') {
-            this.state.isFrozen = true;
-            Network.send({ type: 'SYNC', payload: { action: 'FREEZE_STATE', state: true } });
-            setTimeout(() => {
-                this.state.isFrozen = false;
-                Network.send({ type: 'SYNC', payload: { action: 'FREEZE_STATE', state: false } });
-            }, 3000);
-        }
-        if(type === 'HINT') {
-            // Give them the first 2 letters
-            const hint = this.state.secretWord.substring(0, 2) + "...";
-            Network.sendTo(player, { type: 'SYNC', payload: { action: 'HINT_DELIVERED', text: hint } });
-        }
-    }
-};
-
-// --- 6. Client Logic (Network & View) ---
-const Network = {
+const State = {
     peer: null, conn: null, isHost: false,
+    name: 'Player', p2Name: 'Partner',
+    
+    // Game
+    letters: [], foundWords: [], score: 0, time: 90, timerId: null, active: false,
+    
     init() {
-        document.getElementById('btnHost').addEventListener('click', () => { sfx.click(); this.hostRoom(); });
-        document.getElementById('btnJoin').addEventListener('click', () => { sfx.click(); this.joinRoom(); });
-        document.getElementById('btnSubmitWord').addEventListener('click', () => this.submitGuess());
-        document.getElementById('wordInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') this.submitGuess(); });
+        document.getElementById('btnHost').addEventListener('click', () => this.hostRoom());
+        document.getElementById('btnJoin').addEventListener('click', () => this.joinRoom());
+        document.getElementById('btnCancelHost').addEventListener('click', () => {
+            if(this.peer) this.peer.destroy();
+            UI.screen('screen-home');
+        });
+        document.getElementById('btnSubmitGuess').addEventListener('click', () => this.submitGuess());
+        document.getElementById('wordGuess').addEventListener('keypress', (e) => { if(e.key === 'Enter') this.submitGuess(); });
         
-        // Powerups
-        document.getElementById('btnPowerFreeze').addEventListener('click', () => {
-            sfx.click(); if(Profile.deductExp(50)) this.send({ type: 'POWERUP', kind: 'FREEZE' });
+        document.getElementById('btnPlayAgain').addEventListener('click', () => {
+            if(this.isHost) this.startGame(); else UI.toast('Waiting for host to restart...', 'info');
         });
-        document.getElementById('btnPowerHint').addEventListener('click', () => {
-            sfx.click(); if(Profile.deductExp(25)) this.send({ type: 'POWERUP', kind: 'HINT' });
-        });
+        document.getElementById('btnExit').addEventListener('click', () => window.location.reload());
     },
+
+    getPeerConfig() {
+        return {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        };
+    },
+
     hostRoom() {
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const nameInput = document.getElementById('playerName').value.trim();
+        this.name = nameInput || 'Host';
+        
+        sfx.pop();
+        const code = Math.floor(1000 + Math.random() * 9000).toString();
         this.isHost = true;
-        this.peer = new Peer(code);
-        this.peer.on('open', (id) => {
-            document.getElementById('roomCodeDisplay').classList.remove('hidden');
-            document.getElementById('hostCode').textContent = id;
-            UI.toast('SERVER ESTABLISHED. WAITING FOR LINK.', 'success');
-        });
+        
+        UI.screen('screen-lobby');
+        document.getElementById('displayRoomCode').textContent = code;
+
+        this.peer = new Peer(APP_PREFIX + code, this.getPeerConfig());
+        this.peer.on('open', () => UI.toast('Room Active. Waiting for partner.', 'info'));
         this.peer.on('connection', (c) => this.handleConnection(c));
+        this.peer.on('error', (e) => { UI.toast('Connection Error. Try again.', 'error'); UI.screen('screen-home'); });
     },
+
     joinRoom() {
+        const nameInput = document.getElementById('playerName').value.trim();
+        this.name = nameInput || 'Guest';
+        
         const code = document.getElementById('joinCode').value.trim();
-        if(code.length !== 6) return UI.toast('INVALID 6-DIGIT FREQUENCY', 'error');
+        if(code.length !== 4) return UI.toast('Enter 4-Digit Code', 'error');
+        
+        sfx.pop();
         this.isHost = false;
-        this.peer = new Peer();
+        
+        UI.toast('Connecting...', 'info');
+        this.peer = new Peer(this.getPeerConfig());
         this.peer.on('open', () => {
-            UI.toast('ATTEMPTING LINK...', 'info');
-            const c = this.peer.connect(code, { reliable: true });
+            const c = this.peer.connect(APP_PREFIX + code, { reliable: true });
             this.handleConnection(c);
         });
+        this.peer.on('error', (e) => UI.toast('Room not found or network error.', 'error'));
     },
+
     handleConnection(c) {
         this.conn = c;
         c.on('open', () => {
-            UI.toast('UPLINK SECURED', 'success'); sfx.success();
-            Profile.data.name = document.getElementById('playerName').value || 'GUEST'; Profile.save();
-            c.send({ type: 'HANDSHAKE', name: Profile.data.name });
-            if(this.isHost) setTimeout(() => GameServer.startMatch(), 1500);
+            sfx.success(); UI.toast('Linked successfully!', 'success');
+            c.send({ type: 'HANDSHAKE', name: this.name });
         });
         c.on('data', (data) => this.processData(data));
-        c.on('close', () => { UI.toast('PARTNER DISCONNECTED', 'error'); UI.switchScreen('lobby'); window.location.reload(); });
+        c.on('close', () => { UI.toast('Partner disconnected.', 'error'); setTimeout(()=>window.location.reload(), 2000); });
     },
-    send(payload) { 
-        if(this.conn) this.conn.send(payload); 
-        // If host triggers an action, loop it directly to Server logic
-        if(this.isHost && payload.type === 'GUESS') GameServer.evaluateGuess(payload.word, 'P1');
-        if(this.isHost && payload.type === 'POWERUP') GameServer.triggerPowerup(payload.kind, 'P1');
-    },
-    sendTo(player, payload) {
-        if(player === 'P1' && this.isHost) this.processData(payload); // Loopback to self
-        if(player === 'P2' && this.conn) this.conn.send(payload);
-    },
-    processData(data) {
-        // --- SERVER INBOUND ---
-        if(this.isHost) {
-            if(data.type === 'HANDSHAKE') {
-                document.getElementById('p2Name').textContent = data.name;
-                document.getElementById('p1Name').textContent = Profile.data.name;
-                this.conn.send({ type: 'HANDSHAKE', name: Profile.data.name });
-            }
-            if(data.type === 'GUESS') GameServer.evaluateGuess(data.word, 'P2');
-            if(data.type === 'POWERUP') GameServer.triggerPowerup(data.kind, 'P2');
-        } 
-        // --- CLIENT INBOUND ---
-        else {
-            if(data.type === 'HANDSHAKE') {
-                document.getElementById('p2Name').textContent = data.name;
-                document.getElementById('p1Name').textContent = Profile.data.name;
-            }
-        }
 
-        // --- GLOBAL SYNC (BOTH) ---
-        if(data.type === 'SYNC') {
-            const p = data.payload;
-            if(p.action === 'MATCH_START') {
-                UI.switchScreen('arena');
-                document.getElementById('btnSubmitWord').disabled = false;
-                document.getElementById('arenaStatus').textContent = "QUANTUM ANAGRAMS";
-            }
-            if(p.action === 'NEW_ROUND') {
-                document.getElementById('anagramDisplay').textContent = p.scramble;
-                UI.visualFeedback('anagramDisplay', 'success');
-                document.getElementById('wordInput').value = '';
-                document.getElementById('hintDisplay').textContent = '';
-            }
-            if(p.action === 'TICK') {
-                document.getElementById('arenaTimer').textContent = p.time;
-            }
-            if(p.action === 'SCORE_UPDATE') {
-                if(this.isHost) { document.getElementById('p1Score').textContent = p.p1; document.getElementById('p2Score').textContent = p.p2; }
-                else { document.getElementById('p1Score').textContent = p.p2; document.getElementById('p2Score').textContent = p.p1; }
-                
-                if((this.isHost && p.solver === 'P1') || (!this.isHost && p.solver === 'P2')) {
-                    sfx.success(); UI.toast('SEQUENCE EXTRACTED', 'success'); Profile.addExp(50);
-                } else {
-                    UI.toast('PARTNER EXTRACTED SEQUENCE', 'error'); sfx.error();
-                }
-            }
-            if(p.action === 'GUESS_REJECTED') {
-                sfx.error(); UI.visualFeedback('inputWrapper', 'error');
-            }
-            if(p.action === 'FREEZE_STATE') {
-                if(p.state) {
-                    sfx.freeze(); document.getElementById('freezeOverlay').classList.remove('hidden');
-                    document.getElementById('timerRing').classList.add('frozen');
-                    UI.toast('CHRONOS FROZEN', 'info');
-                } else {
-                    document.getElementById('freezeOverlay').classList.add('hidden');
-                    document.getElementById('timerRing').classList.remove('frozen');
-                }
-            }
-            if(p.action === 'HINT_DELIVERED') {
-                document.getElementById('hintDisplay').textContent = `CLUE: ${p.text}`;
-                sfx.powerup();
-            }
-            if(p.action === 'MATCH_END') {
-                document.getElementById('btnSubmitWord').disabled = true;
-                let amIWinner = false;
-                if(p.winner === 'DRAW') UI.toast('MATCH DRAWN', 'info');
-                else if((this.isHost && p.winner === 'P1') || (!this.isHost && p.winner === 'P2')) {
-                    UI.toast('VICTORY ACHIEVED', 'success'); Profile.data.wins++; Profile.addExp(100); amIWinner = true;
-                } else {
-                    UI.toast('DEFEAT DETECTED', 'error');
-                }
-                document.getElementById('arenaStatus').textContent = amIWinner ? "VICTORY" : (p.winner === 'DRAW' ? "DRAW" : "DEFEAT");
-                
-                if(this.isHost) {
-                    setTimeout(() => { GameServer.startMatch(); }, 5000);
-                    UI.toast('INITIATING REMATCH IN 5s...', 'info');
-                }
+    processData(data) {
+        if(data.type === 'HANDSHAKE') {
+            this.p2Name = data.name;
+            if(this.isHost) {
+                this.conn.send({ type: 'HANDSHAKE', name: this.name });
+                setTimeout(() => this.startGame(), 1000);
             }
         }
+        if(data.type === 'SYNC') this.syncGame(data.payload);
+        if(data.type === 'GUESS' && this.isHost) {
+            this.evaluateGuess(data.word, data.player);
+        }
     },
+
+    sendSync(payload) { if(this.conn) this.conn.send({ type: 'SYNC', payload }); },
+
+    // --- GAME LOGIC ---
+    startGame() {
+        this.active = true; this.score = 0; this.time = 90; this.foundWords = [];
+        document.getElementById('overlay-result').classList.add('hidden');
+        
+        // Generate 7 letters (3 Vowels, 4 Consonants)
+        this.letters = [];
+        for(let i=0; i<3; i++) this.letters.push(VOWELS[Math.floor(Math.random() * VOWELS.length)]);
+        for(let i=0; i<4; i++) this.letters.push(CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)]);
+        this.letters.sort(() => 0.5 - Math.random());
+
+        this.sendSync({ action: 'START', letters: this.letters, p1Name: this.name, p2Name: this.p2Name });
+        this.syncGame({ action: 'START', letters: this.letters, p1Name: this.p2Name, p2Name: this.name }); // Self sync (names flipped)
+
+        clearInterval(this.timerId);
+        this.timerId = setInterval(() => {
+            this.time--;
+            this.sendSync({ action: 'TICK', time: this.time });
+            this.syncGame({ action: 'TICK', time: this.time });
+            if(this.time <= 0) this.endGame();
+        }, 1000);
+    },
+
+    endGame() {
+        clearInterval(this.timerId); this.active = false;
+        this.sendSync({ action: 'END', score: this.score, words: this.foundWords.length });
+        this.syncGame({ action: 'END', score: this.score, words: this.foundWords.length });
+    },
+
+    syncGame(p) {
+        if(p.action === 'START') {
+            document.getElementById('hudP1Name').textContent = this.name;
+            document.getElementById('hudP2Name').textContent = this.p2Name;
+            
+            const pool = document.getElementById('letterPool');
+            pool.innerHTML = '';
+            p.letters.forEach(l => {
+                const tile = document.createElement('div'); tile.className = 'letter-tile'; tile.textContent = l;
+                pool.appendChild(tile);
+            });
+            
+            document.getElementById('foundWordsList').innerHTML = '';
+            document.getElementById('teamScore').textContent = '0';
+            document.getElementById('wordGuess').value = '';
+            UI.screen('screen-arena');
+        }
+        if(p.action === 'TICK') {
+            document.getElementById('timerText').textContent = p.time + 's';
+            document.getElementById('timerBar').style.width = (p.time / 90 * 100) + '%';
+            if(p.time < 15) document.getElementById('timerBar').style.background = 'var(--neon-pink)';
+            else document.getElementById('timerBar').style.background = 'linear-gradient(90deg, var(--neon-blue), var(--neon-pink))';
+        }
+        if(p.action === 'WORD_FOUND') {
+            sfx.success();
+            this.score = p.score; this.foundWords = p.wordsList;
+            document.getElementById('teamScore').textContent = this.score;
+            
+            const list = document.getElementById('foundWordsList');
+            list.innerHTML = '';
+            this.foundWords.forEach(w => {
+                const pill = document.createElement('div'); pill.className = 'word-pill'; pill.textContent = w;
+                list.appendChild(pill);
+            });
+            
+            // Animate letters
+            const tiles = document.querySelectorAll('.letter-tile');
+            tiles.forEach(t => { t.classList.add('active'); setTimeout(()=>t.classList.remove('active'), 300); });
+        }
+        if(p.action === 'REJECT') {
+            const input = document.getElementById('wordGuess');
+            input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+            sfx.error();
+        }
+        if(p.action === 'END') {
+            sfx.win();
+            document.getElementById('finalScoreDisplay').textContent = p.score;
+            document.getElementById('finalStatsDisplay').textContent = `Words Discovered: ${p.words}`;
+            document.getElementById('overlay-result').classList.remove('hidden');
+        }
+    },
+
     submitGuess() {
-        const input = document.getElementById('wordInput');
+        if(!this.active) return;
+        const input = document.getElementById('wordGuess');
         const guess = input.value.trim().toUpperCase();
         if(!guess) return;
-        this.send({ type: 'GUESS', word: guess });
-        input.value = ''; input.focus();
+        
+        // Simple client-side letter check before sending
+        let tempLetters = [...this.letters];
+        let validLetters = true;
+        for(let char of guess) {
+            const idx = tempLetters.indexOf(char);
+            if(idx === -1) { validLetters = false; break; }
+            tempLetters.splice(idx, 1);
+        }
+
+        if(!validLetters) {
+            this.syncGame({ action: 'REJECT' });
+        } else {
+            if(this.isHost) this.evaluateGuess(guess, this.name);
+            else this.conn.send({ type: 'GUESS', word: guess, player: this.name });
+        }
+        input.value = '';
+    },
+
+    evaluateGuess(guess, player) {
+        if(!this.active) return;
+        // Check if word exists and hasn't been found
+        // *In a real app, you'd use a massive JSON dictionary. Using a curated array here to ensure lightweight execution.*
+        if(DICTIONARY.includes(guess) && !this.foundWords.includes(guess)) {
+            const points = guess.length * 10;
+            this.score += points;
+            this.foundWords.push(guess);
+            
+            const payload = { action: 'WORD_FOUND', score: this.score, wordsList: this.foundWords };
+            this.sendSync(payload); this.syncGame(payload);
+        } else {
+            if(player === this.name) this.syncGame({ action: 'REJECT' });
+            else this.sendSync({ action: 'REJECT' });
+        }
     }
 };
 
-window.onload = () => { initGraphicsEngine(); Profile.init(); Network.init(); };
+window.onload = () => State.init();
