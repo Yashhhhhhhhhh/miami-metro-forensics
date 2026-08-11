@@ -1,546 +1,599 @@
-// app.js
+/* ==========================================================================
+   SPELLBOUND | CO-OP WORD SANCTUARY ENGINE
+   ========================================================================== */
 
-const SOURCES = [
-  { id: 'ipwhois', label: 'Network/IP Node', kind: 'network', active: true, fetcher: fetchIPLocation },
-  { id: 'osm', label: 'Geospatial Triangulation', kind: 'location', active: true, fetcher: fetchNominatim },
-  { id: 'wikipedia', label: 'Global DB (Wiki)', kind: 'reference', active: true, fetcher: fetchWikipedia },
-  { id: 'wikidata', label: 'Entity Graph (Data)', kind: 'entity', active: true, fetcher: fetchWikidata },
-  { id: 'fbi', label: 'Federal Warrants (FBI)', kind: 'federal', active: true, fetcher: fetchFBI },
-  { id: 'reddit', label: 'Subterranean Chatter', kind: 'forum', active: true, fetcher: fetchReddit },
-  { id: 'openalex', label: 'Scholar Index', kind: 'scholarship', active: true, fetcher: fetchOpenAlex },
-  { id: 'europepmc', label: 'Toxicology & Med', kind: 'medical', active: true, fetcher: fetchEuropePMC },
-  { id: 'books', label: 'Published Manifestos', kind: 'literature', active: true, fetcher: fetchBooks },
-  { id: 'hackernews', label: 'Deep Tech Forum', kind: 'forum', active: true, fetcher: fetchHackerNews },
-  { id: 'github', label: 'Code Trail (GitHub)', kind: 'repository', active: true, fetcher: fetchGitHub },
-  { id: 'archive', label: 'Cold Storage (Archive)', kind: 'archive', active: true, fetcher: fetchArchive },
+// --- 1. CURATED DICTIONARIES ---
+const DICTIONARY = [
+  "LOVE", "ROSE", "MOON", "STAR", "GLOW", "FLAME", "SWEET", "HEART", "DREAM", "SHINE",
+  "LIGHT", "MAGIC", "SPARK", "ANGEL", "PEACE", "CHARM", "HONEY", "SMILE", "GRACE", "BLISS",
+  "FAITH", "TRUST", "CANDLE", "SERENE", "VELVET", "SILK", "COZY", "WARMTH", "FOREVER", "ALWAYS",
+  "SHELTER", "FLOWER", "BLOSSOM", "SUNSET", "AURORA", "CELESTIAL", "ETERNAL", "PASSION", "DEVOTION",
+  "WHISPER", "HARMONY", "RADIANT", "DELIGHT", "EMBRACE", "BELOVED", "TREASURE", "BEAUTY", "MELODY"
 ];
 
-const state = {
-  query: '', subject: 'auto', depth: 'standard', sort: 'relevance',
-  activeSourceIds: SOURCES.filter((s) => s.active).map((s) => s.id),
-  activeFocuses: ['location', 'network', 'reference', 'entity', 'scholarship', 'medical', 'federal', 'literature', 'forum', 'repository', 'archive'],
-  exactPhrase: '', location: '', fromYear: '', toYear: '',
-  results: [], summary: null, loading: false, page: 1, dossiers: [], activeDossierId: null, notes: '',
-};
+const FIVE_LETTER_WORDS = [
+  "ANGEL", "BEACH", "BLISS", "BLOOM", "CHARM", "CHALL", "CLOUD", "CANDY", "DREAM", "FLAME",
+  "GRACE", "HEART", "LIGHT", "MAGIC", "PEACE", "QUEEN", "ROSE", "SMILE", "SPARK", "SWEET",
+  "TRUST", "VALOR", "YOUTH", "SHINE", "SHINE", "HONEY", "LOVER", "FAITH", "HAPPY", "PEACH"
+];
 
-const els = {
-  bootScreen: document.getElementById('bootScreen'), mainShell: document.getElementById('mainShell'),
-  form: document.getElementById('searchForm'), queryInput: document.getElementById('queryInput'),
-  subjectSelect: document.getElementById('subjectSelect'), depthSelect: document.getElementById('depthSelect'),
-  sortSelect: document.getElementById('sortSelect'), exactPhraseInput: document.getElementById('exactPhraseInput'),
-  locationInput: document.getElementById('locationInput'), fromYearInput: document.getElementById('fromYearInput'),
-  toYearInput: document.getElementById('toYearInput'), sourceRow: document.getElementById('sourceRow'),
-  resultsTitle: document.getElementById('resultsTitle'), statusBar: document.getElementById('statusBar'),
-  summaryGrid: document.getElementById('summaryGrid'), resultGroups: document.getElementById('resultGroups'),
-  heroStats: document.getElementById('heroStats'), dossierList: document.getElementById('dossierList'),
-  notesInput: document.getElementById('notesInput'), saveNotesButton: document.getElementById('saveNotesButton'),
-  saveCaseButton: document.getElementById('saveCaseButton'), exportButton: document.getElementById('exportButton'),
-  newDossierButton: document.getElementById('newDossierButton'), cardTemplate: document.getElementById('resultCardTemplate'),
-};
+// --- 2. WEB AUDIO ENGINE ---
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
 
-const DEFAULT_PROMPTS = ['Miami Metro Police Department', '8.8.8.8', 'Bay Harbor Butcher'];
-
-// --- INDEXED DB ---
-const DB_NAME = 'MiamiMetroDB'; const STORE_NAME = 'trophyBox';
-function initDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = (e) => {
-      if (!e.target.result.objectStoreNames.contains(STORE_NAME)) e.target.result.createObjectStore(STORE_NAME);
-    };
-    request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
-  });
-}
-async function getFromDB(key, def) {
-  try {
-    const db = await initDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get(key);
-      req.onsuccess = () => resolve(req.result !== undefined ? req.result : def); req.onerror = () => reject(req.error);
-    });
-  } catch { return def; }
-}
-async function saveToDB(key, val) {
-  try {
-    const db = await initDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const req = tx.objectStore(STORE_NAME).put(val, key);
-      req.onsuccess = () => resolve(); req.onerror = () => reject(req.error);
-    });
-  } catch (e) { console.warn('Storage failed.', e); }
-}
-
-// --- BOOT SEQUENCE ---
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    els.bootScreen.classList.add('fade-out');
-    els.mainShell.classList.remove('hidden');
-    initialize();
-  }, 2200);
-});
-
-async function initialize() {
-  renderLoadingFallback();
-  state.notes = await getFromDB('dexter-notes', '');
-  const defaultDossier = [seedDossier('Unidentified Subject', 'Blood never lies. Begin tracking parameters.')];
-  state.dossiers = await getFromDB('dexter-dossiers', defaultDossier);
-  if (!Array.isArray(state.dossiers) || !state.dossiers.length) state.dossiers = defaultDossier;
-
-  renderSourceChips(); renderHeroStats(); renderDossiers();
-  
-  els.notesInput.value = state.notes; els.queryInput.value = DEFAULT_PROMPTS[0]; applySavedQuery(DEFAULT_PROMPTS[0]);
-  
-  els.form.addEventListener('submit', handleSearchSubmit);
-  ['subjectSelect', 'depthSelect'].forEach(id => els[id].addEventListener('change', (e) => { state[id.replace('Select', '')] = e.target.value; renderHeroStats(); }));
-  els.sortSelect.addEventListener('change', (e) => { state.sort = e.target.value; renderResults(); });
-  ['exactPhrase', 'location', 'fromYear', 'toYear'].forEach(f => els[`${f}Input`].addEventListener('input', (e) => state[f] = e.target.value.trim()));
-  
-  document.querySelectorAll('.focus-chip').forEach(b => b.addEventListener('click', () => toggleFocus(b.dataset.focus)));
-  els.saveNotesButton.addEventListener('click', saveNotes); els.saveCaseButton.addEventListener('click', saveCase);
-  els.exportButton.addEventListener('click', exportCurrentState); els.newDossierButton.addEventListener('click', createNewDossier);
-}
-
-function applySavedQuery(query) { if (query) { state.query = query; els.queryInput.value = query; } }
-function renderSourceChips() {
-  els.sourceRow.innerHTML = '';
-  SOURCES.forEach((source) => {
-    const btn = document.createElement('button'); btn.type = 'button';
-    btn.className = `source-chip${state.activeSourceIds.includes(source.id) ? ' active' : ''}`;
-    btn.textContent = source.label; btn.addEventListener('click', () => toggleSource(source.id));
-    els.sourceRow.appendChild(btn);
-  });
-}
-function toggleSource(sourceId) {
-  const index = state.activeSourceIds.indexOf(sourceId);
-  if (index >= 0) state.activeSourceIds.splice(index, 1); else state.activeSourceIds.push(sourceId);
-  renderSourceChips(); renderHeroStats();
-}
-function toggleFocus(focus) {
-  const index = state.activeFocuses.indexOf(focus);
-  if (index >= 0 && state.activeFocuses.length > 1) state.activeFocuses.splice(index, 1);
-  else if (index < 0) state.activeFocuses.push(focus);
-  document.querySelectorAll('.focus-chip').forEach(b => b.classList.toggle('active', state.activeFocuses.includes(b.dataset.focus)));
-  renderHeroStats();
-}
-function renderHeroStats() {
-  const activeSources = SOURCES.filter(s => state.activeSourceIds.includes(s.id));
-  const stats = [
-    { value: activeSources.length, label: 'Active Informants' },
-    { value: [...new Set(activeSources.map(s => s.kind))].length, label: 'Investigation Vectors' },
-    { value: state.depth === 'deep' ? 'Deep' : 'Surface', label: 'Tissue Scan Depth' },
-    { value: 'System', label: 'Ready for Analysis' },
-  ];
-  els.heroStats.innerHTML = stats.map(s => `<div class="stat"><span class="value">${escapeHtml(s.value)}</span><span class="label">${escapeHtml(s.label)}</span></div>`).join('');
-}
-
-// --- CORE SEARCH EXECUTION ---
-async function handleSearchSubmit(e) { if (e) e.preventDefault(); state.page = 1; state.results = []; await executeSearch(); }
-async function loadMoreResults() { state.page += 1; await executeSearch(true); }
-
-async function executeSearch(isAppending = false) {
-  const query = els.queryInput.value.trim();
-  state.query = query;
-  if (!query) { setStatus('ERROR: Enter target parameters.'); return; }
-  const activeSources = SOURCES.filter(s => state.activeSourceIds.includes(s.id));
-  if (!activeSources.length) { setStatus('ERROR: Enable at least one database.'); return; }
-  
-  state.loading = true; setStatus(`Hunting across ${activeSources.length} databases for [${query}]...`);
-  if (!isAppending) renderLoadingState(query);
-
-  const queryPlan = { normalized: query.trim().replace(/\s+/g, ' '), depth: state.depth, page: state.page };
-
-  const jobs = activeSources.map(async (source) => {
-    try { 
-      const payload = await source.fetcher(queryPlan);
-      return { source, payload: payload || { items: [] } }; 
-    } catch (err) { 
-      return { source, payload: { items: [], note: 'Failed' } }; 
+  init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
-  });
-  
-  const settled = await Promise.all(jobs);
-  const collected = settled.flatMap(({ source, payload }) => normalizePayload(source, payload));
-  
-  state.results = isAppending ? sortResults([...state.results, ...collected], state.sort) : sortResults(collected, state.sort);
-  state.summary = summarizeResults(query, state.results, state.activeSourceIds);
-  state.loading = false;
-  
-  renderResults(); persistLastSearch();
-}
+  }
 
-function normalizePayload(source, payload) {
-  const items = Array.isArray(payload?.items) ? payload.items : [];
-  return items.map(item => ({
-    id: `${source.id}:${item.id || item.url || item.title || Math.random()}`, 
-    sourceId: source.id, sourceLabel: source.label,
-    group: item.group || mapGroup(source.kind), resultKind: item.resultKind || 'record',
-    title: item.title || 'Unknown Target', snippet: item.snippet || 'Record classified / unreadable.', 
-    url: item.url || '#', published: item.published || 'Date Unknown', 
-    domain: extractDomain(item.url || ''), score: typeof item.score === 'number' ? item.score : 0,
-    mapUrl: item.mapUrl || null, imageUrl: item.imageUrl || null, coordData: item.coordData || null
-  }));
-}
-
-// --- ADVANCED ADVANCED FETCHERS ---
-
-// 1. IP Geolocation / Network Trace (IP-WHOIS)
-async function fetchIPLocation(plan) {
-  const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-  if (!ipRegex.test(plan.normalized)) return { items: [] }; // Only run if valid IPv4 format
-  
-  const res = await fetchJson(`https://ipwho.is/${plan.normalized}`);
-  if (!res || !res.success) return { items: [] };
-
-  const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${res.longitude-0.05}%2C${res.latitude-0.05}%2C${res.longitude+0.05}%2C${res.latitude+0.05}&layer=mapnik&marker=${res.latitude}%2C${res.longitude}`;
-
-  return {
-    items: [{
-      id: `ip-${res.ip}`,
-      title: `Network Node: ${res.ip} (${res.city || 'Unknown'}, ${res.country})`,
-      snippet: `ISP: ${res.connection?.isp || 'Unknown'} | ASN: ${res.connection?.asn || 'N/A'} | Type: ${res.type} | Proxy/VPN: ${res.security?.proxy ? 'YES' : 'NO'}`,
-      url: `https://ipwhois.io/lookup/${res.ip}`,
-      group: 'network', resultKind: 'ip trace', score: 100,
-      mapUrl: mapEmbedUrl,
-      coordData: `LAT: ${res.latitude} | LON: ${res.longitude} | TZ: ${res.timezone?.id || 'N/A'}`
-    }]
-  };
-}
-
-// 2. OpenStreetMap / Nominatim (Precise Geospatial Triangulation)
-async function fetchNominatim(plan) {
-  const res = await fetchJson(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(plan.normalized)}&format=json&addressdetails=1&limit=3`);
-  if (!res || !res.length) return { items: [] };
-
-  const items = res.map((entry, i) => {
-    const lat = parseFloat(entry.lat);
-    const lon = parseFloat(entry.lon);
-    const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01}%2C${lat-0.01}%2C${lon+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lon}`;
-
-    return {
-      id: `osm-${entry.place_id}`,
-      title: `Triangulated Location: ${entry.display_name.split(',')[0]}`,
-      snippet: `Full Address: ${entry.display_name} | Type: ${entry.type} (${entry.class})`,
-      url: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`,
-      published: 'Real-Time GIS', group: 'location', resultKind: 'geospatial', score: 98 - i,
-      mapUrl: mapEmbedUrl,
-      coordData: `LAT: ${lat.toFixed(6)} | LON: ${lon.toFixed(6)} | OSM-ID: ${entry.osm_id}`
-    };
-  });
-  return { items };
-}
-
-// 3. Wikipedia with Page Images
-async function fetchWikipedia(plan) {
-  const limit = plan.depth === 'deep' ? 10 : 4; const offset = (plan.page - 1) * limit;
-  const res = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(plan.normalized)}&srlimit=${limit}&sroffset=${offset}&format=json&origin=*`);
-  const searchItems = res?.query?.search || [];
-
-  const items = await Promise.all(searchItems.map(async (entry, i) => {
-    let summary = stripHtml(entry.snippet);
-    let imageUrl = null;
+  playTone(freq, type, duration, gainVal = 0.1) {
+    if (this.muted) return;
+    this.init();
     try {
-      const summaryRes = await fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(entry.title)}`);
-      summary = summaryRes.extract || summary;
-      imageUrl = summaryRes.thumbnail?.source || null;
-    } catch {}
-
-    return {
-      title: entry.title, snippet: summary, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(entry.title.replace(/ /g, '_'))}`,
-      published: entry.timestamp ? entry.timestamp.substring(0,4) : '', group: 'reference', resultKind: 'wiki', score: 95 - i,
-      imageUrl
-    };
-  }));
-  return { items };
-}
-
-async function fetchWikidata(plan) {
-  if (plan.page > 1) return { items: [] };
-  const res = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(plan.normalized)}&language=en&limit=6&format=json&origin=*`);
-  const items = (res?.search || []).map((entry, i) => ({
-    title: entry.label || entry.id, snippet: entry.description || 'No description on file.', url: `https://www.wikidata.org/wiki/${entry.id}`, resultKind: 'alias', score: 90 - i
-  }));
-  return { items };
-}
-
-async function fetchFBI(plan) {
-  if (plan.page > 1) return { items: [] };
-  const res = await fetchJson(`https://api.fbi.gov/api/v1/wanted/list?title=${encodeURIComponent(plan.normalized)}`);
-  const items = (res?.items || []).map((entry, i) => ({
-    title: entry.title, snippet: stripHtml(entry.description || entry.warning_message || 'Warrant issued.'), 
-    url: entry.url, published: entry.publication ? entry.publication.substring(0,4) : '', 
-    group: 'federal', resultKind: 'warrant', score: 100 - i,
-    imageUrl: entry.images?.[0]?.large || null
-  }));
-  return { items };
-}
-
-async function fetchReddit(plan) {
-  const limit = plan.depth === 'deep' ? 8 : 4;
-  const res = await fetchJson(`https://www.reddit.com/search.json?q=${encodeURIComponent(plan.normalized)}&limit=${limit}&type=link`);
-  const items = (res?.data?.children || []).map((entry, i) => {
-    const data = entry.data;
-    return {
-      title: data.title || 'Subterranean Thread', snippet: `Subreddit: r/${data.subreddit} | Upvotes: ${data.ups}. ${stripHtml(data.selftext).substring(0, 150)}`,
-      url: `https://reddit.com${data.permalink}`, published: new Date(data.created_utc * 1000).getFullYear().toString(),
-      group: 'forum', resultKind: 'intel', score: 88 - i
-    };
-  });
-  return { items };
-}
-
-async function fetchHackerNews(plan) {
-  const limit = plan.depth === 'deep' ? 8 : 4;
-  const res = await fetchJson(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(plan.normalized)}&page=${plan.page - 1}&hitsPerPage=${limit}`);
-  const items = (res?.hits || []).map((entry, i) => ({
-    title: entry.title || entry.story_title || 'Untitled Thread', snippet: `Author: ${entry.author}. ${stripHtml(entry.comment_text || '').substring(0, 150)}...`,
-    url: entry.url || `https://news.ycombinator.com/item?id=${entry.objectID}`, published: entry.created_at ? entry.created_at.substring(0,4) : '', 
-    group: 'forum', resultKind: 'thread', score: 87 - i
-  }));
-  return { items };
-}
-
-async function fetchGitHub(plan) {
-  const limit = plan.depth === 'deep' ? 8 : 4;
-  const res = await fetchJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(plan.normalized)}&per_page=${limit}&page=${plan.page}`);
-  const items = (res?.items || []).map((entry, i) => ({
-    title: entry.full_name, snippet: entry.description || 'No documentation found in repository.', 
-    url: entry.html_url, published: entry.updated_at ? entry.updated_at.substring(0,4) : '', 
-    group: 'repository', resultKind: 'repo', score: 85 - i
-  }));
-  return { items };
-}
-
-async function fetchEuropePMC(plan) {
-  const limit = plan.depth === 'deep' ? 6 : 3;
-  const res = await fetchJson(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(plan.normalized)}&format=json&resultType=core&pageSize=${limit}&cursorMark=*`);
-  const items = (res?.resultList?.result || []).map((entry, i) => ({
-    title: entry.title, snippet: stripHtml(entry.abstractText || 'Abstract withheld.').substring(0, 150) + '...',
-    url: `https://europepmc.org/article/${entry.source}/${entry.pmid}`, published: entry.pubYear || '', group: 'medical', resultKind: 'clinical', score: 86 - i
-  }));
-  return { items };
-}
-
-async function fetchBooks(plan) {
-  const limit = plan.depth === 'deep' ? 8 : 4; const offset = (plan.page - 1) * limit;
-  const res = await fetchJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(plan.normalized)}&maxResults=${limit}&startIndex=${offset}`);
-  const items = (res?.items || []).map((entry, i) => {
-    const info = entry.volumeInfo || {};
-    return { title: info.title || 'Unknown Text', snippet: stripHtml(info.description || `Authors: ${info.authors?.join(', ')}`), url: info.previewLink || info.infoLink || '#', published: info.publishedDate ? info.publishedDate.substring(0,4) : '', group: 'literature', resultKind: 'book', score: 82 - i, imageUrl: info.imageLinks?.thumbnail || null };
-  });
-  return { items };
-}
-
-async function fetchOpenAlex(plan) {
-  const limit = plan.depth === 'deep' ? 8 : 4;
-  const res = await fetchJson(`https://api.openalex.org/works?search=${encodeURIComponent(plan.normalized)}&per-page=${limit}&page=${plan.page}`);
-  const items = (res?.results || []).map((e, i) => ({
-    title: e.display_name || 'Classified Work', snippet: e.primary_location?.source?.display_name || 'Scholarly abstract withheld.',
-    url: e.id, published: String(e.publication_year || ''), group: 'scholarship', resultKind: 'journal', score: 84 - i
-  }));
-  return { items };
-}
-
-async function fetchArchive(plan) {
-  const limit = plan.depth === 'deep' ? 8 : 4;
-  const res = await fetchJson(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(plan.normalized)}&fl[]=identifier,title,creator,date,description&rows=${limit}&page=${plan.page}&output=json`);
-  const items = (res?.response?.docs || []).map((e, i) => ({
-    title: e.title || e.identifier, snippet: stripHtml(e.description || 'Cold storage file.'), url: `https://archive.org/details/${e.identifier}`,
-    published: e.date ? e.date.substring(0,4) : '', group: 'archive', resultKind: 'archive', score: 80 - i
-  }));
-  return { items };
-}
-
-// Resilient Fetch Layer
-async function fetchJson(url, options = {}, retries = 2, backoff = 500) {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 12000);
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal, headers: { Accept: 'application/json' }});
-    if (!res.ok) {
-      if (res.status === 429 && retries > 0) {
-        await new Promise(r => setTimeout(r, backoff)); return fetchJson(url, options, retries - 1, backoff * 2);
-      }
-      throw new Error(`HTTP ${res.status}`);
-    }
-    return await res.json();
-  } catch(e) { return null; } 
-  finally { window.clearTimeout(timeout); }
-}
-
-// --- RENDERING & UI ---
-function stripHtml(v) { return String(v || '').replace(/<[^>]*>/g, ' ').trim(); }
-function extractDomain(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; } }
-function groupBy(arr, keyFn) { return arr.reduce((acc, v) => { (acc[keyFn(v)] = acc[keyFn(v)] || []).push(v); return acc; }, {}); }
-function setStatus(msg) { els.statusBar.textContent = msg; }
-function mapGroup(k) { const valid = ['network', 'location', 'entity', 'scholarship', 'medical', 'federal', 'literature', 'forum', 'repository', 'archive']; return valid.includes(k) ? k : 'reference'; }
-function groupLabel(group) {
-  return { 
-    network: 'Network Node & IP Trace', location: 'Geospatial Triangulation', federal: 'Federal Warrants',
-    reference: 'Global Records', entity: 'Entity Graphs', medical: 'Toxicology & Medical', 
-    literature: 'Manifestos & Lore', scholarship: 'Academic Journals', forum: 'Subterranean Chatter', 
-    repository: 'Code Trails', archive: 'Cold Files (Archived)' 
-  }[group] || 'Unclassified Evidence';
-}
-
-function sortResults(items, sortMode) {
-  const cloned = [...items];
-  if (sortMode === 'source') return cloned.sort((l, r) => l.sourceLabel.localeCompare(r.sourceLabel) || r.score - l.score);
-  if (sortMode === 'recent') return cloned.sort((l, r) => (parseInt(r.published) || 0) - (parseInt(l.published) || 0) || r.score - l.score);
-  return cloned.sort((l, r) => r.score - l.score || l.title.localeCompare(r.title));
-}
-
-function summarizeResults(query, results, activeSourceIds) {
-  return {
-    total: results.length, sourceCount: activeSourceIds.length,
-    mediaCount: results.filter(i => ['literature', 'archive', 'location', 'network'].includes(i.group)).length,
-    scholarCount: results.filter(i => ['scholarship', 'medical'].includes(i.group)).length,
-    entityCount: results.filter(i => ['entity', 'reference', 'federal'].includes(i.group)).length,
-    primaryLine: `Isolated ${results.length} records.`, filterLine: buildFilterSummary()
-  };
-}
-
-function buildFilterSummary() {
-  const parts = [state.exactPhrase && `Target: "${state.exactPhrase}"`, state.location && `Loc: ${state.location}`].filter(Boolean);
-  return parts.length ? `Parameters active: ${parts.join(', ')}.` : 'Broad spectrum analysis.';
-}
-
-function renderLoadingState(query) {
-  els.resultsTitle.textContent = `Analyzing spatter for [${query}]...`;
-  els.summaryGrid.innerHTML = '';
-  els.resultGroups.innerHTML = `<div class="empty-state"><h3>Running Forensics</h3><p>Extracting data from digital nodes and satellite networks...</p></div>`;
-}
-function renderEmptyState(title, message) {
-  els.resultsTitle.textContent = title; els.summaryGrid.innerHTML = '';
-  els.resultGroups.innerHTML = `<div class="empty-state"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p></div>`;
-}
-
-function renderResults() {
-  if (!state.results.length) {
-    if (state.loading) return renderLoadingState(state.query || '');
-    return renderEmptyState('Cold Trail', 'No evidence found. The scene was wiped clean.');
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch (e) {}
   }
-  const summary = state.summary;
-  els.resultsTitle.textContent = `${summary.total} Pieces of Evidence Found`;
-  els.statusBar.textContent = `ANALYSIS COMPLETE. ${summary.primaryLine} ${summary.filterLine}`;
-  renderSummaryGrid(summary); renderGroupedResults(); renderDossiers(); renderHeroStats();
-}
 
-function renderSummaryGrid(summary) {
-  const cards = [
-    { number: summary.total, label: 'Total Evidence', body: `Across ${summary.sourceCount} tapped systems.` },
-    { number: summary.mediaCount, label: 'Geospatial & IP Nodes', body: 'Satellite maps and network traces.' },
-    { number: summary.scholarCount, label: 'Journals & Med Reports', body: 'Academic and scientific trail.' },
-    { number: summary.entityCount, label: 'Entity & Warrant Matches', body: 'Structured aliases and DB hits.' },
-  ];
-  els.summaryGrid.innerHTML = cards.map(c => `
-    <article class="summary-card">
-      <span class="number">${c.number}</span>
-      <span class="heading">${c.label}</span>
-      <p>${c.body}</p>
-    </article>
-  `).join('');
-}
+  playCorrect() {
+    this.playTone(523.25, 'sine', 0.15, 0.1); // C5
+    setTimeout(() => this.playTone(659.25, 'sine', 0.2, 0.1), 100); // E5
+  }
 
-function renderGroupedResults() {
-  const grouped = groupBy(state.results, item => item.group);
-  const order = ['network', 'location', 'federal', 'reference', 'entity', 'medical', 'forum', 'repository', 'literature', 'scholarship', 'archive', 'other'];
-  els.resultGroups.innerHTML = '';
+  playWrong() {
+    this.playTone(220, 'sawtooth', 0.25, 0.08);
+  }
 
-  order.filter(g => grouped[g] && grouped[g].length).forEach(group => {
-    const items = grouped[group];
-    const section = document.createElement('section');
-    section.className = 'group';
-    section.innerHTML = `<div class="group-head"><h3>${escapeHtml(groupLabel(group))}</h3></div><div class="group-grid"></div>`;
-    const grid = section.querySelector('.group-grid');
-    items.forEach((item, idx) => {
-      const node = buildCardNode(item);
-      node.style.animationDelay = `${idx * 0.05}s`;
-      grid.appendChild(node);
+  playWin() {
+    [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.3, 0.12), idx * 120);
     });
-    els.resultGroups.appendChild(section);
+  }
+}
+
+const audio = new SoundEngine();
+
+// --- 3. STATE MANAGEMENT ---
+const state = {
+  playerName: 'Player 1',
+  avatar: '🌙',
+  mode: 'local', // 'local' or 'online'
+  peer: null,
+  conn: null,
+  isHost: false,
+  roomCode: null,
+  
+  // Game Session
+  activeGame: null,
+  currentTurn: 1, // 1 or 2
+  scores: { p1: 0, p2: 0 },
+  p2Name: 'Partner',
+  p2Avatar: '🌹',
+  timer: null,
+  timeLeft: 60,
+  
+  // Stats
+  stats: {
+    gamesPlayed: 0,
+    wordsFound: 0,
+    highestScore: 0,
+    coopVictories: 0
+  }
+};
+
+// --- 4. DOM ELEMENTS ---
+const els = {
+  lobbyScreen: document.getElementById('lobbyScreen'),
+  arenaScreen: document.getElementById('arenaScreen'),
+  trophyModal: document.getElementById('trophyModal'),
+  playerNameInput: document.getElementById('playerNameInput'),
+  avatarSelect: document.getElementById('avatarSelect'),
+  modeLocalBtn: document.getElementById('modeLocalBtn'),
+  modeOnlineBtn: document.getElementById('modeOnlineBtn'),
+  onlinePanel: document.getElementById('onlinePanel'),
+  createRoomBtn: document.getElementById('createRoomBtn'),
+  createdRoomCode: document.getElementById('createdRoomCode'),
+  joinRoomInput: document.getElementById('joinRoomInput'),
+  joinRoomBtn: document.getElementById('joinRoomBtn'),
+  networkStatus: document.getElementById('networkStatus'),
+  soundToggleBtn: document.getElementById('soundToggleBtn'),
+  trophyRoomBtn: document.getElementById('trophyRoomBtn'),
+  closeTrophyBtn: document.getElementById('closeTrophyBtn'),
+  
+  // Arena HUD
+  p1AvatarDisplay: document.getElementById('p1AvatarDisplay'),
+  p1NameDisplay: document.getElementById('p1NameDisplay'),
+  p1ScoreDisplay: document.getElementById('p1ScoreDisplay'),
+  p2AvatarDisplay: document.getElementById('p2AvatarDisplay'),
+  p2NameDisplay: document.getElementById('p2NameDisplay'),
+  p2ScoreDisplay: document.getElementById('p2ScoreDisplay'),
+  activeModeTitle: document.getElementById('activeModeTitle'),
+  timerBadge: document.getElementById('timerBadge'),
+  turnIndicator: document.getElementById('turnIndicator'),
+  arenaBoard: document.getElementById('arenaBoard'),
+  leaveGameBtn: document.getElementById('leaveGameBtn'),
+  
+  // Stats
+  statGamesPlayed: document.getElementById('statGamesPlayed'),
+  statWordsFound: document.getElementById('statWordsFound'),
+  statHighestScore: document.getElementById('statHighestScore'),
+  statCoopVictories: document.getElementById('statCoopVictories')
+};
+
+// --- 5. INITIALIZATION & EVENT LISTENERS ---
+function init() {
+  loadStats();
+  setupEventListeners();
+  initAmbientCanvas();
+}
+
+function setupEventListeners() {
+  els.playerNameInput.addEventListener('input', (e) => {
+    state.playerName = e.target.value.trim() || 'Player 1';
   });
 
-  const loadBtn = document.createElement('button');
-  loadBtn.className = 'ghost-button full-width blood-border';
-  loadBtn.textContent = state.loading ? 'Extracting...' : `Dig Deeper (Page ${state.page + 1})`;
-  loadBtn.disabled = state.loading; loadBtn.addEventListener('click', loadMoreResults);
-  els.resultGroups.appendChild(loadBtn);
+  els.avatarSelect.addEventListener('change', (e) => {
+    state.avatar = e.target.value;
+  });
+
+  els.modeLocalBtn.addEventListener('click', () => {
+    state.mode = 'local';
+    els.modeLocalBtn.classList.add('active');
+    els.modeOnlineBtn.classList.remove('active');
+    els.onlinePanel.classList.add('hidden');
+  });
+
+  els.modeOnlineBtn.addEventListener('click', () => {
+    state.mode = 'online';
+    els.modeOnlineBtn.classList.add('active');
+    els.modeLocalBtn.classList.remove('active');
+    els.onlinePanel.classList.remove('hidden');
+    initPeerJS();
+  });
+
+  els.createRoomBtn.addEventListener('click', createOnlineRoom);
+  els.joinRoomBtn.addEventListener('click', joinOnlineRoom);
+
+  document.querySelectorAll('.mode-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const selectedMode = card.dataset.mode;
+      launchGame(selectedMode);
+    });
+  });
+
+  els.leaveGameBtn.addEventListener('click', returnToLobby);
+  els.soundToggleBtn.addEventListener('click', toggleSound);
+  els.trophyRoomBtn.addEventListener('click', () => els.trophyModal.classList.remove('hidden'));
+  els.closeTrophyBtn.addEventListener('click', () => els.trophyModal.classList.add('hidden'));
 }
 
-function buildCardNode(item) {
-  const fragment = els.cardTemplate.content.cloneNode(true);
-  const card = fragment.querySelector('.result-card');
-  const metaContainer = fragment.querySelector('.result-meta');
-  metaContainer.innerHTML = `<span class="badge">${escapeHtml(item.sourceLabel)}</span><span class="pill">${escapeHtml(item.resultKind)}</span>`;
+function toggleSound() {
+  audio.muted = !audio.muted;
+  els.soundToggleBtn.textContent = audio.muted ? '🔇' : '🔊';
+}
+
+// --- 6. PEERJS MULTIPLAYER SYSTEM ---
+function initPeerJS() {
+  if (state.peer) return;
+  state.peer = new Peer();
   
-  const titleLink = document.createElement('a'); titleLink.href = item.url; titleLink.target = '_blank'; titleLink.textContent = item.title;
-  fragment.querySelector('h3').appendChild(titleLink);
+  state.peer.on('open', (id) => {
+    els.networkStatus.textContent = `Status: Network Ready (Peer ID Active)`;
+  });
+
+  state.peer.on('connection', (conn) => {
+    state.conn = conn;
+    setupPeerHandlers();
+    els.networkStatus.textContent = `Status: Partner Connected!`;
+    audio.playWin();
+  });
+}
+
+function createOnlineRoom() {
+  if (!state.peer) return;
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  state.roomCode = code;
+  state.isHost = true;
   
-  const mediaSlot = fragment.querySelector('.card-media-slot');
-  if (item.mapUrl) {
-    mediaSlot.innerHTML = `<iframe class="map-embed" src="${item.mapUrl}" loading="lazy"></iframe>`;
-  } else if (item.imageUrl) {
-    mediaSlot.innerHTML = `<img src="${item.imageUrl}" class="card-image-preview" loading="lazy" alt="Evidence Preview" />`;
+  els.createdRoomCode.textContent = `ROOM: ${code}`;
+  els.createdRoomCode.classList.remove('hidden');
+  els.networkStatus.textContent = `Waiting for partner to join code ${code}...`;
+}
+
+function joinOnlineRoom() {
+  const code = els.joinRoomInput.value.trim();
+  if (!code || !state.peer) return;
+  
+  els.networkStatus.textContent = `Connecting to room ${code}...`;
+  
+  // Note: For production simplicity, peer connects directly via room alias or generated ID
+  const conn = state.peer.connect(code);
+  if (conn) {
+    state.conn = conn;
+    setupPeerHandlers();
+  }
+}
+
+function setupPeerHandlers() {
+  state.conn.on('open', () => {
+    els.networkStatus.textContent = `Status: Live Connection Established!`;
+    syncNetworkData({ type: 'HANDSHAKE', name: state.playerName, avatar: state.avatar });
+  });
+
+  state.conn.on('data', (data) => {
+    handleNetworkMessage(data);
+  });
+}
+
+function syncNetworkData(msg) {
+  if (state.conn && state.conn.open) {
+    state.conn.send(msg);
+  }
+}
+
+function handleNetworkMessage(msg) {
+  switch (msg.type) {
+    case 'HANDSHAKE':
+      state.p2Name = msg.name;
+      state.p2Avatar = msg.avatar;
+      updateHud();
+      break;
+    case 'LAUNCH_GAME':
+      startLocalGameEngine(msg.gameMode);
+      break;
+    case 'GAME_ACTION':
+      processGameAction(msg.action);
+      break;
+  }
+}
+
+// --- 7. GAME ENGINE & MODES ---
+function launchGame(gameMode) {
+  if (state.mode === 'online' && state.conn) {
+    syncNetworkData({ type: 'LAUNCH_GAME', gameMode });
+  }
+  startLocalGameEngine(gameMode);
+}
+
+function startLocalGameEngine(gameMode) {
+  state.activeGame = gameMode;
+  state.scores = { p1: 0, p2: 0 };
+  state.currentTurn = 1;
+  
+  els.lobbyScreen.classList.remove('active');
+  els.arenaScreen.classList.add('active');
+  
+  updateHud();
+  
+  switch (gameMode) {
+    case 'anagram': initAnagramMode(); break;
+    case 'chain': initChainMode(); break;
+    case 'wordle': initWordleMode(); break;
+    case 'grid': initGridMode(); break;
+  }
+  
+  state.stats.gamesPlayed++;
+  saveStats();
+}
+
+function updateHud() {
+  els.p1AvatarDisplay.textContent = state.avatar;
+  els.p1NameDisplay.textContent = state.playerName;
+  els.p1ScoreDisplay.textContent = `${state.scores.p1} pts`;
+  
+  els.p2AvatarDisplay.textContent = state.p2Avatar;
+  els.p2NameDisplay.textContent = state.p2Name;
+  els.p2ScoreDisplay.textContent = `${state.scores.p2} pts`;
+  
+  els.turnIndicator.textContent = state.currentTurn === 1 ? `${state.playerName}'s Turn` : `${state.p2Name}'s Turn`;
+}
+
+function startTimer(duration, onComplete) {
+  clearInterval(state.timer);
+  state.timeLeft = duration;
+  els.timerBadge.textContent = `${state.timeLeft}s`;
+  
+  state.timer = setInterval(() => {
+    state.timeLeft--;
+    els.timerBadge.textContent = `${state.timeLeft}s`;
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timer);
+      onComplete();
+    }
+  }, 1000);
+}
+
+// --- MODE 1: ANAGRAM BLITZ ---
+let currentTargetWord = '';
+
+function initAnagramMode() {
+  els.activeModeTitle.textContent = "Anagram Blitz";
+  nextAnagramRound();
+  startTimer(60, endAnagramGame);
+}
+
+function nextAnagramRound() {
+  currentTargetWord = DICTIONARY[Math.floor(Math.random() * DICTIONARY.length)];
+  const jumbled = currentTargetWord.split('').sort(() => 0.5 - Math.random()).join('');
+  
+  els.arenaBoard.innerHTML = `
+    <div class="anagram-container">
+      <div class="jumble-display">${jumbled}</div>
+      <div class="word-input-box">
+        <input type="text" id="anagramInput" placeholder="Type unscrambled word..." autofocus />
+        <button id="submitAnagramBtn" class="btn btn-primary">Submit</button>
+      </div>
+      <p style="color: var(--text-muted);">Unscramble as many words as possible together!</p>
+    </div>
+  `;
+
+  document.getElementById('submitAnagramBtn').addEventListener('click', checkAnagram);
+  document.getElementById('anagramInput').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') checkAnagram();
+  });
+}
+
+function checkAnagram() {
+  const inputEl = document.getElementById('anagramInput');
+  const guess = inputEl.value.trim().toUpperCase();
+  
+  if (guess === currentTargetWord) {
+    audio.playCorrect();
+    if (state.currentTurn === 1) state.scores.p1 += 10;
+    else state.scores.p2 += 10;
+    
+    state.stats.wordsFound++;
+    updateHud();
+    nextAnagramRound();
+  } else {
+    audio.playWrong();
+    inputEl.style.borderColor = 'var(--rose-gold)';
+  }
+}
+
+function endAnagramGame() {
+  audio.playWin();
+  els.arenaBoard.innerHTML = `
+    <div style="text-align: center;">
+      <h2 style="font-family: var(--font-serif); font-size: 2rem; margin-bottom: 12px;">Round Complete!</h2>
+      <p style="margin-bottom: 24px; color: var(--text-muted);">Final Combined Score: ${state.scores.p1 + state.scores.p2} points</p>
+      <button class="btn btn-primary" onclick="launchGame('anagram')">Play Again</button>
+    </div>
+  `;
+}
+
+// --- MODE 2: WORD CHAIN ---
+let chainHistory = [];
+
+function initChainMode() {
+  els.activeModeTitle.textContent = "Word Chain";
+  chainHistory = ["LOVE"];
+  renderChainBoard();
+}
+
+function renderChainBoard() {
+  const lastWord = chainHistory[chainHistory.length - 1];
+  const requiredLetter = lastWord.slice(-1);
+  
+  els.arenaBoard.innerHTML = `
+    <div class="chain-container">
+      <div class="chain-history">
+        ${chainHistory.map(w => `<span class="chain-chip">${w.slice(0,-1)}<span class="last-letter">${w.slice(-1)}</span></span>`).join('')}
+      </div>
+      <p style="text-align: center; margin-bottom: 16px;">Next word must start with: <strong style="color: var(--rose-gold); font-size: 1.4rem;">${requiredLetter}</strong></p>
+      <div class="word-input-box">
+        <input type="text" id="chainInput" placeholder="Word starting with ${requiredLetter}..." autofocus />
+        <button id="submitChainBtn" class="btn btn-primary">Add Word</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('submitChainBtn').addEventListener('click', () => submitChainWord(requiredLetter));
+  document.getElementById('chainInput').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') submitChainWord(requiredLetter);
+  });
+}
+
+function submitChainWord(requiredLetter) {
+  const inputEl = document.getElementById('chainInput');
+  const word = inputEl.value.trim().toUpperCase();
+  
+  if (word.startsWith(requiredLetter) && word.length >= 3 && !chainHistory.includes(word)) {
+    audio.playCorrect();
+    chainHistory.push(word);
+    state.stats.wordsFound++;
+    state.currentTurn = state.currentTurn === 1 ? 2 : 1;
+    updateHud();
+    renderChainBoard();
+  } else {
+    audio.playWrong();
+  }
+}
+
+// --- MODE 3: CO-OP WORDLE ---
+let secretWordle = "";
+let wordleAttempts = 0;
+
+function initWordleMode() {
+  els.activeModeTitle.textContent = "Co-Op Wordle";
+  secretWordle = FIVE_LETTER_WORDS[Math.floor(Math.random() * FIVE_LETTER_WORDS.length)];
+  wordleAttempts = 0;
+  renderWordleBoard();
+}
+
+function renderWordleBoard() {
+  els.arenaBoard.innerHTML = `
+    <div class="chain-container" style="text-align: center;">
+      <div class="wordle-board" id="wordleGrid">
+        ${Array(6).fill().map(() => `
+          <div class="wordle-row">
+            ${Array(5).fill().map(() => `<div class="wordle-tile"></div>`).join('')}
+          </div>
+        `).join('')}
+      </div>
+      <div class="word-input-box">
+        <input type="text" id="wordleInput" maxlength="5" placeholder="5-letter guess..." autofocus />
+        <button id="submitWordleBtn" class="btn btn-primary">Guess</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('submitWordleBtn').addEventListener('click', submitWordleGuess);
+  document.getElementById('wordleInput').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') submitWordleGuess();
+  });
+}
+
+function submitWordleGuess() {
+  const inputEl = document.getElementById('wordleInput');
+  const guess = inputEl.value.trim().toUpperCase();
+  
+  if (guess.length !== 5) {
+    audio.playWrong();
+    return;
   }
 
-  if (item.coordData) {
-    const coordDiv = document.createElement('div');
-    coordDiv.className = 'coord-box';
-    coordDiv.innerHTML = `<span>[TRIANGULATION DATA]</span> ${escapeHtml(item.coordData)}`;
-    card.insertBefore(coordDiv, fragment.querySelector('.result-snippet'));
+  const row = document.querySelectorAll('.wordle-row')[wordleAttempts];
+  const tiles = row.querySelectorAll('.wordle-tile');
+  
+  for (let i = 0; i < 5; i++) {
+    tiles[i].textContent = guess[i];
+    if (guess[i] === secretWordle[i]) {
+      tiles[i].classList.add('correct');
+    } else if (secretWordle.includes(guess[i])) {
+      tiles[i].classList.add('present');
+    } else {
+      tiles[i].classList.add('absent');
+    }
   }
 
-  fragment.querySelector('.result-snippet').textContent = item.snippet || 'Record classified / unreadable.';
-  
-  const footer = [item.domain, item.published, item.score ? `Match: ${item.score}%` : null].filter(Boolean);
-  fragment.querySelector('.result-footer').innerHTML = `<span>[${escapeHtml(footer.join('] ['))}]</span>`;
-  return card;
+  wordleAttempts++;
+  inputEl.value = '';
+
+  if (guess === secretWordle) {
+    audio.playWin();
+    state.stats.coopVictories++;
+    saveStats();
+    alert("✨ Spectacular! You cracked the word together!");
+  } else if (wordleAttempts >= 6) {
+    audio.playWrong();
+    alert(`Word was ${secretWordle}! Better luck next time.`);
+  }
 }
 
-// --- DOSSIERS / TROPHY BOX ---
-function renderDossiers() {
-  els.dossierList.innerHTML = state.dossiers.length ? state.dossiers.map(d => `
-    <article class="dossier-item ${d.id === state.activeDossierId ? 'active' : ''}" data-dossier-id="${d.id}">
-      <h3>${escapeHtml(d.title)}</h3>
-      <p>${escapeHtml(d.summary)}</p>
-    </article>
-  `).join('') : '<p class="empty-state">Trophy box is empty.</p>';
-  els.dossierList.querySelectorAll('.dossier-item').forEach(i => i.addEventListener('click', () => activateDossier(i.dataset.dossierId)));
+// --- MODE 4: LETTER GRID (BOGGLE) ---
+let gridLetters = [];
+let selectedWord = "";
+
+function initGridMode() {
+  els.activeModeTitle.textContent = "Letter Grid";
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  gridLetters = Array(16).fill().map(() => alphabet[Math.floor(Math.random() * alphabet.length)]);
+  
+  els.arenaBoard.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <div class="boggle-grid">
+        ${gridLetters.map((char, i) => `<div class="boggle-tile" data-idx="${i}">${char}</div>`).join('')}
+      </div>
+      <p style="margin-bottom: 12px; font-weight: 700;">Word: <span id="gridWordDisplay" style="color: var(--rose-gold); font-size: 1.2rem;">---</span></p>
+      <button id="clearGridBtn" class="btn btn-outline btn-sm">Clear Selection</button>
+    </div>
+  `;
+
+  document.querySelectorAll('.boggle-tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+      tile.classList.toggle('selected');
+      selectedWord += tile.textContent;
+      document.getElementById('gridWordDisplay').textContent = selectedWord;
+      audio.playTone(400 + selectedWord.length * 50, 'sine', 0.1);
+    });
+  });
+
+  document.getElementById('clearGridBtn').addEventListener('click', () => {
+    selectedWord = "";
+    document.getElementById('gridWordDisplay').textContent = "---";
+    document.querySelectorAll('.boggle-tile').forEach(t => t.classList.remove('selected'));
+  });
 }
-function seedDossier(title, summary) { return { id: `case-${Date.now()}`, title, summary, query: '', note: '', updatedAt: new Date().toISOString(), savedResults: [] }; }
-async function saveDossiers() { await saveToDB('dexter-dossiers', state.dossiers); }
-function activateDossier(id) {
-  state.activeDossierId = id; renderDossiers();
-  const d = state.dossiers.find(x => x.id === id);
-  if (d) { applySavedQuery(d.query); els.notesInput.value = d.note || ''; setStatus(`Loaded Slide: ${d.title}`); }
+
+// --- 8. STATS & LOBBY LOGIC ---
+function returnToLobby() {
+  clearInterval(state.timer);
+  els.arenaScreen.classList.remove('active');
+  els.lobbyScreen.classList.add('active');
 }
-async function createNewDossier() {
-  const d = seedDossier(`Slide ${state.dossiers.length + 1}`, 'Blank slide prepared.');
-  state.dossiers.unshift(d); state.activeDossierId = d.id; await saveDossiers(); renderDossiers(); setStatus('New glass slide ready.');
+
+function saveStats() {
+  localStorage.setItem('spellbound-stats', JSON.stringify(state.stats));
+  updateStatsDisplay();
 }
-async function saveNotes() {
-  state.notes = els.notesInput.value; await saveToDB('dexter-notes', state.notes);
-  const d = state.dossiers.find(x => x.id === state.activeDossierId);
-  if (d) { d.note = state.notes; d.updatedAt = new Date().toISOString(); await saveDossiers(); }
-  setStatus('Monologue logged.');
+
+function loadStats() {
+  const raw = localStorage.getItem('spellbound-stats');
+  if (raw) {
+    try { state.stats = JSON.parse(raw); } catch(e){}
+  }
+  updateStatsDisplay();
 }
-async function saveCase() {
-  if (!state.results.length) return setStatus('No evidence to store.');
-  let d = state.dossiers.find(x => x.id === state.activeDossierId);
-  if (!d) { d = state.dossiers[0]; state.activeDossierId = d.id; }
-  d.title = state.query || d.title; d.query = state.query; d.summary = `Stored ${state.results.length} spatters.`; d.updatedAt = new Date().toISOString();
-  await saveDossiers(); renderDossiers(); setStatus('Evidence secured in the Trophy Box.');
+
+function updateStatsDisplay() {
+  els.statGamesPlayed.textContent = state.stats.gamesPlayed;
+  els.statWordsFound.textContent = state.stats.wordsFound;
+  els.statHighestScore.textContent = state.stats.highestScore;
+  els.statCoopVictories.textContent = state.stats.coopVictories;
 }
-function exportCurrentState() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `case-file-${state.query.replace(/\s+/g, '-')}.json`; a.click(); setStatus('Case file extracted.');
+
+// --- 9. ATMOSPHERIC CANVAS (PARTICLES) ---
+function initAmbientCanvas() {
+  const canvas = document.getElementById('ambientCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  const particles = Array(45).fill().map(() => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radius: Math.random() * 2 + 1,
+    alpha: Math.random() * 0.5 + 0.2,
+    speedY: -Math.random() * 0.4 - 0.1
+  }));
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    
+    particles.forEach(p => {
+      p.y += p.speedY;
+      if (p.y < 0) p.y = height;
+      
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 117, 151, ${p.alpha})`;
+      ctx.fill();
+    });
+    
+    requestAnimationFrame(animate);
+  }
+  
+  animate();
 }
-async function persistLastSearch() {
-  const d = state.dossiers.find(x => x.id === state.activeDossierId) || state.dossiers[0];
-  if(d) { d.query = state.query; await saveDossiers(); }
-}
-function escapeHtml(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-function renderLoadingFallback() { renderEmptyState('Miami Metro Lab', 'System online. Awaiting target parameters.'); }
+
+// Start application
+init();

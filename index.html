@@ -1,166 +1,209 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Forensic Intelligence Workspace for target analysis." />
-    <title>Miami Metro | Forensic Terminal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="crt-overlay"></div>
-    <div class="plastic-wrap"></div>
-    <div class="forensic-grid"></div>
-    <div class="blood-spatter spatter-a"></div>
-    <div class="blood-spatter spatter-b"></div>
-    
-    <div id="bootScreen" class="boot-screen">
-      <div class="boot-text">
-        <p>> INITIALIZING GEOSPATIAL & NETWORK SENSORS...</p>
-        <p>> IP TRACE ENGINE [ONLINE]</p>
-        <p>> SATELLITE TRIANGULATION [ACTIVE]</p>
-        <p>> PREPARING SLIDES...</p>
-        <p class="blink">_</p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpellBound | Private Co-Op Word Sanctuary</title>
+  
+  <!-- Aesthetic Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- PeerJS for Zero-Lag Private Peer-to-Peer Multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Atmospheric Canvas Background -->
+  <canvas id="ambientCanvas"></canvas>
+  <div class="doodle-overlay"></div>
+
+  <div class="app-shell">
+    <!-- TOP NAVBAR -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">✦</span>
+        <span class="brand-title">SpellBound</span>
       </div>
-    </div>
+      <div class="nav-actions">
+        <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">🔊</button>
+        <button id="trophyRoomBtn" class="icon-btn" title="Trophy Room">🏆</button>
+      </div>
+    </header>
 
-    <main class="shell hidden" id="mainShell">
-      <header class="hero panel pop-in">
-        <div class="hero-copy">
-          <span class="eyebrow">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-            Forensic Analysis Division
-          </span>
-          <h1>Track the pattern. Isolate the evidence.</h1>
-          <p>
-            The blood never lies. Enter a subject, address, or IP address to run a multi-vector sweep across satellite maps, network nodes, and public databases.
-          </p>
+    <!-- MAIN CONTAINER -->
+    <main class="main-content">
+      
+      <!-- LOBBY SCREEN -->
+      <section id="lobbyScreen" class="screen active">
+        <div class="lobby-hero">
+          <span class="eyebrow-tag">✨ Private Co-Op & Duel Sanctuary</span>
+          <h1>Spell, Connect, and Duel Together.</h1>
+          <p>A private space for two. Connect live across devices or play together on one screen.</p>
         </div>
-        <div class="hero-stats" id="heroStats"></div>
-      </header>
 
-      <section class="search-panel panel slide-up-delay-1">
-        <form id="searchForm" class="search-form">
-          <label class="search-box">
-            <span>Target Subject / Location / IP</span>
-            <div class="input-wrapper">
-              <svg class="search-icon" width="20" height="20" fill="none" stroke="#e63946" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input id="queryInput" name="query" type="search" placeholder="Enter target name, place, or IPv4 address..." autocomplete="off" spellcheck="false" />
+        <!-- PLAYER SETUP CARD -->
+        <div class="card setup-card">
+          <div class="card-title">
+            <h3>Player Profile</h3>
+            <span class="subtitle">Customize your in-game persona</span>
+          </div>
+          <div class="setup-grid">
+            <div class="input-group">
+              <label for="playerNameInput">Your Name</label>
+              <input type="text" id="playerNameInput" value="Player 1" maxlength="12" />
             </div>
-          </label>
-          <div class="controls-grid">
-            <label>
-              <span>Classification</span>
-              <select id="subjectSelect" name="subject">
-                <option value="auto">Auto-Detect Vector</option>
-                <option value="person">Person of Interest</option>
-                <option value="place">Geospatial Target</option>
-                <option value="organization">Syndicate / Corp</option>
-                <option value="topic">Modus Operandi</option>
+            <div class="input-group">
+              <label for="avatarSelect">Avatar Icon</label>
+              <select id="avatarSelect">
+                <option value="🌙">🌙 Moon</option>
+                <option value="🌹">🌹 Rose</option>
+                <option value="⚡">⚡ Spark</option>
+                <option value="🦋">🦋 Butterfly</option>
+                <option value="👑">👑 Crown</option>
+                <option value="🔥">🔥 Ember</option>
               </select>
-            </label>
-            <label>
-              <span>Scan Depth</span>
-              <select id="depthSelect" name="depth">
-                <option value="standard">Surface Sweep</option>
-                <option value="deep">Deep Tissue Scan</option>
-              </select>
-            </label>
-            <label>
-              <span>Organize By</span>
-              <select id="sortSelect" name="sort">
-                <option value="relevance">Highest Probability</option>
-                <option value="recent">Most Recent Activity</option>
-                <option value="source">Database Origin</option>
-              </select>
-            </label>
-            <button class="primary-button slice-hover" type="submit">Run Spatter Analysis</button>
+            </div>
           </div>
-          
-          <div class="advanced-grid">
-            <label>
-              <span>Exact Phrase</span>
-              <input id="exactPhraseInput" name="exactPhrase" type="text" placeholder='"Bay Harbor Butcher"' />
-            </label>
-            <label>
-              <span>Jurisdiction</span>
-              <input id="locationInput" name="location" type="text" placeholder="Miami, FL" />
-            </label>
-            <label>
-              <span>Cold Case (From)</span>
-              <input id="fromYearInput" name="fromYear" type="number" min="1500" max="2100" placeholder="YYYY" />
-            </label>
-            <label>
-              <span>Active (To)</span>
-              <input id="toYearInput" name="toYear" type="number" min="1500" max="2100" placeholder="YYYY" />
-            </label>
+
+          <div class="connection-mode-selector">
+            <button id="modeLocalBtn" class="mode-tab active">Pass & Play (Same Screen)</button>
+            <button id="modeOnlineBtn" class="mode-tab">Live Peer-to-Peer (2 Devices)</button>
           </div>
-          
-          <div class="focus-row" aria-label="Evidence focus">
-            <button class="focus-chip active" type="button" data-focus="location">Geospatial</button>
-            <button class="focus-chip active" type="button" data-focus="network">Network/IP</button>
-            <button class="focus-chip active" type="button" data-focus="reference">Records</button>
-            <button class="focus-chip active" type="button" data-focus="entity">Aliases</button>
-            <button class="focus-chip active" type="button" data-focus="media">Surveillance</button>
-            <button class="focus-chip active" type="button" data-focus="archive">Cold Files</button>
+
+          <!-- ONLINE ROOM PANEL -->
+          <div id="onlinePanel" class="online-panel hidden">
+            <div class="room-box">
+              <div class="room-action">
+                <button id="createRoomBtn" class="btn btn-secondary">Create Private Room</button>
+                <span id="createdRoomCode" class="room-code-badge hidden">ROOM: ----</span>
+              </div>
+              <div class="divider">OR</div>
+              <div class="room-join">
+                <input type="text" id="joinRoomInput" placeholder="Enter 4-Digit Room Code" maxlength="6" />
+                <button id="joinRoomBtn" class="btn btn-primary">Join Room</button>
+              </div>
+            </div>
+            <div id="networkStatus" class="network-status">Status: Local Standby</div>
           </div>
-        </form>
-        <div class="source-row" id="sourceRow" aria-label="Research sources"></div>
+        </div>
+
+        <!-- GAME MODE CARDS -->
+        <div class="modes-headline">
+          <h2>Select Game Mode</h2>
+          <p>Choose how you want to play tonight</p>
+        </div>
+
+        <div class="modes-grid">
+          <!-- Mode 1 -->
+          <div class="mode-card" data-mode="anagram">
+            <div class="mode-badge">Fast-Paced</div>
+            <div class="mode-icon">🔠</div>
+            <h3>Anagram Blitz</h3>
+            <p>Unscramble chaotic letter jumbles before the timer runs out. Earn streak multipliers!</p>
+            <button class="btn btn-primary btn-sm">Launch Duel</button>
+          </div>
+
+          <!-- Mode 2 -->
+          <div class="mode-card" data-mode="chain">
+            <div class="mode-badge">Turn-Based</div>
+            <div class="mode-icon">🔗</div>
+            <h3>Word Chain</h3>
+            <p>Build an endless string of words where each word must begin with the final letter of the last.</p>
+            <button class="btn btn-primary btn-sm">Start Chain</button>
+          </div>
+
+          <!-- Mode 3 -->
+          <div class="mode-card" data-mode="wordle">
+            <div class="mode-badge">Co-Op</div>
+            <div class="mode-icon">🧩</div>
+            <h3>Co-Op Wordle</h3>
+            <p>Combine forces to deduce the secret 5-letter word in 6 attempts or fewer.</p>
+            <button class="btn btn-primary btn-sm">Crack Code</button>
+          </div>
+
+          <!-- Mode 4 -->
+          <div class="mode-card" data-mode="grid">
+            <div class="mode-badge">Search Blitz</div>
+            <div class="mode-icon">🔍</div>
+            <h3>Letter Grid (Boggle)</h3>
+            <p>Trace pathways across a 4x4 letter matrix to uncover as many hidden words as possible.</p>
+            <button class="btn btn-primary btn-sm">Find Words</button>
+          </div>
+        </div>
       </section>
 
-      <section class="workspace-grid slide-up-delay-2">
-        <aside class="panel sidebar">
-          <div class="section-head">
-            <div>
-              <span class="eyebrow">Case Files</span>
-              <h2>Trophy Box</h2>
+      <!-- GAME ARENA SCREEN -->
+      <section id="arenaScreen" class="screen">
+        <!-- ARENA HUD -->
+        <div class="arena-hud card">
+          <div class="player-hud p1">
+            <span class="hud-avatar" id="p1AvatarDisplay">🌙</span>
+            <div class="hud-info">
+              <span class="hud-name" id="p1NameDisplay">Player 1</span>
+              <span class="hud-score" id="p1ScoreDisplay">0 pts</span>
             </div>
-            <button id="newDossierButton" class="ghost-button icon-button" type="button" title="New Slide">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-            </button>
           </div>
-          <div id="dossierList" class="dossier-list custom-scrollbar"></div>
-          <div class="notes-card">
-            <label for="notesInput">
-              <span>Inner Monologue</span>
-              <textarea id="notesInput" rows="8" class="custom-scrollbar" placeholder="Tonight's the night. Document the coordinates..."></textarea>
-            </label>
-            <button id="saveNotesButton" class="ghost-button full-width" type="button">Log Field Note</button>
-          </div>
-        </aside>
 
-        <section class="panel results-panel">
-          <div class="section-head results-head">
-            <div>
-              <span class="eyebrow">Forensic HUD</span>
-              <h2 id="resultsTitle">Lab prepped. Waiting for target parameters.</h2>
+          <div class="hud-center">
+            <span class="game-mode-tag" id="activeModeTitle">Anagram Blitz</span>
+            <div class="timer-badge" id="timerBadge">60s</div>
+            <span class="turn-indicator" id="turnIndicator">Player 1's Turn</span>
+          </div>
+
+          <div class="player-hud p2">
+            <div class="hud-info align-right">
+              <span class="hud-name" id="p2NameDisplay">Partner</span>
+              <span class="hud-score" id="p2ScoreDisplay">0 pts</span>
             </div>
-            <div class="results-actions">
-              <button id="saveCaseButton" class="ghost-button blood-border" type="button">Store Glass Slide</button>
-              <button id="exportButton" class="ghost-button" type="button">Extract Evidence</button>
+            <span class="hud-avatar" id="p2AvatarDisplay">🌹</span>
+          </div>
+        </div>
+
+        <!-- DYNAMIC GAME PLAY CONTAINER -->
+        <div class="arena-board card" id="arenaBoard">
+          <!-- Dynamic Content Injected Here by App.js -->
+        </div>
+
+        <!-- ARENA CONTROLS -->
+        <div class="arena-footer">
+          <button id="leaveGameBtn" class="btn btn-outline">Exit to Lobby</button>
+        </div>
+      </section>
+
+      <!-- TROPHY ROOM MODAL -->
+      <div id="trophyModal" class="modal-overlay hidden">
+        <div class="modal-card card">
+          <div class="modal-header">
+            <h3>🏆 Trophy Room & Stats</h3>
+            <button id="closeTrophyBtn" class="close-btn">&times;</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-number" id="statGamesPlayed">0</span>
+              <span class="stat-label">Games Played</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="statWordsFound">0</span>
+              <span class="stat-label">Words Discovered</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="statHighestScore">0</span>
+              <span class="stat-label">Best Single Round</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="statCoopVictories">0</span>
+              <span class="stat-label">Co-Op Victories</span>
             </div>
           </div>
-          <div id="statusBar" class="status-bar">SYSTEM ONLINE. ALL VECTOR SENSORS READY.</div>
-          <div id="summaryGrid" class="summary-grid"></div>
-          <div id="resultGroups" class="result-groups"></div>
-        </section>
-      </section>
+        </div>
+      </div>
+
     </main>
+  </div>
 
-    <template id="resultCardTemplate">
-      <article class="result-card glass-slide">
-        <div class="slide-glare"></div>
-        <div class="result-meta"></div>
-        <h3></h3>
-        <div class="card-media-slot"></div>
-        <p class="result-snippet custom-scrollbar"></p>
-        <div class="result-footer"></div>
-      </article>
-    </template>
-    
-    <script src="app.js" defer></script>
-  </body>
+  <script src="app.js"></script>
+</body>
 </html>
