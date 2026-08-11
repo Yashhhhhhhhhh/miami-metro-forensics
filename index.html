@@ -11,19 +11,17 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- Forensic Ambience & CRT Scanlines -->
     <div class="crt-overlay"></div>
     <div class="plastic-wrap"></div>
     <div class="forensic-grid"></div>
     <div class="blood-spatter spatter-a"></div>
     <div class="blood-spatter spatter-b"></div>
     
-    <!-- Initial Boot Sequence -->
     <div id="bootScreen" class="boot-screen">
       <div class="boot-text">
-        <p>> INITIALIZING MIAMI METRO SECURE PROTOCOL...</p>
-        <p>> BYPASSING FIREWALLS [OK]</p>
-        <p>> LOADING FORENSIC DB [OK]</p>
+        <p>> INITIALIZING GEOSPATIAL & NETWORK SENSORS...</p>
+        <p>> IP TRACE ENGINE [ONLINE]</p>
+        <p>> SATELLITE TRIANGULATION [ACTIVE]</p>
         <p>> PREPARING SLIDES...</p>
         <p class="blink">_</p>
       </div>
@@ -38,7 +36,7 @@
           </span>
           <h1>Track the pattern. Isolate the evidence.</h1>
           <p>
-            The blood never lies. Enter a subject's name, alias, or MO to run a sweep across public databases, archives, and the subterranean web. Prepare your slides.
+            The blood never lies. Enter a subject, address, or IP address to run a multi-vector sweep across satellite maps, network nodes, and public databases.
           </p>
         </div>
         <div class="hero-stats" id="heroStats"></div>
@@ -47,28 +45,28 @@
       <section class="search-panel panel slide-up-delay-1">
         <form id="searchForm" class="search-form">
           <label class="search-box">
-            <span>Target Subject</span>
+            <span>Target Subject / Location / IP</span>
             <div class="input-wrapper">
               <svg class="search-icon" width="20" height="20" fill="none" stroke="#e63946" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input id="queryInput" name="query" type="search" placeholder="Who is on the table tonight?" autocomplete="off" spellcheck="false" />
+              <input id="queryInput" name="query" type="search" placeholder="Enter target name, place, or IPv4 address..." autocomplete="off" spellcheck="false" />
             </div>
           </label>
           <div class="controls-grid">
             <label>
               <span>Classification</span>
               <select id="subjectSelect" name="subject">
-                <option value="auto">Unidentified</option>
+                <option value="auto">Auto-Detect Vector</option>
                 <option value="person">Person of Interest</option>
+                <option value="place">Geospatial Target</option>
                 <option value="organization">Syndicate / Corp</option>
                 <option value="topic">Modus Operandi</option>
-                <option value="place">Crime Scene (Location)</option>
               </select>
             </label>
             <label>
-              <span>Analysis Depth</span>
+              <span>Scan Depth</span>
               <select id="depthSelect" name="depth">
-                <option value="standard">Surface Sweep (Fast)</option>
-                <option value="deep">Deep Tissue Scan (Thorough)</option>
+                <option value="standard">Surface Sweep</option>
+                <option value="deep">Deep Tissue Scan</option>
               </select>
             </label>
             <label>
@@ -84,7 +82,7 @@
           
           <div class="advanced-grid">
             <label>
-              <span>Exact Match</span>
+              <span>Exact Phrase</span>
               <input id="exactPhraseInput" name="exactPhrase" type="text" placeholder='"Bay Harbor Butcher"' />
             </label>
             <label>
@@ -102,12 +100,12 @@
           </div>
           
           <div class="focus-row" aria-label="Evidence focus">
+            <button class="focus-chip active" type="button" data-focus="location">Geospatial</button>
+            <button class="focus-chip active" type="button" data-focus="network">Network/IP</button>
             <button class="focus-chip active" type="button" data-focus="reference">Records</button>
             <button class="focus-chip active" type="button" data-focus="entity">Aliases</button>
-            <button class="focus-chip active" type="button" data-focus="scholarship">Journals</button>
             <button class="focus-chip active" type="button" data-focus="media">Surveillance</button>
             <button class="focus-chip active" type="button" data-focus="archive">Cold Files</button>
-            <button class="focus-chip active" type="button" data-focus="forum">Chatter</button>
           </div>
         </form>
         <div class="source-row" id="sourceRow" aria-label="Research sources"></div>
@@ -128,7 +126,7 @@
           <div class="notes-card">
             <label for="notesInput">
               <span>Inner Monologue</span>
-              <textarea id="notesInput" rows="8" class="custom-scrollbar" placeholder="Tonight's the night. Document the pattern..."></textarea>
+              <textarea id="notesInput" rows="8" class="custom-scrollbar" placeholder="Tonight's the night. Document the coordinates..."></textarea>
             </label>
             <button id="saveNotesButton" class="ghost-button full-width" type="button">Log Field Note</button>
           </div>
@@ -138,26 +136,26 @@
           <div class="section-head results-head">
             <div>
               <span class="eyebrow">Forensic HUD</span>
-              <h2 id="resultsTitle">Lab prepped. Waiting for subject.</h2>
+              <h2 id="resultsTitle">Lab prepped. Waiting for target parameters.</h2>
             </div>
             <div class="results-actions">
               <button id="saveCaseButton" class="ghost-button blood-border" type="button">Store Glass Slide</button>
               <button id="exportButton" class="ghost-button" type="button">Extract Evidence</button>
             </div>
           </div>
-          <div id="statusBar" class="status-bar">SYSTEM ONLINE. EVERYTHING IS CLEAN.</div>
+          <div id="statusBar" class="status-bar">SYSTEM ONLINE. ALL VECTOR SENSORS READY.</div>
           <div id="summaryGrid" class="summary-grid"></div>
           <div id="resultGroups" class="result-groups"></div>
         </section>
       </section>
     </main>
 
-    <!-- Master Template for Glass Slides -->
     <template id="resultCardTemplate">
       <article class="result-card glass-slide">
         <div class="slide-glare"></div>
         <div class="result-meta"></div>
         <h3></h3>
+        <div class="card-media-slot"></div>
         <p class="result-snippet custom-scrollbar"></p>
         <div class="result-footer"></div>
       </article>

@@ -19,31 +19,23 @@
 html { min-height: 100%; background: var(--bg); scroll-behavior: smooth; }
 body { margin: 0; min-height: 100vh; color: var(--text); font-family: "Inter", system-ui, sans-serif; letter-spacing: 0.02em; overflow-x: hidden; }
 
-/* Typography */
-input, textarea, .status-bar, .eyebrow, .number, .boot-text { font-family: "Courier Prime", monospace; }
+input, textarea, .status-bar, .eyebrow, .number, .boot-text, .coord-data { font-family: "Courier Prime", monospace; }
 button, select { font-family: inherit; cursor: pointer; }
 
-/* Scrollbar */
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar, body::-webkit-scrollbar { width: 4px; height: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: #000; }
 .custom-scrollbar::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: rgba(230, 57, 70, 0.4); }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* =====================================
-   CRT & ATMOSPHERE
-   ===================================== */
+/* CRT Scanlines */
 .crt-overlay {
   position: fixed; inset: 0; pointer-events: none; z-index: 9999;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
   background-size: 100% 4px, 6px 100%;
   animation: flicker 0.15s infinite;
 }
-
-@keyframes flicker {
-  0% { opacity: 0.95; }
-  50% { opacity: 0.85; }
-  100% { opacity: 0.95; }
-}
+@keyframes flicker { 0% { opacity: 0.95; } 50% { opacity: 0.85; } 100% { opacity: 0.95; } }
 
 .plastic-wrap { position: fixed; inset: 0; pointer-events: none; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(%23n)" opacity="0.06"/></svg>'); z-index: 0; }
 .forensic-grid { position: fixed; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(168, 218, 220, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(168, 218, 220, 0.02) 1px, transparent 1px); background-size: 40px 40px; z-index: 0; }
@@ -51,9 +43,7 @@ button, select { font-family: inherit; cursor: pointer; }
 .spatter-a { width: 45vw; height: 45vw; top: -10vw; right: -20vw; }
 .spatter-b { width: 35vw; height: 35vw; bottom: -10vw; left: -15vw; opacity: 0.08; }
 
-/* =====================================
-   BOOT SEQUENCE
-   ===================================== */
+/* Boot Screen */
 .boot-screen {
   position: fixed; inset: 0; background: #000; z-index: 10000;
   display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 40px;
@@ -62,17 +52,15 @@ button, select { font-family: inherit; cursor: pointer; }
 .boot-screen.fade-out { opacity: 0; pointer-events: none; }
 .boot-text p { color: var(--sterile); font-size: 1.2rem; margin: 8px 0; opacity: 0; animation: typing 0.1s forwards; }
 .boot-text p:nth-child(1) { animation-delay: 0.2s; }
-.boot-text p:nth-child(2) { animation-delay: 0.8s; }
-.boot-text p:nth-child(3) { animation-delay: 1.4s; }
-.boot-text p:nth-child(4) { animation-delay: 2.0s; color: var(--accent); }
+.boot-text p:nth-child(2) { animation-delay: 0.7s; }
+.boot-text p:nth-child(3) { animation-delay: 1.2s; }
+.boot-text p:nth-child(4) { animation-delay: 1.7s; color: var(--accent); }
 .blink { animation: blink 1s step-end infinite; }
 @keyframes typing { to { opacity: 1; } }
 @keyframes blink { 50% { opacity: 0; } }
 .hidden { display: none !important; }
 
-/* =====================================
-   LAYOUT & PANELS
-   ===================================== */
+/* Shell & Panels */
 .shell { width: min(calc(100vw - 32px), var(--max-width)); margin: 0 auto; padding: 32px 0 60px; position: relative; z-index: 1; }
 .panel {
   background: var(--panel); border: 1px solid rgba(168, 218, 220, 0.15); box-shadow: var(--shadow);
@@ -80,12 +68,10 @@ button, select { font-family: inherit; cursor: pointer; }
 }
 .panel::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.9; }
 
-/* =====================================
-   HERO & FORMS
-   ===================================== */
+/* Hero & Form */
 .hero { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr); gap: 32px; padding: 40px; }
 .hero-copy h1, .section-head h2 { margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; }
-.hero-copy h1 { font-size: clamp(2.2rem, 4vw, 3.8rem); line-height: 1.1; margin-top: 12px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+.hero-copy h1 { font-size: clamp(2.2rem, 4vw, 3.8rem); line-height: 1.1; margin-top: 12px; color: #fff; }
 .hero-copy p { margin: 20px 0 0; max-width: 60ch; color: var(--muted); line-height: 1.6; font-size: 1rem; }
 .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--sterile); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
 .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -105,9 +91,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); backgro
 .controls-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 16px; align-items: end; }
 .advanced-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 
-/* =====================================
-   BUTTONS & CHIPS
-   ===================================== */
+/* Buttons & Chips */
 .focus-row, .source-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .source-row { margin-top: 24px; padding-top: 24px; border-top: 1px dashed rgba(168,218,220,0.2); }
 .focus-chip, .source-chip { border: 1px solid rgba(255, 255, 255, 0.15); background: #000; color: var(--muted); padding: 8px 14px; font-size: 0.8rem; font-family: "Courier Prime", monospace; text-transform: uppercase; transition: all 0.2s ease; }
@@ -116,16 +100,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); backgro
 
 .primary-button, .ghost-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; padding: 14px 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease; font-family: "Inter", sans-serif; }
 .primary-button { background: var(--accent); color: #fff; border-bottom: 3px solid #8b0000; }
-.primary-button:hover { background: #ff0033; transform: translateY(-2px); box-shadow: 0 10px 20px var(--accent-glow); border-bottom-width: 1px; margin-top: 2px;}
+.primary-button:hover { background: #ff0033; transform: translateY(-2px); box-shadow: 0 10px 20px var(--accent-glow); }
 .ghost-button { background: rgba(0, 0, 0, 0.5); color: var(--text); border: 1px solid rgba(168, 218, 220, 0.3); }
 .ghost-button:hover { background: rgba(168, 218, 220, 0.1); border-color: var(--sterile); color: #fff; }
 .blood-border { border-color: var(--accent); color: var(--accent); }
-.blood-border:hover { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+.blood-border:hover { background: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent-glow); }
 .full-width { width: 100%; }
 
-/* =====================================
-   WORKSPACE
-   ===================================== */
+/* Sidebar & Workspace */
 .workspace-grid { display: grid; grid-template-columns: minmax(280px, 320px) minmax(0, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
 .sidebar, .results-panel { padding: 32px; }
 .section-head { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 24px; }
@@ -135,66 +117,61 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); backgro
 .dossier-item { padding: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-left: 3px solid rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.2s ease; }
 .dossier-item:hover { background: rgba(255, 255, 255, 0.08); }
 .dossier-item.active { border-left-color: var(--accent); background: rgba(230, 57, 70, 0.1); }
-.dossier-item h3 { margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sterile); }
+.dossier-item h3 { margin: 0; font-size: 0.95rem; text-transform: uppercase; color: var(--sterile); }
 .dossier-item p { margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); font-family: "Courier Prime", monospace; }
 
 .notes-card { margin-top: 24px; padding-top: 24px; border-top: 1px dashed rgba(168, 218, 220, 0.2); }
 .notes-card textarea { resize: vertical; min-height: 180px; margin-bottom: 16px; font-size: 0.9rem; line-height: 1.5; color: var(--sterile); }
 
-/* =====================================
-   RESULTS HUD
-   ===================================== */
-.status-bar { margin-bottom: 24px; padding: 14px 20px; background: #000; border: 1px solid rgba(168, 218, 220, 0.3); color: var(--sterile); text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 10px rgba(168, 218, 220, 0.1); }
+/* Results HUD */
+.status-bar { margin-bottom: 24px; padding: 14px 20px; background: #000; border: 1px solid rgba(168, 218, 220, 0.3); color: var(--sterile); text-transform: uppercase; letter-spacing: 0.05em; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 32px; }
 .summary-card { padding: 20px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 2px solid var(--sterile); }
 .summary-card .number { font-size: 2.5rem; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
-.summary-card .heading { margin-top: 8px; font-size: 0.75rem; text-transform: uppercase; color: var(--sterile); font-weight: 900; letter-spacing: 0.1em; }
+.summary-card .heading { margin-top: 8px; font-size: 0.75rem; text-transform: uppercase; color: var(--sterile); font-weight: 900; }
 .summary-card p { color: var(--muted); font-size: 0.8rem; margin: 8px 0 0; font-family: "Courier Prime", monospace; }
 
 .result-groups { display: grid; gap: 40px; }
 .group-head { border-bottom: 1px solid rgba(168, 218, 220, 0.3); padding-bottom: 12px; margin-bottom: 16px; display: flex; align-items: center; }
 .group-head::before { content: "► "; color: var(--accent); margin-right: 8px; font-size: 0.8rem; }
-.group-head h3 { margin: 0; font-size: 1.1rem; text-transform: uppercase; color: var(--text); letter-spacing: 0.1em; }
-.group-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.group-head h3 { margin: 0; font-size: 1.1rem; text-transform: uppercase; color: var(--text); }
+.group-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
 
-/* The Glass Slide Effect (Upgraded) */
+/* Glass Slide & Visual Media Cards */
 .glass-slide {
   position: relative; display: flex; flex-direction: column; gap: 12px; padding: 20px;
   background: rgba(10, 12, 16, 0.8); border: 1px solid rgba(168, 218, 220, 0.2);
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 5px 15px rgba(0,0,0,0.5);
-  min-height: 220px; overflow: hidden; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8); min-height: 220px; overflow: hidden; transition: all 0.3s ease;
 }
 .glass-slide:hover {
-  border-color: rgba(230, 57, 70, 0.6); background: rgba(230, 57, 70, 0.05);
-  transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.6); background: rgba(230, 57, 70, 0.05); transform: translateY(-3px);
 }
-.glass-slide::before {
-  content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--sterile); transition: background 0.3s;
-}
-.glass-slide:hover::before { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.glass-slide::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--sterile); transition: background 0.3s; }
+.glass-slide:hover::before { background: var(--accent); }
 
-.slide-glare { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.02) 50%, transparent 55%); transform: rotate(30deg); pointer-events: none; }
+/* Media Slot (Maps & Images) */
+.card-media-slot { width: 100%; margin: 6px 0; overflow: hidden; border: 1px solid rgba(168, 218, 220, 0.2); }
+.map-embed { width: 100%; height: 180px; border: none; filter: invert(90%) hue-rotate(180deg) contrast(120%); }
+.card-image-preview { width: 100%; max-height: 200px; object-fit: cover; display: block; filter: contrast(110%); }
+
+.coord-box {
+  background: #000; border: 1px solid var(--accent); padding: 10px; margin: 6px 0;
+  color: var(--sterile); font-size: 0.8rem; display: grid; gap: 4px;
+}
+.coord-box span { color: var(--accent); font-weight: 700; }
+
 .result-meta { display: flex; gap: 8px; font-family: "Courier Prime", monospace; margin-left: 8px; }
-.badge, .pill { padding: 4px 8px; font-size: 0.65rem; text-transform: uppercase; border: 1px solid; font-weight: 700; letter-spacing: 0.1em; }
+.badge, .pill { padding: 4px 8px; font-size: 0.65rem; text-transform: uppercase; border: 1px solid; font-weight: 700; }
 .badge { border-color: var(--accent); color: var(--accent); background: rgba(230, 57, 70, 0.1); }
 .pill { border-color: var(--sterile); color: var(--sterile); background: rgba(168, 218, 220, 0.05); }
 
 .glass-slide h3 { margin: 0 0 0 8px; font-size: 1rem; text-transform: uppercase; line-height: 1.4; }
 .glass-slide a { color: #fff; text-decoration: none; }
-.glass-slide a:hover { color: var(--sterile); text-shadow: 0 0 8px rgba(168,218,220,0.5); }
+.glass-slide a:hover { color: var(--sterile); }
 
-.result-snippet { color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin: 0 0 0 8px; flex-grow: 1; overflow-y: auto; padding-right: 4px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 8px; }
+.result-snippet { color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin: 0 0 0 8px; flex-grow: 1; overflow-y: auto; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 8px; }
 .result-footer { display: flex; justify-content: space-between; color: rgba(168,218,220,0.5); font-size: 0.7rem; font-family: "Courier Prime", monospace; border-top: 1px dashed rgba(168, 218, 220, 0.2); padding-top: 12px; margin-left: 8px; }
 
-/* =====================================
-   ANIMATIONS & RESPONSIVE
-   ===================================== */
-@keyframes popIn { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
-@keyframes slideUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-.pop-in { animation: popIn 0.5s ease forwards; }
-.slide-up-delay-1 { opacity: 0; animation: slideUp 0.5s ease 0.1s forwards; }
-.slide-up-delay-2 { opacity: 0; animation: slideUp 0.5s ease 0.2s forwards; }
-.animated-card { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; }
-
+/* Responsive */
 @media (max-width: 1200px) { .hero, .workspace-grid { grid-template-columns: 1fr; } .summary-grid, .advanced-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 768px) { .shell { width: 100%; padding: 0; } .hero, .search-panel, .sidebar, .results-panel { border-radius: 0; border: none; padding: 24px 16px; border-top: 1px solid rgba(230,57,70,0.3); } .controls-grid, .advanced-grid, .summary-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .shell { width: 100%; padding: 0; } .hero, .search-panel, .sidebar, .results-panel { border-radius: 0; border: none; padding: 24px 16px; } .controls-grid, .advanced-grid, .summary-grid { grid-template-columns: 1fr; } }

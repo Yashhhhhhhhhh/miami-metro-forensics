@@ -1,16 +1,16 @@
 // app.js
 
 const SOURCES = [
+  { id: 'ipwhois', label: 'Network/IP Node', kind: 'network', active: true, fetcher: fetchIPLocation },
+  { id: 'osm', label: 'Geospatial Triangulation', kind: 'location', active: true, fetcher: fetchNominatim },
   { id: 'wikipedia', label: 'Global DB (Wiki)', kind: 'reference', active: true, fetcher: fetchWikipedia },
   { id: 'wikidata', label: 'Entity Graph (Data)', kind: 'entity', active: true, fetcher: fetchWikidata },
   { id: 'fbi', label: 'Federal Warrants (FBI)', kind: 'federal', active: true, fetcher: fetchFBI },
-  { id: 'reddit', label: 'Subterranean Chatter (Reddit)', kind: 'forum', active: true, fetcher: fetchReddit },
-  { id: 'osm', label: 'Geospatial Ping (Location)', kind: 'location', active: true, fetcher: fetchNominatim },
+  { id: 'reddit', label: 'Subterranean Chatter', kind: 'forum', active: true, fetcher: fetchReddit },
   { id: 'openalex', label: 'Scholar Index', kind: 'scholarship', active: true, fetcher: fetchOpenAlex },
-  { id: 'crossref', label: 'Citation Trail', kind: 'scholarship', active: false, fetcher: fetchCrossref },
-  { id: 'europepmc', label: 'Toxicology & Med (PMC)', kind: 'medical', active: true, fetcher: fetchEuropePMC },
+  { id: 'europepmc', label: 'Toxicology & Med', kind: 'medical', active: true, fetcher: fetchEuropePMC },
   { id: 'books', label: 'Published Manifestos', kind: 'literature', active: true, fetcher: fetchBooks },
-  { id: 'hackernews', label: 'Deep Tech Forum (HN)', kind: 'forum', active: true, fetcher: fetchHackerNews },
+  { id: 'hackernews', label: 'Deep Tech Forum', kind: 'forum', active: true, fetcher: fetchHackerNews },
   { id: 'github', label: 'Code Trail (GitHub)', kind: 'repository', active: true, fetcher: fetchGitHub },
   { id: 'archive', label: 'Cold Storage (Archive)', kind: 'archive', active: true, fetcher: fetchArchive },
 ];
@@ -18,7 +18,7 @@ const SOURCES = [
 const state = {
   query: '', subject: 'auto', depth: 'standard', sort: 'relevance',
   activeSourceIds: SOURCES.filter((s) => s.active).map((s) => s.id),
-  activeFocuses: ['reference', 'entity', 'scholarship', 'medical', 'federal', 'literature', 'forum', 'repository', 'archive', 'location'],
+  activeFocuses: ['location', 'network', 'reference', 'entity', 'scholarship', 'medical', 'federal', 'literature', 'forum', 'repository', 'archive'],
   exactPhrase: '', location: '', fromYear: '', toYear: '',
   results: [], summary: null, loading: false, page: 1, dossiers: [], activeDossierId: null, notes: '',
 };
@@ -38,9 +38,9 @@ const els = {
   newDossierButton: document.getElementById('newDossierButton'), cardTemplate: document.getElementById('resultCardTemplate'),
 };
 
-const DEFAULT_PROMPTS = ['Trinity Killer', 'Ice Truck Killer', 'Bay Harbor Butcher'];
+const DEFAULT_PROMPTS = ['Miami Metro Police Department', '8.8.8.8', 'Bay Harbor Butcher'];
 
-// --- INDEXED DB (Trophy Box) ---
+// --- INDEXED DB ---
 const DB_NAME = 'MiamiMetroDB'; const STORE_NAME = 'trophyBox';
 function initDB() {
   return new Promise((resolve, reject) => {
@@ -72,20 +72,19 @@ async function saveToDB(key, val) {
   } catch (e) { console.warn('Storage failed.', e); }
 }
 
-// --- BOOT SEQUENCE & INIT ---
+// --- BOOT SEQUENCE ---
 window.addEventListener('DOMContentLoaded', () => {
-  // Boot screen timing
   setTimeout(() => {
     els.bootScreen.classList.add('fade-out');
     els.mainShell.classList.remove('hidden');
     initialize();
-  }, 2800);
+  }, 2200);
 });
 
 async function initialize() {
   renderLoadingFallback();
   state.notes = await getFromDB('dexter-notes', '');
-  const defaultDossier = [seedDossier('Unidentified Subject', 'Blood never lies. Begin tracking the pattern.')];
+  const defaultDossier = [seedDossier('Unidentified Subject', 'Blood never lies. Begin tracking parameters.')];
   state.dossiers = await getFromDB('dexter-dossiers', defaultDossier);
   if (!Array.isArray(state.dossiers) || !state.dossiers.length) state.dossiers = defaultDossier;
 
@@ -136,14 +135,14 @@ function renderHeroStats() {
   els.heroStats.innerHTML = stats.map(s => `<div class="stat"><span class="value">${escapeHtml(s.value)}</span><span class="label">${escapeHtml(s.label)}</span></div>`).join('');
 }
 
-// --- CORE SEARCH LOGIC ---
+// --- CORE SEARCH EXECUTION ---
 async function handleSearchSubmit(e) { if (e) e.preventDefault(); state.page = 1; state.results = []; await executeSearch(); }
 async function loadMoreResults() { state.page += 1; await executeSearch(true); }
 
 async function executeSearch(isAppending = false) {
   const query = els.queryInput.value.trim();
   state.query = query;
-  if (!query) { setStatus('ERROR: Enter a subject to begin the hunt.'); return; }
+  if (!query) { setStatus('ERROR: Enter target parameters.'); return; }
   const activeSources = SOURCES.filter(s => state.activeSourceIds.includes(s.id));
   if (!activeSources.length) { setStatus('ERROR: Enable at least one database.'); return; }
   
@@ -177,29 +176,90 @@ function normalizePayload(source, payload) {
     id: `${source.id}:${item.id || item.url || item.title || Math.random()}`, 
     sourceId: source.id, sourceLabel: source.label,
     group: item.group || mapGroup(source.kind), resultKind: item.resultKind || 'record',
-    title: item.title || 'Unknown Subject', snippet: item.snippet || 'Record classified / unreadable.', 
+    title: item.title || 'Unknown Target', snippet: item.snippet || 'Record classified / unreadable.', 
     url: item.url || '#', published: item.published || 'Date Unknown', 
     domain: extractDomain(item.url || ''), score: typeof item.score === 'number' ? item.score : 0,
+    mapUrl: item.mapUrl || null, imageUrl: item.imageUrl || null, coordData: item.coordData || null
   }));
 }
 
-// --- FETCHERS (The Pits of Hell) ---
+// --- ADVANCED ADVANCED FETCHERS ---
 
+// 1. IP Geolocation / Network Trace (IP-WHOIS)
+async function fetchIPLocation(plan) {
+  const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+  if (!ipRegex.test(plan.normalized)) return { items: [] }; // Only run if valid IPv4 format
+  
+  const res = await fetchJson(`https://ipwho.is/${plan.normalized}`);
+  if (!res || !res.success) return { items: [] };
+
+  const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${res.longitude-0.05}%2C${res.latitude-0.05}%2C${res.longitude+0.05}%2C${res.latitude+0.05}&layer=mapnik&marker=${res.latitude}%2C${res.longitude}`;
+
+  return {
+    items: [{
+      id: `ip-${res.ip}`,
+      title: `Network Node: ${res.ip} (${res.city || 'Unknown'}, ${res.country})`,
+      snippet: `ISP: ${res.connection?.isp || 'Unknown'} | ASN: ${res.connection?.asn || 'N/A'} | Type: ${res.type} | Proxy/VPN: ${res.security?.proxy ? 'YES' : 'NO'}`,
+      url: `https://ipwhois.io/lookup/${res.ip}`,
+      group: 'network', resultKind: 'ip trace', score: 100,
+      mapUrl: mapEmbedUrl,
+      coordData: `LAT: ${res.latitude} | LON: ${res.longitude} | TZ: ${res.timezone?.id || 'N/A'}`
+    }]
+  };
+}
+
+// 2. OpenStreetMap / Nominatim (Precise Geospatial Triangulation)
+async function fetchNominatim(plan) {
+  const res = await fetchJson(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(plan.normalized)}&format=json&addressdetails=1&limit=3`);
+  if (!res || !res.length) return { items: [] };
+
+  const items = res.map((entry, i) => {
+    const lat = parseFloat(entry.lat);
+    const lon = parseFloat(entry.lon);
+    const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01}%2C${lat-0.01}%2C${lon+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lon}`;
+
+    return {
+      id: `osm-${entry.place_id}`,
+      title: `Triangulated Location: ${entry.display_name.split(',')[0]}`,
+      snippet: `Full Address: ${entry.display_name} | Type: ${entry.type} (${entry.class})`,
+      url: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`,
+      published: 'Real-Time GIS', group: 'location', resultKind: 'geospatial', score: 98 - i,
+      mapUrl: mapEmbedUrl,
+      coordData: `LAT: ${lat.toFixed(6)} | LON: ${lon.toFixed(6)} | OSM-ID: ${entry.osm_id}`
+    };
+  });
+  return { items };
+}
+
+// 3. Wikipedia with Page Images
 async function fetchWikipedia(plan) {
-  const limit = plan.depth === 'deep' ? 12 : 5; const offset = (plan.page - 1) * limit;
+  const limit = plan.depth === 'deep' ? 10 : 4; const offset = (plan.page - 1) * limit;
   const res = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(plan.normalized)}&srlimit=${limit}&sroffset=${offset}&format=json&origin=*`);
-  const items = (res?.query?.search || []).map((entry, i) => ({
-    title: entry.title, snippet: stripHtml(entry.snippet), url: `https://en.wikipedia.org/wiki/${encodeURIComponent(entry.title.replace(/ /g, '_'))}`,
-    published: new Date(entry.timestamp).getFullYear().toString() || '', resultKind: 'wiki', score: 99 - i
+  const searchItems = res?.query?.search || [];
+
+  const items = await Promise.all(searchItems.map(async (entry, i) => {
+    let summary = stripHtml(entry.snippet);
+    let imageUrl = null;
+    try {
+      const summaryRes = await fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(entry.title)}`);
+      summary = summaryRes.extract || summary;
+      imageUrl = summaryRes.thumbnail?.source || null;
+    } catch {}
+
+    return {
+      title: entry.title, snippet: summary, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(entry.title.replace(/ /g, '_'))}`,
+      published: entry.timestamp ? entry.timestamp.substring(0,4) : '', group: 'reference', resultKind: 'wiki', score: 95 - i,
+      imageUrl
+    };
   }));
   return { items };
 }
 
 async function fetchWikidata(plan) {
   if (plan.page > 1) return { items: [] };
-  const res = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(plan.normalized)}&language=en&limit=8&format=json&origin=*`);
+  const res = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(plan.normalized)}&language=en&limit=6&format=json&origin=*`);
   const items = (res?.search || []).map((entry, i) => ({
-    title: entry.label || entry.id, snippet: entry.description || 'No description on file.', url: `https://www.wikidata.org/wiki/${entry.id}`, resultKind: 'alias', score: 95 - i
+    title: entry.label || entry.id, snippet: entry.description || 'No description on file.', url: `https://www.wikidata.org/wiki/${entry.id}`, resultKind: 'alias', score: 90 - i
   }));
   return { items };
 }
@@ -209,36 +269,24 @@ async function fetchFBI(plan) {
   const res = await fetchJson(`https://api.fbi.gov/api/v1/wanted/list?title=${encodeURIComponent(plan.normalized)}`);
   const items = (res?.items || []).map((entry, i) => ({
     title: entry.title, snippet: stripHtml(entry.description || entry.warning_message || 'Warrant issued.'), 
-    url: entry.url, published: entry.publication ? new Date(entry.publication).getFullYear().toString() : '', 
-    group: 'federal', resultKind: 'warrant', score: 100 - i
+    url: entry.url, published: entry.publication ? entry.publication.substring(0,4) : '', 
+    group: 'federal', resultKind: 'warrant', score: 100 - i,
+    imageUrl: entry.images?.[0]?.large || null
   }));
   return { items };
 }
 
-// NEW: Reddit Search JSON
 async function fetchReddit(plan) {
-  const limit = plan.depth === 'deep' ? 10 : 5;
+  const limit = plan.depth === 'deep' ? 8 : 4;
   const res = await fetchJson(`https://www.reddit.com/search.json?q=${encodeURIComponent(plan.normalized)}&limit=${limit}&type=link`);
   const items = (res?.data?.children || []).map((entry, i) => {
     const data = entry.data;
     return {
       title: data.title || 'Subterranean Thread', snippet: `Subreddit: r/${data.subreddit} | Upvotes: ${data.ups}. ${stripHtml(data.selftext).substring(0, 150)}`,
       url: `https://reddit.com${data.permalink}`, published: new Date(data.created_utc * 1000).getFullYear().toString(),
-      group: 'forum', resultKind: 'intel', score: 92 - i
+      group: 'forum', resultKind: 'intel', score: 88 - i
     };
   });
-  return { items };
-}
-
-// NEW: OpenStreetMap (Nominatim) for Geospatial Pings
-async function fetchNominatim(plan) {
-  if (plan.page > 1) return { items: [] };
-  const res = await fetchJson(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(plan.normalized)}&format=json&limit=3`);
-  const items = (res || []).map((entry, i) => ({
-    title: `Ping: ${entry.display_name.split(',')[0]}`, snippet: `Type: ${entry.type} | Lat: ${entry.lat}, Lon: ${entry.lon}. Location data acquired.`,
-    url: `https://www.openstreetmap.org/?mlat=${entry.lat}&mlon=${entry.lon}#map=15/${entry.lat}/${entry.lon}`,
-    group: 'location', resultKind: 'geospatial', score: 90 - i
-  }));
   return { items };
 }
 
@@ -247,8 +295,8 @@ async function fetchHackerNews(plan) {
   const res = await fetchJson(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(plan.normalized)}&page=${plan.page - 1}&hitsPerPage=${limit}`);
   const items = (res?.hits || []).map((entry, i) => ({
     title: entry.title || entry.story_title || 'Untitled Thread', snippet: `Author: ${entry.author}. ${stripHtml(entry.comment_text || '').substring(0, 150)}...`,
-    url: entry.url || `https://news.ycombinator.com/item?id=${entry.objectID}`, published: entry.created_at ? new Date(entry.created_at).getFullYear().toString() : '', 
-    group: 'forum', resultKind: 'thread', score: 90 - i
+    url: entry.url || `https://news.ycombinator.com/item?id=${entry.objectID}`, published: entry.created_at ? entry.created_at.substring(0,4) : '', 
+    group: 'forum', resultKind: 'thread', score: 87 - i
   }));
   return { items };
 }
@@ -258,7 +306,7 @@ async function fetchGitHub(plan) {
   const res = await fetchJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(plan.normalized)}&per_page=${limit}&page=${plan.page}`);
   const items = (res?.items || []).map((entry, i) => ({
     title: entry.full_name, snippet: entry.description || 'No documentation found in repository.', 
-    url: entry.html_url, published: entry.updated_at ? new Date(entry.updated_at).getFullYear().toString() : '', 
+    url: entry.html_url, published: entry.updated_at ? entry.updated_at.substring(0,4) : '', 
     group: 'repository', resultKind: 'repo', score: 85 - i
   }));
   return { items };
@@ -269,7 +317,7 @@ async function fetchEuropePMC(plan) {
   const res = await fetchJson(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(plan.normalized)}&format=json&resultType=core&pageSize=${limit}&cursorMark=*`);
   const items = (res?.resultList?.result || []).map((entry, i) => ({
     title: entry.title, snippet: stripHtml(entry.abstractText || 'Abstract withheld.').substring(0, 150) + '...',
-    url: `https://europepmc.org/article/${entry.source}/${entry.pmid}`, published: entry.pubYear || '', group: 'medical', resultKind: 'clinical', score: 88 - i
+    url: `https://europepmc.org/article/${entry.source}/${entry.pmid}`, published: entry.pubYear || '', group: 'medical', resultKind: 'clinical', score: 86 - i
   }));
   return { items };
 }
@@ -279,7 +327,7 @@ async function fetchBooks(plan) {
   const res = await fetchJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(plan.normalized)}&maxResults=${limit}&startIndex=${offset}`);
   const items = (res?.items || []).map((entry, i) => {
     const info = entry.volumeInfo || {};
-    return { title: info.title || 'Unknown Text', snippet: stripHtml(info.description || `Authors: ${info.authors?.join(', ')}`), url: info.previewLink || info.infoLink || '#', published: info.publishedDate ? info.publishedDate.substring(0,4) : '', group: 'literature', resultKind: 'book', score: 82 - i };
+    return { title: info.title || 'Unknown Text', snippet: stripHtml(info.description || `Authors: ${info.authors?.join(', ')}`), url: info.previewLink || info.infoLink || '#', published: info.publishedDate ? info.publishedDate.substring(0,4) : '', group: 'literature', resultKind: 'book', score: 82 - i, imageUrl: info.imageLinks?.thumbnail || null };
   });
   return { items };
 }
@@ -289,17 +337,7 @@ async function fetchOpenAlex(plan) {
   const res = await fetchJson(`https://api.openalex.org/works?search=${encodeURIComponent(plan.normalized)}&per-page=${limit}&page=${plan.page}`);
   const items = (res?.results || []).map((e, i) => ({
     title: e.display_name || 'Classified Work', snippet: e.primary_location?.source?.display_name || 'Scholarly abstract withheld.',
-    url: e.id, published: String(e.publication_year || ''), group: 'scholarship', resultKind: 'journal', score: 86 - i
-  }));
-  return { items };
-}
-
-async function fetchCrossref(plan) {
-  const limit = plan.depth === 'deep' ? 6 : 4; const offset = (plan.page - 1) * limit;
-  const res = await fetchJson(`https://api.crossref.org/works?query=${encodeURIComponent(plan.normalized)}&rows=${limit}&offset=${offset}`);
-  const items = (res?.message?.items || []).map((e, i) => ({
-    title: e.title?.[0] || 'Unknown Citation', snippet: `Author: ${e.author?.[0]?.family || 'Redacted'}`,
-    url: e.URL || '#', published: e.created?.['date-parts']?.[0]?.[0]?.toString() || '', group: 'scholarship', resultKind: 'citation', score: 84 - i
+    url: e.id, published: String(e.publication_year || ''), group: 'scholarship', resultKind: 'journal', score: 84 - i
   }));
   return { items };
 }
@@ -327,22 +365,22 @@ async function fetchJson(url, options = {}, retries = 2, backoff = 500) {
       throw new Error(`HTTP ${res.status}`);
     }
     return await res.json();
-  } catch(e) { 
-    return null; 
-  } finally { window.clearTimeout(timeout); }
+  } catch(e) { return null; } 
+  finally { window.clearTimeout(timeout); }
 }
 
-// --- DATA PARSING & UI ---
+// --- RENDERING & UI ---
 function stripHtml(v) { return String(v || '').replace(/<[^>]*>/g, ' ').trim(); }
 function extractDomain(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; } }
 function groupBy(arr, keyFn) { return arr.reduce((acc, v) => { (acc[keyFn(v)] = acc[keyFn(v)] || []).push(v); return acc; }, {}); }
 function setStatus(msg) { els.statusBar.textContent = msg; }
-function mapGroup(k) { const valid = ['entity', 'scholarship', 'medical', 'federal', 'literature', 'forum', 'repository', 'archive', 'location']; return valid.includes(k) ? k : 'reference'; }
+function mapGroup(k) { const valid = ['network', 'location', 'entity', 'scholarship', 'medical', 'federal', 'literature', 'forum', 'repository', 'archive']; return valid.includes(k) ? k : 'reference'; }
 function groupLabel(group) {
   return { 
-    reference: 'Global Records', entity: 'Entity Graphs', federal: 'Federal Warrants', location: 'Geospatial Ping',
-    medical: 'Toxicology & Medical', literature: 'Manifestos & Lore', scholarship: 'Academic Journals', 
-    forum: 'Subterranean Chatter', repository: 'Code Trails', archive: 'Cold Files (Archived)' 
+    network: 'Network Node & IP Trace', location: 'Geospatial Triangulation', federal: 'Federal Warrants',
+    reference: 'Global Records', entity: 'Entity Graphs', medical: 'Toxicology & Medical', 
+    literature: 'Manifestos & Lore', scholarship: 'Academic Journals', forum: 'Subterranean Chatter', 
+    repository: 'Code Trails', archive: 'Cold Files (Archived)' 
   }[group] || 'Unclassified Evidence';
 }
 
@@ -356,7 +394,7 @@ function sortResults(items, sortMode) {
 function summarizeResults(query, results, activeSourceIds) {
   return {
     total: results.length, sourceCount: activeSourceIds.length,
-    mediaCount: results.filter(i => ['literature', 'archive', 'location'].includes(i.group)).length,
+    mediaCount: results.filter(i => ['literature', 'archive', 'location', 'network'].includes(i.group)).length,
     scholarCount: results.filter(i => ['scholarship', 'medical'].includes(i.group)).length,
     entityCount: results.filter(i => ['entity', 'reference', 'federal'].includes(i.group)).length,
     primaryLine: `Isolated ${results.length} records.`, filterLine: buildFilterSummary()
@@ -371,7 +409,7 @@ function buildFilterSummary() {
 function renderLoadingState(query) {
   els.resultsTitle.textContent = `Analyzing spatter for [${query}]...`;
   els.summaryGrid.innerHTML = '';
-  els.resultGroups.innerHTML = `<div class="empty-state"><h3>Running Forensics</h3><p>Extracting data from the digital veins. Give it a moment.</p></div>`;
+  els.resultGroups.innerHTML = `<div class="empty-state"><h3>Running Forensics</h3><p>Extracting data from digital nodes and satellite networks...</p></div>`;
 }
 function renderEmptyState(title, message) {
   els.resultsTitle.textContent = title; els.summaryGrid.innerHTML = '';
@@ -392,7 +430,7 @@ function renderResults() {
 function renderSummaryGrid(summary) {
   const cards = [
     { number: summary.total, label: 'Total Evidence', body: `Across ${summary.sourceCount} tapped systems.` },
-    { number: summary.mediaCount, label: 'Manifestos & Geospatial', body: 'Literature, archives, and pings.' },
+    { number: summary.mediaCount, label: 'Geospatial & IP Nodes', body: 'Satellite maps and network traces.' },
     { number: summary.scholarCount, label: 'Journals & Med Reports', body: 'Academic and scientific trail.' },
     { number: summary.entityCount, label: 'Entity & Warrant Matches', body: 'Structured aliases and DB hits.' },
   ];
@@ -407,7 +445,7 @@ function renderSummaryGrid(summary) {
 
 function renderGroupedResults() {
   const grouped = groupBy(state.results, item => item.group);
-  const order = ['federal', 'location', 'reference', 'entity', 'medical', 'forum', 'repository', 'literature', 'scholarship', 'archive', 'other'];
+  const order = ['network', 'location', 'federal', 'reference', 'entity', 'medical', 'forum', 'repository', 'literature', 'scholarship', 'archive', 'other'];
   els.resultGroups.innerHTML = '';
 
   order.filter(g => grouped[g] && grouped[g].length).forEach(group => {
@@ -439,6 +477,21 @@ function buildCardNode(item) {
   
   const titleLink = document.createElement('a'); titleLink.href = item.url; titleLink.target = '_blank'; titleLink.textContent = item.title;
   fragment.querySelector('h3').appendChild(titleLink);
+  
+  const mediaSlot = fragment.querySelector('.card-media-slot');
+  if (item.mapUrl) {
+    mediaSlot.innerHTML = `<iframe class="map-embed" src="${item.mapUrl}" loading="lazy"></iframe>`;
+  } else if (item.imageUrl) {
+    mediaSlot.innerHTML = `<img src="${item.imageUrl}" class="card-image-preview" loading="lazy" alt="Evidence Preview" />`;
+  }
+
+  if (item.coordData) {
+    const coordDiv = document.createElement('div');
+    coordDiv.className = 'coord-box';
+    coordDiv.innerHTML = `<span>[TRIANGULATION DATA]</span> ${escapeHtml(item.coordData)}`;
+    card.insertBefore(coordDiv, fragment.querySelector('.result-snippet'));
+  }
+
   fragment.querySelector('.result-snippet').textContent = item.snippet || 'Record classified / unreadable.';
   
   const footer = [item.domain, item.published, item.score ? `Match: ${item.score}%` : null].filter(Boolean);
@@ -490,4 +543,4 @@ async function persistLastSearch() {
   if(d) { d.query = state.query; await saveDossiers(); }
 }
 function escapeHtml(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-function renderLoadingFallback() { renderEmptyState('Miami Metro Lab', 'System online. Awaiting target.'); }
+function renderLoadingFallback() { renderEmptyState('Miami Metro Lab', 'System online. Awaiting target parameters.'); }
