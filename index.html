@@ -55,7 +55,6 @@
         radial-gradient(circle at 83% 18%, color-mix(in srgb, var(--hot) 31%, transparent), transparent 24rem),
         radial-gradient(circle at 70% 88%, color-mix(in srgb, var(--p2) 32%, transparent), transparent 25rem),
         linear-gradient(135deg, #151820, var(--bg));
-      /* Custom cursor for arcade feel */
       cursor: crosshair;
     }
     button, input, select { font: inherit; cursor: pointer; }
@@ -78,7 +77,6 @@
       animation: drift 12s ease-in-out infinite alternate;
       backdrop-filter: blur(4px);
     }
-    /* Upgraded doodle shapes */
     .d1 { left: 4%; top: 19%; border-radius: 43% 57% 48% 52%; border-color: color-mix(in srgb, var(--p1) 70%, white); width: 110px; }
     .d2 { right: 6%; top: 12%; width: 64px; border-radius: 999px; animation-delay: -2s; border-color: color-mix(in srgb, var(--hot) 75%, white); }
     .d3 { left: 8%; bottom: 9%; width: 62px; transform: rotate(21deg); animation-delay: -4s; border-radius: 5px; border-color: color-mix(in srgb, var(--p2) 74%, white); }
@@ -147,7 +145,6 @@
     .o1 { width: 360px; left: 8%; top: 10%; aspect-ratio: 1; }
     .o2 { width: 240px; right: 8%; bottom: 2%; animation-duration: 13s; animation-direction: reverse; aspect-ratio: 1;}
     .o3 { width: 120px; left: 22%; bottom: 18%; animation-duration: 8s; aspect-ratio: 1;}
-    @keyframes spin { to { rotate: 360deg; } }
     
     .mascot-card {
       position: absolute; display: grid; place-items: center; width: min(170px, 35vw); aspect-ratio: 3 / 4;
@@ -259,7 +256,7 @@
       box-shadow: 0 10px 20px color-mix(in srgb, var(--p1) 20%, transparent);
     }
     
-    /* Hyper Cipher enhancements */
+    /* Cipher */
     .big-prompt { padding: clamp(20px, 4vw, 42px); text-align: center; background: rgba(0,0,0,0.8); border: 1px solid var(--mint); border-radius: 18px; box-shadow: inset 0 0 30px rgba(56, 217, 169, 0.2); }
     .vault-label { color: var(--mint); font-family: monospace; font-size: 0.9rem; letter-spacing: 0.2em; display: block; margin-bottom: 10px; opacity: 0.8; }
     .glitch-text {
@@ -280,11 +277,10 @@
     .pill.p2 { background: var(--p2); }
     @keyframes pop-in { from { transform: scale(0.5); opacity: 0; } }
     
-    /* Neon Maze (Fog of War) */
+    /* Maze */
     .maze-grid {
       display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: rgba(10, 12, 16, 0.95);
-      padding: 12px; border-radius: 18px; box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
-      position: relative; overflow: hidden;
+      padding: 12px; border-radius: 18px; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); position: relative; overflow: hidden;
     }
     .maze-cell {
       aspect-ratio: 1; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(255,255,255,0.02);
@@ -294,13 +290,12 @@
     .maze-cell.exit { background: var(--p1); box-shadow: 0 0 20px var(--p1); animation: pulse-exit 1s infinite alternate; }
     .maze-cell.gem { color: var(--hot); text-shadow: 0 0 10px var(--hot); }
     .maze-cell.trap { color: var(--danger); text-shadow: 0 0 10px var(--danger); }
-    /* The Fog of War mechanic */
     .maze-cell.fog { background: #000; border-color: transparent; color: transparent; box-shadow: none; transform: scale(1); border-radius: 8px; }
-    .maze-cell.fog.here { background: var(--p2); } /* Failsafe */
+    .maze-cell.fog.here { background: var(--p2); }
     @keyframes pulse-exit { from { box-shadow: 0 0 10px var(--p1); } to { box-shadow: 0 0 30px var(--p1), 0 0 10px #fff; } }
     .pad-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     
-    /* Synth Memory (Signal) */
+    /* Signal */
     .signal-board { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; }
     .signal-pad {
       border-radius: 24px; border: 4px solid transparent; opacity: 0.3; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -314,7 +309,7 @@
       box-shadow: 0 0 40px currentColor, inset 0 0 0 rgba(0,0,0,0); border-color: #fff;
     }
     
-    /* Blast Tiles (Minesweeper style) */
+    /* Trap */
     .trap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex: 1; }
     .trap-card {
       border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); background: linear-gradient(135deg, rgba(17,19,24,0.3), rgba(17,19,24,0.1));
@@ -327,14 +322,9 @@
     .trap-card.safe { background: var(--p2); box-shadow: 0 0 20px color-mix(in srgb, var(--p2) 40%, transparent); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
     .trap-card.bonus { background: var(--mint); box-shadow: 0 0 20px color-mix(in srgb, var(--mint) 40%, transparent); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
     .trap-card.bomb { background: var(--danger); box-shadow: 0 0 30px var(--danger); animation: explode 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .trap-card span { display: inline-block; transform: rotateY(180deg); } /* Fix text mirroring */
-    @keyframes explode {
-      0% { transform: rotateY(180deg) scale(1); }
-      40% { transform: rotateY(180deg) scale(1.4); background: #fff; color: var(--danger); }
-      100% { transform: rotateY(180deg) scale(1); }
-    }
+    .trap-card span { display: inline-block; transform: rotateY(180deg); }
     
-    /* Reflex Rift (Visual distortions) */
+    /* Reflex */
     .reaction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; }
     .reaction-pad {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -345,37 +335,37 @@
     .reaction-pad small { font-size: 1.2rem; opacity: 0.8; margin-top: 10px; letter-spacing: 0.1em; }
     .reaction-pad.go { background: var(--mint); box-shadow: 0 0 60px color-mix(in srgb, var(--mint) 60%, transparent); border-color: #fff; transform: scale(1.02); }
     .reaction-pad.fake { background: var(--danger); box-shadow: 0 0 60px color-mix(in srgb, var(--danger) 60%, transparent); }
-    /* The mind-messing glitch phase */
-    .reaction-pad.glitch {
-      background: var(--p2); animation: rgb-split 0.1s infinite;
-      border-color: var(--danger); color: transparent;
-    }
+    .reaction-pad.glitch { background: var(--p2); animation: rgb-split 0.1s infinite; border-color: var(--danger); color: transparent; }
     .reaction-pad.glitch::before { content: '!@#$'; position: absolute; color: var(--mint); left: 5px; font-family: monospace; font-size: 4rem; }
     .reaction-pad.glitch::after { content: '%^&*'; position: absolute; color: var(--hot); right: 5px; font-family: monospace; font-size: 4rem; }
-    @keyframes rgb-split {
-      0% { transform: translate(0) scale(1); filter: hue-rotate(0deg); }
-      25% { transform: translate(-8px, 8px) scale(1.05); filter: hue-rotate(90deg); }
-      50% { transform: translate(8px, -8px) scale(0.95); filter: hue-rotate(180deg); }
-      75% { transform: translate(-8px, -8px) scale(1.1); filter: hue-rotate(270deg); }
-      100% { transform: translate(0) scale(1); filter: hue-rotate(360deg); }
-    }
     
-    /* Sketch Lab */
-    .draw-wrap { display: grid; grid-template-columns: 1fr 260px; gap: 16px; flex: 1; }
-    .draw-board {
-      width: 100%; height: 100%; min-height: 430px; background: #fffdf5;
-      border: 2px solid var(--line); border-radius: 18px; cursor: crosshair; touch-action: none;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+    .sketch-layout { display: flex; flex-direction: column; flex: 1; gap: 12px; height: 100%; min-height: 600px;}
+    .pro-toolbar { 
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 18px;
+      background: var(--paper); border: 1px solid rgba(255,255,255,0.7); border-radius: 16px; 
+      box-shadow: 0 10px 24px rgba(0,0,0,0.1); justify-content: space-between;
     }
-    .draw-board.neon-mode { background: #0a0a0f; border-color: var(--p2); box-shadow: inset 0 0 40px rgba(0,0,0,0.9); }
-    .draw-tools { display: grid; align-content: start; gap: 12px; }
-    .color-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-    .swatch { width: 100%; aspect-ratio: 1; border: 3px solid rgba(255,255,255,0.8); border-radius: 12px; cursor: pointer; transition: transform 0.2s; }
-    .swatch:hover { transform: scale(1.1); }
-    .swatch.active { outline: 3px solid var(--ink); transform: scale(1.1); }
-    .neon-mode .swatch.active { outline: 3px solid #fff; box-shadow: 0 0 10px currentColor; }
+    .tool-group { display: flex; gap: 8px; align-items: center; border-right: 1px solid var(--line); padding-right: 12px;}
+    .tool-group:last-child { border-right: none; padding-right: 0;}
     
-    /* VFX Classes */
+    .tool-btn {
+      display: grid; place-items: center; width: 42px; aspect-ratio: 1; background: rgba(0,0,0,0.05); 
+      border: 1px solid var(--line); border-radius: 10px; font-size: 1.2rem; transition: all 0.2s;
+    }
+    .tool-btn:hover { background: rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .tool-btn.active { background: var(--p2); border-color: var(--p2); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--p2) 40%, transparent); }
+    
+    .color-picker-wrap { position: relative; width: 42px; height: 42px; border-radius: 10px; overflow: hidden; border: 2px solid var(--line); cursor: pointer;}
+    .color-picker-wrap input[type="color"] { position: absolute; top: -10px; left: -10px; width: 62px; height: 62px; cursor: pointer; border: none;}
+    
+    .swatch-mini { width: 28px; height: 28px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s;}
+    .swatch-mini:hover { transform: scale(1.15);}
+    
+    .adaptive-canvas-wrap { flex: 1; position: relative; border-radius: 16px; overflow: hidden; border: 2px solid var(--line); background: #fffdf5; box-shadow: inset 0 0 30px rgba(0,0,0,0.05);}
+    .adaptive-canvas-wrap.neon-mode { background: #0a0a0f; border-color: var(--p2); }
+    #drawCanvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    
+    /* VFX & Utilities */
     .screen-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
     @keyframes shake {
       10%, 90% { transform: translate3d(-3px, 0, 0); }
@@ -392,7 +382,6 @@
     .round-result span { color: var(--p2); font-size: 1.5rem; font-family: monospace; }
     @keyframes stamp-in { 0% { transform: scale(2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     
-    /* Modals & Toasts */
     .toast-host { position: fixed; z-index: 100; left: 50%; top: 18px; display: grid; gap: 8px; width: min(420px, calc(100% - 24px)); transform: translateX(-50%); pointer-events: none; }
     .toast {
       padding: 14px 18px; color: #fff; background: rgba(17,19,24,0.95); border: 1px solid rgba(255,255,255,0.2);
@@ -412,9 +401,8 @@
     .stats-grid small, .achievement-list small { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;}
     .achievement-list { display: grid; gap: 10px; margin-bottom: 24px; max-height: 200px; overflow-y: auto; padding-right: 10px;}
     
-    /* Responsive Adjustments */
     @media (max-width: 900px) {
-      .hero-zone, .arena-shell, .draw-wrap { grid-template-columns: 1fr; }
+      .hero-zone, .arena-shell { grid-template-columns: 1fr; }
       .hero-art { min-height: 270px; }
       .setup-grid { grid-template-columns: repeat(2, 1fr); }
       .connection-panel, .room-controls { grid-template-columns: 1fr; }
@@ -432,6 +420,7 @@
       .maze-grid { gap: 4px; padding: 8px; }
       .maze-cell { border-radius: 4px; font-size: 0.9rem;}
       .trap-card { font-size: 1.2rem; }
+      .pro-toolbar { justify-content: center; }
     }
   </style>
 </head>
@@ -450,7 +439,7 @@
     <header class="topbar">
       <button class="brand-mark" id="homeBtn" type="button" aria-label="Home">
         <span class="brand-sigil">P</span>
-        <span><strong>Playroom</strong><small>arcade v3</small></span>
+        <span><strong>Playroom</strong><small>arcade v4</small></span>
       </button>
       <nav class="top-actions" aria-label="App actions">
         <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst"><span>+</span></button>
@@ -464,8 +453,8 @@
         <div class="hero-zone">
           <div class="hero-copy">
             <p class="kicker">Two humans. One private arcade.</p>
-            <h1>Crack codes, dodge traps, and cause scoreboard drama.</h1>
-            <p class="hero-text">A live two-player playground built for phones and laptops. Now featuring advanced physics, Fog of War, Minesweeper mechanics, and visual hacks. Create a room and sync up.</p>
+            <h1>Crack codes, dodge traps, and paint masterpieces together.</h1>
+            <p class="hero-text">A live two-player playground built for phones and laptops. Now featuring advanced physics, Fog of War, Minesweeper mechanics, and a pro-grade synchronized sketch lab.</p>
           </div>
           <div class="hero-art" aria-hidden="true">
             <div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
@@ -494,6 +483,7 @@
                 <option value="45">45 seconds (Fast)</option>
                 <option value="60">60 seconds (Standard)</option>
                 <option value="90">90 seconds (Marathon)</option>
+                <option value="300">5 Minutes (Sketching)</option>
               </select>
             </label>
           </div>
@@ -519,12 +509,10 @@
       <section id="arenaScreen" class="screen">
         <div class="arena-shell">
           <aside class="score-rail panel">
-            <!-- P1 is ALWAYS "You" locally. -->
             <div class="score-player" id="p1ScoreCard">
               <span class="avatar-chip p1" id="p1Avatar">Y</span>
               <span id="p1Name">You</span><strong id="p1Score">0</strong>
             </div>
-            <!-- P2 is ALWAYS "Partner" locally. -->
             <div class="score-player" id="p2ScoreCard">
               <span class="avatar-chip p2" id="p2Avatar">P</span>
               <span id="p2Name">Partner</span><strong id="p2Score">0</strong>
@@ -568,8 +556,8 @@
   <script>
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
-    const STORE_KEY = "playroom-arcade-v3";
-    const ROOM_PREFIX = "playroom-arcade-v3-";
+    const STORE_KEY = "playroom-arcade-v4";
+    const ROOM_PREFIX = "playroom-arcade-v4-";
     
     // Core Application State
     const profile = {
@@ -579,7 +567,6 @@
     const room = { peer: null, conn: null, code: "", connected: false, role: "local", mySlot: 0, suppress: false };
     const app = { activeGame: null, score: [0, 0], timer: null, timeLeft: 0, roomNames: ["You", "Partner"], finished: false };
 
-    // Advanced Game Definitions
     const games = [
       { id: "cipher", title: "Hyper Cipher", tag: "Codebreaking", icon: "HC", color: "#ff4f7b", desc: "Hack rotating ciphers matrix-style. Type fast as the code visually scrambles." },
       { id: "maze", title: "Grid Runner", tag: "Fog of War", icon: "GR", color: "#2f7df6", desc: "Navigate a dark, volatile neon grid. You can only see adjacent tiles. Dodge hidden traps!" },
@@ -587,7 +574,7 @@
       { id: "trap", title: "Blast Tiles", tag: "Minesweeper-lite", icon: "BT", color: "#38d9a9", desc: "Safe tiles reveal how many bombs touch them! Use logic to build streaks, or risk an explosion." },
       { id: "reflex", title: "Rift Overcharge", tag: "Fake-out duel", icon: "RO", color: "#ff9f1c", desc: "Wait for the green. Beware the violent RGB glitch phases designed to mess with your brain." },
       { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
-      { id: "sketch", title: "Live Sketch Lab", tag: "Synced drawing", icon: "LS", color: "#111318", desc: "A shared board with a new NEON mode. Draw with glowing lasers and manually applaud." }
+      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An adaptive digital studio. Draw with spray paint, neon lasers, and mandala symmetry." }
     ];
 
     const cipherRounds = [
@@ -599,9 +586,9 @@
     ];
     const remixPrompts = ["A luxury date night in a supermarket", "A spaceship crew arguing over the aux cable", "A detective scene inside a dramatic cafe"];
     const remixConstraints = ["include a fake brand name", "contain one terrible rhyme", "overconfident narrator", "mention a mysterious suitcase"];
-    const sketchPrompts = ["Draw our future villain lair", "Draw a map to the world's most dramatic snack", "Draw the creature that guards our inside jokes"];
+    const sketchPrompts = ["Draw our future villain lair", "Draw a map to the world's most dramatic snack", "Draw the creature that guards our inside jokes", "Draw an epic battle between cats and vacuums"];
 
-    // Audio Engine (Synthesized sounds)
+    // Audio Engine
     const audio = {
       ctx: null,
       unlock() {
@@ -623,7 +610,6 @@
       win() { [360, 470, 620, 840, 1020].forEach((f, i) => setTimeout(() => this.tone(f, 0.15, "sine", 0.05), i * 80)); }
     };
 
-    // State Management
     function loadProfile() {
       try { const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
         Object.assign(profile, { names: saved.names || profile.names, theme: saved.theme || profile.theme, roundLength: saved.roundLength || profile.roundLength, sound: saved.sound ?? profile.sound, stats: saved.stats || profile.stats });
@@ -633,8 +619,7 @@
     function localName() { return profile.names[0] || "You"; }
     function partnerName() { return profile.names[1] || "Partner"; }
     
-    // Core Identity Engine (Fixes the flipped-score bug)
-    // You are ALWAYS rendered on the left (P1 UI). If connected, we fetch your actual physical slot score/name.
+    // Core Identity Engine (Fixes flipped-score bug completely)
     function getLocalScore() { return room.connected ? app.score[room.mySlot] : app.score[0]; }
     function getRemoteScore() { return room.connected ? app.score[room.mySlot === 0 ? 1 : 0] : app.score[1]; }
     function getRemoteName() { return room.connected ? app.roomNames[room.mySlot === 0 ? 1 : 0] : partnerName(); }
@@ -653,16 +638,15 @@
       $("#themeSelect").value = profile.theme; $("#roundLengthSelect").value = String(profile.roundLength);
       $("#soundIcon").textContent = profile.sound ? "ON" : "OFF";
       
-      // Lobby mappings
+      // Lobby UI
       $("#lobbyP1").textContent = "You"; $("#lobbyP2").textContent = getRemoteName();
       $("#lobbyScore").textContent = `${getLocalScore()} - ${getRemoteScore()}`;
       
-      // Arena mappings (Always You vs Them)
+      // Arena mappings (Always You on Left, Partner on Right locally)
       $("#p1Name").textContent = "You"; $("#p2Name").textContent = getRemoteName();
       $("#p1Score").textContent = getLocalScore(); $("#p2Score").textContent = getRemoteScore();
       $("#p1Avatar").textContent = initials(localName()); $("#p2Avatar").textContent = initials(getRemoteName());
       
-      // Stats
       $("#statP1Label").textContent = `Your wins`; $("#statP2Label").textContent = `Partner wins`;
       
       const pNode = $("#connPanel");
@@ -805,15 +789,12 @@
       room.peer = null; room.conn = null; room.connected = false; room.code = ""; room.role = "local"; room.mySlot = 0;
     }
 
-    // Helper functions
     const shuffle = (items) => [...items].sort(() => Math.random() - 0.5);
     const sample = (items) => items[Math.floor(Math.random() * items.length)];
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     const safe = (txt) => String(txt).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
     const modules = {
-      
-      // Advanced Cipher: Visual Hacking Scramble
       cipher: {
         round: 0, solved: [], scrambleTimer: null,
         start() { this.round = 0; this.solved = []; this.render(); startTimer(profile.roundLength, () => finishRound(`System locked. Solved ${this.solved.length}.`)); this.scramble(); },
@@ -865,7 +846,6 @@
         restore(data) { this.round = data.round || 0; this.solved = data.solved || []; this.render(); }
       },
 
-      // Advanced Maze: Fog of War
       maze: {
         size: 7, pos: { x: 0, y: 0 }, exit: { x: 6, y: 6 }, traps: [], gems: [], moves: 0,
         start() {
@@ -884,10 +864,8 @@
                   const here = this.pos.x === x && this.pos.y === y;
                   const exit = this.exit.x === x && this.exit.y === y;
                   const trap = this.traps.includes(i); const gem = this.gems.includes(i);
-                  // Fog of War logic: Only see adjacent tiles (Manhattan distance <= 2)
                   const dist = Math.abs(x - this.pos.x) + Math.abs(y - this.pos.y);
                   const isFog = dist > 2;
-                  
                   return `<div class="maze-cell ${here ? "here" : ""} ${exit ? "exit" : ""} ${trap ? "trap" : ""} ${gem ? "gem" : ""} ${isFog ? "fog" : ""}">${here ? "US" : exit ? "EX" : gem ? "$" : trap ? "!" : ""}</div>`;
                 }).join("")}
               </div>
@@ -921,7 +899,6 @@
         restore(d) { this.pos = d.pos || this.pos; this.traps = d.traps || []; this.gems = d.gems || []; this.moves = d.moves || 0; this.render(); }
       },
 
-      // Signal: Physical Button Press VFX
       signal: {
         colors: ["red", "blue", "green", "gold"], sequence: [], input: [], showing: false,
         start() { this.sequence = [sample(this.colors), sample(this.colors)]; this.input = []; this.showing = false; this.render(); },
@@ -977,25 +954,19 @@
         restore(d) { this.sequence = d.sequence || []; this.input = d.input || []; this.showing = Boolean(d.showing); this.render(); }
       },
 
-      // Advanced Trap: Minesweeper Logic (Calculates adjacent bombs)
       trap: {
         tiles: [], bank: [0, 0], turn: 0,
         start() {
           this.bank = [0, 0]; this.turn = 0;
-          // Setup tiles
           let rawTiles = [...Array(25).keys()].map((_, i) => ({ id: i, kind: i < 5 ? "bomb" : i < 12 ? "bonus" : "safe", open: false, adj: 0 }));
           rawTiles = shuffle(rawTiles);
-          
-          // Calculate adjacent bombs for puzzle logic
           const getAdj = (index) => {
             let count = 0; const x = index % 5; const y = Math.floor(index / 5);
             for(let dy=-1; dy<=1; dy++) {
               for(let dx=-1; dx<=1; dx++) {
                 if(dx===0 && dy===0) continue;
                 const nx = x+dx, ny = y+dy;
-                if(nx>=0 && nx<5 && ny>=0 && ny<5) {
-                   if(rawTiles[ny*5 + nx].kind === 'bomb') count++;
-                }
+                if(nx>=0 && nx<5 && ny>=0 && ny<5) if(rawTiles[ny*5 + nx].kind === 'bomb') count++;
               }
             }
             return count;
@@ -1014,7 +985,7 @@
                   if(t.open) {
                     if(t.kind === 'bomb') content = "!";
                     else if(t.kind === 'bonus') content = "+5";
-                    else content = t.adj > 0 ? t.adj : ""; // Show adjacent bombs!
+                    else content = t.adj > 0 ? t.adj : "";
                   }
                   return `<button class="trap-card ${t.open ? `open ${t.kind}` : ""}" data-tile="${i}" type="button"><span>${content}</span></button>`;
                 }).join("")}
@@ -1047,7 +1018,6 @@
         restore(d) { this.tiles = d.tiles || []; this.bank = d.bank || [0, 0]; this.turn = d.turn || 0; this.render(); }
       },
 
-      // Reflex: Intense Visual Glitching
       reflex: {
         phase: "wait", round: 0, timeout: null,
         start() { this.round = 0; this.next(); },
@@ -1059,7 +1029,7 @@
             this.render();
             if (this.phase === "go") audio.tone(920, 0.1, "square");
             else if (this.phase === "fake") audio.tone(180, 0.1);
-            else { audio.tone(440, 0.3, "sawtooth", 0.02); audio.tone(480, 0.3, "square", 0.02); } // Glitch noise
+            else { audio.tone(440, 0.3, "sawtooth", 0.02); audio.tone(480, 0.3, "square", 0.02); }
             syncRoom();
           }, 900 + Math.random() * 2000);
         },
@@ -1125,79 +1095,197 @@
         restore(d) { this.prompt = d.prompt || ""; this.constraints = d.constraints || []; this.entries = d.entries || []; this.turn = d.turn || 0; this.render(); }
       },
 
-      // Advanced Sketch: Neon Glow Mode
       sketch: {
-        canvas: null, ctx: null, drawing: false, color: "#ff4f7b", size: 8, prompt: "", glow: true,
+        canvas: null, ctx: null, drawing: false, 
+        color: "#ff4f7b", size: 8, prompt: "", glow: true, rainbow: false, tool: 'pen', symmetry: 'none',
+        lastX: null, lastY: null, hue: 0,
+        
         start() {
           if (!this.prompt) this.prompt = sample(sketchPrompts);
           $("#gameMount").innerHTML = `
-            <div class="game-panel" style="flex:1">
-              <div class="turn-banner"><span>Canvas</span><span>${safe(this.prompt)}</span></div>
-              <div class="draw-wrap">
-                <canvas id="drawCanvas" class="draw-board neon-mode" width="900" height="500"></canvas>
-                <div class="draw-tools">
-                  <div class="color-row">
-                    ${["#ffffff", "#ff4f7b", "#2f7df6", "#ff9f1c", "#38d9a9", "#8a5cf6"].map(c => `<button class="swatch" style="background:${c}" data-color="${c}" type="button"></button>`).join("")}
-                  </div>
-                  <label class="range-field">Brush <input id="brushSize" type="range" min="2" max="34" value="${this.size}" /></label>
-                  <label class="range-field" style="flex-direction:row; align-items:center; cursor:pointer;"><input type="checkbox" id="glowToggle" checked style="width:20px; min-height:20px;"> Neon Glow</label>
-                  <button id="clearCanvas" class="plain-button" type="button" style="margin-top:10px;">Wipe Board</button>
-                  <button id="sketchA" class="primary-button" type="button">Award ${canonicalName(0)}</button>
-                  <button id="sketchB" class="primary-button" type="button">Award ${canonicalName(1)}</button>
+            <div class="sketch-layout">
+              <div class="turn-banner"><span>Pro Studio</span><span>${safe(this.prompt)}</span></div>
+              
+              <div class="pro-toolbar">
+                <div class="tool-group">
+                  <button class="tool-btn active" data-tool="pen" title="Solid Pen">✏️</button>
+                  <button class="tool-btn" data-tool="spray" title="Spray Paint">💨</button>
+                  <button class="tool-btn" data-tool="eraser" title="Eraser">🧽</button>
+                  <input type="range" id="brushSize" min="2" max="50" value="${this.size}" style="width: 80px; margin-left: 8px;">
                 </div>
+                
+                <div class="tool-group">
+                  <div class="color-picker-wrap">
+                    <input type="color" id="nativeColor" value="${this.color}">
+                  </div>
+                  <div class="swatch-mini" style="background:#ff4f7b" data-color="#ff4f7b"></div>
+                  <div class="swatch-mini" style="background:#38d9a9" data-color="#38d9a9"></div>
+                  <div class="swatch-mini" style="background:#ffffff" data-color="#ffffff"></div>
+                  <button class="tool-btn" id="rainbowToggle" title="Rainbow Ink">🌈</button>
+                  <button class="tool-btn active" id="glowToggle" title="Neon Glow">🌟</button>
+                </div>
+                
+                <div class="tool-group">
+                  <button class="tool-btn" data-sym="none" title="No Symmetry" style="font-weight:900;">1x</button>
+                  <button class="tool-btn" data-sym="mirror" title="Mirror Mode">🪞</button>
+                  <button class="tool-btn" data-sym="mandala" title="Mandala (8-way)">🌀</button>
+                </div>
+                
+                <div class="tool-group" style="border:none;">
+                  <button id="downloadCanvas" class="tool-btn" title="Download Masterpiece">💾</button>
+                  <button id="clearCanvas" class="tool-btn" title="Clear Canvas">🗑️</button>
+                </div>
+              </div>
+              
+              <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
+                <canvas id="drawCanvas"></canvas>
+              </div>
+              
+              <div style="display:flex; gap:10px; margin-top: auto;">
+                  <button id="sketchA" class="primary-button" style="flex:1;" type="button">Award ${canonicalName(0)}</button>
+                  <button id="sketchB" class="primary-button" style="flex:1;" type="button">Award ${canonicalName(1)}</button>
               </div>
             </div>
           `;
-          this.canvas = $("#drawCanvas"); this.ctx = this.canvas.getContext("2d");
-          this.ctx.lineCap = "round"; this.ctx.lineJoin = "round"; this.clear(false); this.bind();
           
-          $$(".swatch").forEach(btn => btn.addEventListener("click", () => {
-            this.color = btn.dataset.color; $$(".swatch").forEach(s => s.classList.remove("active")); btn.classList.add("active");
+          this.canvas = $("#drawCanvas"); this.ctx = this.canvas.getContext("2d");
+          const wrap = $("#canvasWrap");
+          
+          // Adaptive sizing for retina clarity
+          this.canvas.width = wrap.clientWidth;
+          this.canvas.height = wrap.clientHeight;
+          
+          this.ctx.lineCap = "round"; this.ctx.lineJoin = "round"; 
+          this.clear(false); this.bindUI(); this.bindCanvas();
+        },
+        
+        bindUI() {
+          $$(".tool-btn[data-tool]").forEach(btn => btn.addEventListener("click", () => {
+            this.tool = btn.dataset.tool; 
+            $$(".tool-btn[data-tool]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
           }));
-          $(".swatch:nth-child(2)")?.classList.add("active");
+          
+          $$(".tool-btn[data-sym]").forEach(btn => btn.addEventListener("click", () => {
+            this.symmetry = btn.dataset.sym; 
+            $$(".tool-btn[data-sym]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
+          }));
+          $(`.tool-btn[data-sym="none"]`).classList.add("active");
           
           $("#brushSize").addEventListener("input", e => this.size = Number(e.target.value));
-          $("#glowToggle").addEventListener("change", e => {
-            this.glow = e.target.checked;
-            this.canvas.classList.toggle("neon-mode", this.glow);
-            this.clear(true); // Wiping board to match new mode cleanly
+          
+          $("#nativeColor").addEventListener("input", e => { this.color = e.target.value; this.rainbow = false; $("#rainbowToggle").classList.remove("active"); });
+          $$(".swatch-mini").forEach(btn => btn.addEventListener("click", () => { this.color = btn.dataset.color; $("#nativeColor").value = this.color; this.rainbow = false; $("#rainbowToggle").classList.remove("active"); }));
+          
+          $("#rainbowToggle").addEventListener("click", (e) => { this.rainbow = !this.rainbow; e.currentTarget.classList.toggle("active", this.rainbow); });
+          $("#glowToggle").addEventListener("click", (e) => { 
+            this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
+            $("#canvasWrap").classList.toggle("neon-mode", this.glow); this.clear(true); 
           });
+          
           $("#clearCanvas").addEventListener("click", () => this.clear(true));
+          $("#downloadCanvas").addEventListener("click", () => {
+             const link = document.createElement('a'); link.download = 'playroom-masterpiece.png'; 
+             link.href = this.canvas.toDataURL('image/png'); link.click();
+          });
+          
           $("#sketchA").addEventListener("click", () => this.award(slotForLocalAction(0)));
           $("#sketchB").addEventListener("click", () => this.award(slotForLocalAction(1)));
         },
-        bind() {
-          const pos = (e) => {
+        
+        bindCanvas() {
+          const getNormPos = (e) => {
             const rect = this.canvas.getBoundingClientRect();
             const pt = e.touches ? e.touches[0] : e;
-            return { x: ((pt.clientX - rect.left) / rect.width) * this.canvas.width, y: ((pt.clientY - rect.top) / rect.height) * this.canvas.height };
+            return { x: (pt.clientX - rect.left) / rect.width, y: (pt.clientY - rect.top) / rect.height };
           };
-          const down = (e) => { e.preventDefault(); this.drawing = true; const p = pos(e); this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); sendSketch({ name: "start", x: p.x, y: p.y, color: this.color, size: this.size, glow: this.glow }); };
-          const move = (e) => { if (!this.drawing) return; e.preventDefault(); const p = pos(e); this.draw(p.x, p.y, this.color, this.size, this.glow); sendSketch({ name: "draw", x: p.x, y: p.y, color: this.color, size: this.size, glow: this.glow }); };
+          const down = (e) => { 
+            e.preventDefault(); this.drawing = true; const p = getNormPos(e); 
+            this.lastX = p.x; this.lastY = p.y;
+            // Draw a single dot if just clicked
+            this.executeDraw(p.x, p.y, p.x, p.y, this.color, this.size, this.tool, this.symmetry, this.glow);
+            sendSketch({ name: "draw", x0: p.x, y0: p.y, x1: p.x, y1: p.y, c: this.color, s: this.size, t: this.tool, sym: this.symmetry, g: this.glow });
+          };
+          const move = (e) => { 
+            if (!this.drawing) return; e.preventDefault(); const p = getNormPos(e); 
+            
+            if (this.rainbow) { this.hue = (this.hue + 4) % 360; this.color = `hsl(${this.hue}, 100%, 65%)`; }
+            
+            this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, this.size, this.tool, this.symmetry, this.glow);
+            sendSketch({ name: "draw", x0: this.lastX, y0: this.lastY, x1: p.x, y1: p.y, c: this.color, s: this.size, t: this.tool, sym: this.symmetry, g: this.glow });
+            this.lastX = p.x; this.lastY = p.y;
+          };
           const up = () => this.drawing = false;
+          
           this.canvas.addEventListener("mousedown", down); this.canvas.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
           this.canvas.addEventListener("touchstart", down, { passive: false }); this.canvas.addEventListener("touchmove", move, { passive: false }); this.canvas.addEventListener("touchend", up);
         },
-        draw(x, y, color, size, glow) { 
-          this.ctx.strokeStyle = color; this.ctx.lineWidth = size; 
-          if(glow) { this.ctx.shadowBlur = 15; this.ctx.shadowColor = color; } else { this.ctx.shadowBlur = 0; }
-          this.ctx.lineTo(x, y); this.ctx.stroke(); 
+        
+        executeDraw(nx0, ny0, nx1, ny1, color, size, tool, symmetry, glow) {
+           const w = this.canvas.width; const h = this.canvas.height;
+           const x0 = nx0 * w; const y0 = ny0 * h; const x1 = nx1 * w; const y1 = ny1 * h;
+           
+           this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
+           
+           if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } 
+           else { this.ctx.shadowBlur = 0; }
+           
+           if (tool === 'eraser') { this.ctx.globalCompositeOperation = 'destination-out'; this.ctx.lineWidth = size * 2; this.ctx.shadowBlur = 0; } 
+           else { this.ctx.globalCompositeOperation = 'source-over'; }
+           
+           const drawSegment = (px0, py0, px1, py1) => {
+             if (tool === 'spray') {
+               for (let i = 0; i < size * 1.5; i++) {
+                 let angle = Math.random() * Math.PI * 2;
+                 let radius = Math.random() * size * 1.5;
+                 this.ctx.fillRect(px1 + Math.cos(angle)*radius, py1 + Math.sin(angle)*radius, 1.5, 1.5);
+               }
+             } else {
+               this.ctx.beginPath(); this.ctx.moveTo(px0, py0); this.ctx.lineTo(px1, py1); this.ctx.stroke();
+             }
+           };
+
+           // Apply Symmetry Transformations
+           drawSegment(x0, y0, x1, y1);
+           
+           if (symmetry === 'mirror') {
+               drawSegment(w - x0, y0, w - x1, y1);
+           } else if (symmetry === 'mandala') {
+               let cx = w / 2; let cy = h / 2;
+               for(let i=1; i<8; i++) {
+                   this.ctx.save();
+                   this.ctx.translate(cx, cy); this.ctx.rotate((Math.PI * 2 / 8) * i); this.ctx.translate(-cx, -cy);
+                   drawSegment(x0, y0, x1, y1);
+                   this.ctx.restore();
+               }
+           }
         },
+        
         clear(sendIt) { 
-          this.ctx.shadowBlur = 0; this.ctx.fillStyle = this.glow ? "#0a0a0f" : "#fffdf5"; 
+          this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0; 
+          this.ctx.fillStyle = this.glow ? "#0a0a0f" : "#fffdf5"; 
           this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); 
           if (sendIt) sendSketch({ name: "clear", glow: this.glow }); 
         },
+        
         award(slot) { if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
         remoteAction(a) { if (a.name === "sketchAward") this.award(a.slot); },
+        
         remoteSketch(p) {
           if (!this.ctx || !p) return;
-          if (p.name === "clear") { this.glow = p.glow; this.canvas.classList.toggle("neon-mode", this.glow); $('#glowToggle').checked = this.glow; this.clear(false); }
-          if (p.name === "start") { this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); }
-          if (p.name === "draw") this.draw(p.x, p.y, p.color, p.size, p.glow);
+          if (p.name === "clear") { 
+            this.glow = p.glow; $("#canvasWrap").classList.toggle("neon-mode", this.glow); 
+            $('#glowToggle').classList.toggle("active", this.glow); this.clear(false); 
+          }
+          if (p.name === "draw") {
+            this.executeDraw(p.x0, p.y0, p.x1, p.y1, p.c, p.s, p.t, p.sym, p.g);
+          }
         },
         snapshot() { return { prompt: this.prompt, glow: this.glow }; },
-        restore(d) { this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true; if (!this.canvas) this.start(); const p = $(".turn-banner span:last-child"); if (p) p.textContent = this.prompt; }
+        restore(d) { 
+          this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true; 
+          if (!this.canvas) this.start(); 
+          const title = $(".turn-banner span:last-child"); if (title) title.textContent = this.prompt; 
+        }
       }
     };
 
@@ -1213,7 +1301,6 @@
       canvas.dispatchEvent(new CustomEvent("burst", { detail: { amount, x: canvas.width / 2, y: canvas.height * 0.18 } }));
     }
 
-    // Advanced Interactive Background
     function initBackground() {
       const canvas = $("#worldCanvas"); const ctx = canvas.getContext("2d");
       let dots = []; let shards = []; let mouse = { x: -1000, y: -1000 };
@@ -1236,7 +1323,6 @@
           if (dot.x < 0 || dot.x > canvas.width) dot.vx *= -1;
           if (dot.y < 0 || dot.y > canvas.height) dot.vy *= -1;
           
-          // Mouse interaction (repel)
           const dx = mouse.x - dot.x; const dy = mouse.y - dot.y; const dist = Math.sqrt(dx*dx + dy*dy);
           if(dist < 150 * devicePixelRatio) {
             dot.x -= (dx/dist) * 2; dot.y -= (dy/dist) * 2;
