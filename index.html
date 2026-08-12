@@ -56,6 +56,7 @@
         linear-gradient(135deg, #151820, var(--bg));
       cursor: crosshair;
     }
+    
     button, input, select { font: inherit; cursor: pointer; }
     input { cursor: text; }
     button { color: inherit; transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -94,7 +95,7 @@
     }
     main { flex: 1; display: flex; flex-direction: column; }
     
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; transition: opacity 0.3s; }
     .brand-mark, .icon-button, .plain-button, .danger-button { border: 0; cursor: pointer; }
     .brand-mark {
       display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px;
@@ -281,35 +282,44 @@
     
     .floating-dock {
       position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-      display: flex; flex-direction: row; align-items: center; gap: 14px;
-      background: rgba(14, 16, 20, 0.85); border: 1px solid rgba(255,255,255,0.15);
+      display: flex; flex-direction: row; align-items: center; gap: 12px;
+      background: rgba(14, 16, 20, 0.88); border: 1px solid rgba(255,255,255,0.15);
       border-radius: 999px; box-shadow: 0 24px 50px rgba(0,0,0,0.5);
-      backdrop-filter: blur(24px); z-index: 100; padding: 12px 24px;
+      backdrop-filter: blur(24px); z-index: 100; padding: 10px 20px;
     }
-    .dock-group { display: flex; gap: 10px; align-items: center; padding-right: 14px; border-right: 1px solid rgba(255,255,255,0.15); }
+    
+    .dock-group { display: flex; gap: 8px; align-items: center; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.15); }
     .dock-group:last-child { border-right: none; padding-right: 0; }
     
     .tool-btn {
-      display: grid; place-items: center; width: 44px; aspect-ratio: 1; background: transparent; 
-      border: 2px solid transparent; border-radius: 14px; font-size: 1.3rem; transition: all 0.2s;
-      color: #fff; cursor: pointer;
+      display: grid; place-items: center; width: 40px; height: 40px; background: transparent; 
+      border: 2px solid transparent; border-radius: 12px; transition: all 0.2s;
+      color: rgba(255,255,255,0.7); cursor: pointer;
     }
-    .tool-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+    .tool-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
+    .tool-btn:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
     .tool-btn.active { background: var(--p2); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--p2) 40%, transparent); border-color: color-mix(in srgb, var(--p2) 20%, white); }
     
-    .color-picker-wrap { position: relative; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);}
-    .color-picker-wrap input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; border: none; padding:0;}
+    .color-picker-wrap { 
+      position: relative; width: 32px; height: 32px; border-radius: 50%; 
+      overflow: hidden; border: 2px solid rgba(255,255,255,0.4); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .color-picker-wrap input[type="color"] { 
+      position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; border: none; padding:0;
+    }
+    #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; }
     
-    .sketch-award-row { position: absolute; top: 24px; right: 24px; display: flex; gap: 12px; z-index: 10;}
+    .sketch-award-row { position: absolute; top: 16px; right: 16px; display: flex; gap: 12px; z-index: 10;}
+    .sketch-award-row button { padding: 0 20px; border-radius: 999px; height: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
     
     .built-for-monica {
-      position: absolute; bottom: 24px; right: 32px;
-      font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-style: italic;
-      color: rgba(255,255,255,0.3); z-index: 10; pointer-events: none;
-      letter-spacing: 0.08em; text-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: absolute; bottom: 12px; right: 16px;
+      font-family: monospace; font-size: 0.6rem; font-weight: 800;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(25, 23, 22, 0.25); z-index: 10; pointer-events: none;
     }
     .neon-mode .built-for-monica {
-      color: rgba(255,255,255,0.85); text-shadow: 0 0 20px rgba(255,255,255,0.4), 0 0 40px var(--p2);
+      color: rgba(255,255,255,0.3); text-shadow: 0 0 10px rgba(255,255,255,0.2);
     }
     
     .big-prompt { padding: clamp(20px, 4vw, 42px); text-align: center; background: rgba(0,0,0,0.8); border: 1px solid var(--mint); border-radius: 18px; box-shadow: inset 0 0 30px rgba(56, 217, 169, 0.2); }
@@ -397,6 +407,7 @@
       30%, 50%, 70% { transform: translate3d(-10px, 0, 0); }
       40%, 60% { transform: translate3d(10px, 0, 0); }
     }
+    
     .round-result {
       position: absolute; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
       padding: 30px; text-align: center; background: rgba(17,19,24,0.95); backdrop-filter: blur(10px);
@@ -406,7 +417,7 @@
     .round-result span { color: var(--p2); font-size: 1.5rem; font-family: monospace; }
     @keyframes stamp-in { 0% { transform: scale(2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     
-    .toast-host { position: fixed; z-index: 100; left: 50%; top: 18px; display: grid; gap: 8px; width: min(420px, calc(100% - 24px)); transform: translateX(-50%); pointer-events: none; }
+    .toast-host { position: fixed; z-index: 1000; left: 50%; top: 18px; display: grid; gap: 8px; width: min(420px, calc(100% - 24px)); transform: translateX(-50%); pointer-events: none; }
     .toast {
       padding: 14px 18px; color: #fff; background: rgba(17,19,24,0.95); border: 1px solid rgba(255,255,255,0.2);
       border-radius: 14px; box-shadow: 0 18px 44px rgba(0,0,0,0.4); font-weight: 800; text-align: center;
@@ -425,6 +436,16 @@
     .stats-grid small, .achievement-list small { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;}
     .achievement-list { display: grid; gap: 10px; margin-bottom: 24px; max-height: 200px; overflow-y: auto; padding-right: 10px;}
     
+    /* Fullscreen Sketch Toggle */
+    body.sketch-mode-active .topbar { display: none !important; }
+    body.sketch-mode-active .score-rail { display: none !important; }
+    body.sketch-mode-active .app-shell { padding: 0 !important; width: 100% !important; max-width: 100% !important; height: 100dvh !important; }
+    body.sketch-mode-active .arena-shell { grid-template-columns: 1fr; padding: 0 !important; }
+    body.sketch-mode-active .arena-main { padding: 0 !important; border-radius: 0; border: none; }
+    body.sketch-mode-active .adaptive-canvas-wrap { border-radius: 0; border: none; }
+    body.sketch-mode-active .turn-banner { border-radius: 0; }
+    
+    /* Responsive overrides */
     @media (max-width: 900px) {
       .hero-zone, .arena-shell { grid-template-columns: 1fr; }
       .hero-art { min-height: 270px; }
@@ -444,9 +465,16 @@
       .maze-grid { gap: 4px; padding: 8px; }
       .maze-cell { border-radius: 4px; font-size: 0.9rem;}
       .trap-card { font-size: 1.2rem; }
-      .floating-dock { bottom: 10px; padding: 8px; border-radius: 18px; }
-      .tool-btn { width: 36px; font-size: 1.1rem; }
-      .sketch-award-row { top: auto; bottom: 80px; left: 50%; transform: translateX(-50%); right: auto; width: 100%; justify-content: center; }
+      
+      /* Mobile Dock Fix */
+      .floating-dock { 
+        bottom: 12px; width: calc(100% - 24px); 
+        flex-wrap: wrap; justify-content: center; 
+        padding: 10px; border-radius: 20px; gap: 8px;
+      }
+      .dock-group { border: none; padding: 0; }
+      #brushSize { width: 60px; }
+      .sketch-award-row { top: auto; bottom: 85px; left: 50%; transform: translateX(-50%); right: auto; width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -468,9 +496,13 @@
         <span><strong>Playroom</strong><small>arcade v5</small></span>
       </button>
       <nav class="top-actions" aria-label="App actions">
-        <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst"><span>+</span></button>
+        <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5l-10 14M7 5l10 14M2 12h20"/></svg>
+        </button>
         <button class="icon-button" id="soundBtn" type="button" title="Toggle sound"><span id="soundIcon">ON</span></button>
-        <button class="icon-button" id="statsBtn" type="button" title="Trophy room"><span>*</span></button>
+        <button class="icon-button" id="statsBtn" type="button" title="Trophy room">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        </button>
       </nav>
     </header>
 
@@ -566,7 +598,9 @@
     <div class="dialog-card">
       <header>
         <div><p class="section-label">Trophy room</p><h2>Your saved play history</h2></div>
-        <button id="closeStatsBtn" class="icon-button" type="button" aria-label="Close">x</button>
+        <button id="closeStatsBtn" class="icon-button" type="button" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
       </header>
       <div class="stats-grid">
         <div><span id="statGames">0</span><small>Games</small></div>
@@ -600,7 +634,7 @@
       { id: "trap", title: "Blast Tiles", tag: "Minesweeper-lite", icon: "BT", color: "#38d9a9", desc: "Safe tiles reveal how many bombs touch them! Use logic to build streaks, or risk an explosion." },
       { id: "reflex", title: "Rift Overcharge", tag: "Fake-out duel", icon: "RO", color: "#ff9f1c", desc: "Wait for the green. Beware the violent RGB glitch phases designed to mess with your brain." },
       { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
-      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An adaptive digital studio. Draw with spray paint, generative webs, and mandala symmetry." }
+      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An adaptive digital studio. Draw with neon paint, full symmetry, and perfect sync." }
     ];
 
     const cipherRounds = [
@@ -644,7 +678,7 @@
     function localName() { return profile.names[0] || "You"; }
     function partnerName() { return profile.names[1] || "Partner"; }
     
-    // Core Identity Engine (Fixes flipped-score bug completely)
+    // Core Identity Engine
     function getLocalScore() { return room.connected ? app.score[room.mySlot] : app.score[0]; }
     function getRemoteScore() { return room.connected ? app.score[room.mySlot === 0 ? 1 : 0] : app.score[1]; }
     function getRemoteName() { return room.connected ? app.roomNames[room.mySlot === 0 ? 1 : 0] : partnerName(); }
@@ -663,11 +697,9 @@
       $("#themeSelect").value = profile.theme; $("#roundLengthSelect").value = String(profile.roundLength);
       $("#soundIcon").textContent = profile.sound ? "ON" : "OFF";
       
-      // Lobby UI
       $("#lobbyP1").textContent = "You"; $("#lobbyP2").textContent = getRemoteName();
       $("#lobbyScore").textContent = `${getLocalScore()} - ${getRemoteScore()}`;
       
-      // Arena mappings (Always You on Left, Partner on Right locally)
       $("#p1Name").textContent = "You"; $("#p2Name").textContent = getRemoteName();
       $("#p1Score").textContent = getLocalScore(); $("#p2Score").textContent = getRemoteScore();
       $("#p1Avatar").textContent = initials(localName()); $("#p2Avatar").textContent = initials(getRemoteName());
@@ -704,13 +736,13 @@
       $("#gameTag").textContent = game.tag; $("#gameTitle").textContent = game.title;
       $("#timerText").textContent = "--"; $("#timerFill").style.width = "100%"; $("#timerFill").classList.remove("danger");
       
-      // Full screen mode for sketch
+      // Cleanup previous sketch mode state if any
+      document.body.classList.remove('sketch-mode-active');
+      
       if(id === 'sketch') {
          $("#arenaTopline").style.display = 'none';
-         $("#arenaMain").style.padding = '0';
       } else {
          $("#arenaTopline").style.display = 'grid';
-         $("#arenaMain").style.padding = '18px';
       }
       
       showScreen("arenaScreen"); audio.synthHit();
@@ -731,18 +763,34 @@
         else profile.stats.wins[1] += 1;
       }
       saveProfile(); renderChrome(); audio.win(); celebrate(50);
+      
+      document.body.classList.remove('sketch-mode-active');
+      
       if (!$(".round-result")) $("#gameMount").insertAdjacentHTML("afterbegin", `<div class="round-result">${message}<span>SCOREBOARD LOCKED</span></div>`);
       syncRoom({ finishedMessage: message });
     }
 
     function startTimer(seconds, onEnd) {
       clearTimer(); app.timeLeft = seconds;
-      $("#timerText").textContent = app.timeLeft; $("#timerFill").style.width = "100%"; $("#timerFill").classList.remove("danger");
-      app.timer = setInterval(() => {
-        app.timeLeft -= 1; $("#timerText").textContent = app.timeLeft;
+      
+      const updateVisuals = () => {
+        $("#timerText").textContent = app.timeLeft;
         const pct = Math.max(0, app.timeLeft / seconds) * 100;
         $("#timerFill").style.width = `${pct}%`;
         if(app.timeLeft <= 10) $("#timerFill").classList.add("danger");
+        
+        // Update sketch timer if it exists
+        const sketchTimer = $("#sketchTimerDisplay");
+        if(sketchTimer) sketchTimer.textContent = app.timeLeft > 0 ? `${app.timeLeft}s` : "DONE";
+      };
+      
+      updateVisuals();
+      $("#timerFill").classList.remove("danger");
+      
+      app.timer = setInterval(() => {
+        app.timeLeft -= 1; 
+        updateVisuals();
+        
         if (app.timeLeft <= 0) { clearTimer(); onEnd(); }
         else if (room.role === "host") syncRoom();
       }, 1000);
@@ -825,14 +873,18 @@
         if (app.activeGame) {
           const game = games.find(e => e.id === app.activeGame);
           $("#gameTag").textContent = game.tag; $("#gameTitle").textContent = game.title;
-          if(app.activeGame === 'sketch') { $("#arenaTopline").style.display = 'none'; $("#arenaMain").style.padding = '0'; } 
-          else { $("#arenaTopline").style.display = 'grid'; $("#arenaMain").style.padding = '18px'; }
+          
+          if(app.activeGame === 'sketch') { $("#arenaTopline").style.display = 'none'; } 
+          else { $("#arenaTopline").style.display = 'grid'; }
+          
           showScreen("arenaScreen");
         } else showScreen("lobbyScreen");
       }
       if (payload.timeLeft !== undefined) {
         $("#timerText").textContent = payload.timeLeft || "--";
         $("#timerFill").style.width = `${Math.max(0, payload.timeLeft / profile.roundLength) * 100}%`;
+        const sketchTimer = $("#sketchTimerDisplay");
+        if(sketchTimer) sketchTimer.textContent = payload.timeLeft > 0 ? `${payload.timeLeft}s` : "DONE";
       }
       if (app.activeGame && payload.module && modules[app.activeGame]?.restore) modules[app.activeGame].restore(payload.module);
       if (payload.finishedMessage && !$(".round-result")) $("#gameMount").insertAdjacentHTML("afterbegin", `<div class="round-result">${payload.finishedMessage}<span>SCOREBOARD LOCKED</span></div>`);
@@ -1157,29 +1209,34 @@
         start() {
           document.body.classList.add('sketch-mode-active');
           if (!this.prompt) this.prompt = sample(sketchPrompts);
+          
           $("#gameMount").innerHTML = `
             <div class="sketch-layout">
-              <div class="sketch-header">
-                <button id="sketchBackBtn" class="icon-button" style="width: 44px; height: 44px; background: rgba(14,16,20,0.7); border-radius: 50%;">&lt;</button>
-                <div class="sketch-prompt"><span>${safe(this.prompt)}</span></div>
-                <div class="sketch-timer" id="sketchTimerDisplay">--</div>
+              <div class="turn-banner" style="border-radius: 0; background: rgba(14,16,20,0.9); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="font-size: 0.8rem; letter-spacing: 0.1em; opacity: 0.8;">PRO STUDIO</span>
+                <span class="prompt-text" style="text-align: center; font-size: 0.9rem;">${safe(this.prompt)}</span>
+                <span class="sketch-timer" id="sketchTimerDisplay" style="font-family: monospace; font-size: 1.1rem; color: var(--mint);">--</span>
               </div>
               
-              <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap" style="border-radius: 0; border: none;">
+              <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
                 <div class="brush-cursor" id="brushCursor"></div>
                 <canvas id="drawCanvas"></canvas>
-                <div class="monica-footnote">built for monica</div>
+                <div class="built-for-monica">built for monica</div>
               </div>
               
               <div class="sketch-award-row">
-                  <button id="sketchA" class="primary-button" type="button" style="border-radius:999px;">Award ${canonicalName(0)}</button>
-                  <button id="sketchB" class="primary-button" type="button" style="border-radius:999px;">Award ${canonicalName(1)}</button>
+                  <button id="sketchA" class="primary-button" type="button">Award ${canonicalName(0)}</button>
+                  <button id="sketchB" class="primary-button" type="button">Award ${canonicalName(1)}</button>
               </div>
               
               <div class="floating-dock">
                 <div class="dock-group">
-                  <button class="tool-btn active" data-tool="pen" title="Pro Pen">✏️</button>
-                  <button class="tool-btn" data-tool="eraser" title="Eraser">🧽</button>
+                  <button class="tool-btn active" data-tool="pen" title="Pro Pen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                  </button>
+                  <button class="tool-btn" data-tool="eraser" title="Eraser">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L20 9C20.5 9.5 20.5 10.5 20 11L11 20"></path><path d="M10 11l5 5"></path></svg>
+                  </button>
                 </div>
                 
                 <div class="dock-group">
@@ -1187,19 +1244,28 @@
                   <div class="color-picker-wrap">
                     <input type="color" id="nativeColor" value="${this.color}">
                   </div>
-                  <button class="tool-btn active" id="glowToggle" title="Neon Glow">🌟</button>
+                  <button class="tool-btn active" id="glowToggle" title="Neon Glow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg>
+                  </button>
                 </div>
                 
                 <div class="dock-group" style="border:none;">
-                  <button id="undoCanvas" class="tool-btn" title="Undo">↩️</button>
-                  <button id="clearCanvas" class="tool-btn" title="Clear Canvas">🗑️</button>
-                  <button id="downloadCanvas" class="tool-btn" title="Save Masterpiece">💾</button>
+                  <button id="undoCanvas" class="tool-btn" title="Undo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path></svg>
+                  </button>
+                  <button id="clearCanvas" class="tool-btn" title="Clear Canvas">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                  </button>
+                  <button id="downloadCanvas" class="tool-btn" title="Save Masterpiece">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </button>
                 </div>
               </div>
             </div>
           `;
           
-          this.canvas = $("#drawCanvas"); this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
+          this.canvas = $("#drawCanvas"); 
+          this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
           this.wrap = $("#canvasWrap");
           
           this.resizeCanvas();
@@ -1229,12 +1295,6 @@
         },
         
         bindUI() {
-          $("#sketchBackBtn").addEventListener("click", () => {
-             if (room.connected && room.role !== "host") return toast("Only host can return.");
-             document.body.classList.remove('sketch-mode-active');
-             clearTimer(); app.activeGame = null; app.finished = false; showScreen("lobbyScreen"); syncRoom();
-          });
-          
           $$(".tool-btn[data-tool]").forEach(btn => btn.addEventListener("click", () => {
             this.tool = btn.dataset.tool; 
             $$(".tool-btn[data-tool]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
@@ -1275,11 +1335,19 @@
           
           const getPos = (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            return { x: e.clientX - rect.left, y: e.clientY - rect.top, nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height };
+            // Handle both mouse and touch events natively
+            const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+            return { 
+              x: clientX - rect.left, 
+              y: clientY - rect.top, 
+              nx: (clientX - rect.left) / rect.width, 
+              ny: (clientY - rect.top) / rect.height 
+            };
           };
 
           const updateCursor = (e) => {
-             if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
+             if (e.pointerType === 'touch' || e.type.includes('touch')) { cursor.style.display = 'none'; return; }
              const rect = this.wrap.getBoundingClientRect();
              cursor.style.display = 'block';
              cursor.style.width = `${this.size}px`;
@@ -1290,16 +1358,16 @@
           };
           
           const down = (e) => { 
-            if(e.target.closest('.floating-dock') || e.target.closest('.sketch-award-row') || e.target.closest('.sketch-header')) return;
+            if(e.target.closest('.floating-dock') || e.target.closest('.sketch-award-row')) return;
             e.preventDefault(); 
             this.drawing = true; 
-            this.canvas.setPointerCapture(e.pointerId);
             
             const p = getPos(e); 
             this.lastX = p.x; this.lastY = p.y;
             this.saveState();
             
-            const pressure = e.pointerType === 'pen' && e.pressure ? Math.max(0.2, e.pressure) : 1;
+            // Basic pressure mapping if available
+            const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
             const dynSize = this.size * pressure;
             
             this.executeDraw(p.x, p.y, p.x, p.y, this.color, dynSize, this.tool, this.glow);
@@ -1313,7 +1381,7 @@
             e.preventDefault(); 
             const p = getPos(e); 
             
-            const pressure = e.pointerType === 'pen' && e.pressure ? Math.max(0.2, e.pressure) : 1;
+            const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
             const dynSize = this.size * pressure;
             
             this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, dynSize, this.tool, this.glow);
@@ -1324,15 +1392,18 @@
           
           const up = (e) => { 
             this.drawing = false; 
-            if (this.canvas.hasPointerCapture(e.pointerId)) {
-                this.canvas.releasePointerCapture(e.pointerId);
-            }
           };
           
+          // Desktop pointers
           this.canvas.addEventListener("pointerdown", down); 
           this.canvas.addEventListener("pointermove", move); 
           this.canvas.addEventListener("pointerup", up);
-          this.canvas.addEventListener("pointerleave", () => { cursor.style.display = 'none'; });
+          this.canvas.addEventListener("pointerleave", () => { cursor.style.display = 'none'; this.drawing = false; });
+          
+          // Fallback strict touch
+          this.canvas.addEventListener("touchstart", down, {passive: false});
+          this.canvas.addEventListener("touchmove", move, {passive: false});
+          this.canvas.addEventListener("touchend", up, {passive: false});
         },
         
         executeDraw(x0, y0, x1, y1, color, size, tool, glow) {
@@ -1371,7 +1442,7 @@
         remoteAction(a) { if (a.name === "sketchAward") this.award(a.slot); },
         
         remoteSketch(p) {
-          if (!this.ctx || !p) return;
+          if (!this.ctx || !p || !this.wrap) return;
           if (p.name === "clear") { 
             this.glow = p.glow; $("#canvasWrap").classList.toggle("neon-mode", this.glow); 
             $('#glowToggle').classList.toggle("active", this.glow); this.clear(false); 
@@ -1390,7 +1461,7 @@
         restore(d) { 
           this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true; 
           if (!this.canvas) this.start(); 
-          const title = $(".sketch-prompt span"); if (title) title.textContent = this.prompt; 
+          const title = $(".prompt-text"); if (title) title.textContent = this.prompt; 
         }
       }
     };
@@ -1463,8 +1534,8 @@
       $("#playerTwoInput").addEventListener("input", e => { profile.names[1] = e.target.value.trim() || "Partner"; if (!room.connected) app.roomNames[1] = partnerName(); saveProfile(); renderChrome(); });
       $("#themeSelect").addEventListener("change", e => setTheme(e.target.value));
       $("#roundLengthSelect").addEventListener("change", e => { profile.roundLength = Number(e.target.value); saveProfile(); });
-      $("#backBtn").addEventListener("click", () => { if (room.connected && room.role !== "host") return toast("Only host can return."); clearTimer(); app.activeGame = null; app.finished = false; showScreen("lobbyScreen"); syncRoom(); });
-      $("#homeBtn").addEventListener("click", () => { if (app.activeGame && room.connected && room.role !== "host") return toast("Only host can return."); clearTimer(); app.activeGame = null; app.finished = false; showScreen("lobbyScreen"); syncRoom(); });
+      $("#backBtn").addEventListener("click", () => { if (room.connected && room.role !== "host") return toast("Only host can return."); clearTimer(); app.activeGame = null; app.finished = false; document.body.classList.remove('sketch-mode-active'); showScreen("lobbyScreen"); syncRoom(); });
+      $("#homeBtn").addEventListener("click", () => { if (app.activeGame && room.connected && room.role !== "host") return toast("Only host can return."); clearTimer(); app.activeGame = null; app.finished = false; document.body.classList.remove('sketch-mode-active'); showScreen("lobbyScreen"); syncRoom(); });
       $("#resetGameBtn").addEventListener("click", () => startGame(app.activeGame));
       $("#createRoomBtn").addEventListener("click", createRoom);
       $("#joinRoomBtn").addEventListener("click", joinRoom);
