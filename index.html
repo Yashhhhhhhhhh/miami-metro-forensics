@@ -1155,16 +1155,20 @@
         lastX: null, lastY: null, undoStack: [], wrap: null, dpr: 1,
         
         start() {
+          document.body.classList.add('sketch-mode-active');
           if (!this.prompt) this.prompt = sample(sketchPrompts);
           $("#gameMount").innerHTML = `
             <div class="sketch-layout">
-              <div class="turn-banner" style="position:absolute; top:24px; left:24px; width:auto; border-radius:999px; padding:12px 24px;">
-                <span>${safe(this.prompt)}</span>
+              <div class="sketch-header">
+                <button id="sketchBackBtn" class="icon-button" style="width: 44px; height: 44px; background: rgba(14,16,20,0.7); border-radius: 50%;">&lt;</button>
+                <div class="sketch-prompt"><span>${safe(this.prompt)}</span></div>
+                <div class="sketch-timer" id="sketchTimerDisplay">--</div>
               </div>
               
-              <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
+              <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap" style="border-radius: 0; border: none;">
                 <div class="brush-cursor" id="brushCursor"></div>
                 <canvas id="drawCanvas"></canvas>
+                <div class="monica-footnote">built for monica</div>
               </div>
               
               <div class="sketch-award-row">
@@ -1172,16 +1176,14 @@
                   <button id="sketchB" class="primary-button" type="button" style="border-radius:999px;">Award ${canonicalName(1)}</button>
               </div>
               
-              <div class="built-for-monica">built for monica</div>
-              
               <div class="floating-dock">
                 <div class="dock-group">
                   <button class="tool-btn active" data-tool="pen" title="Pro Pen">✏️</button>
                   <button class="tool-btn" data-tool="eraser" title="Eraser">🧽</button>
                 </div>
                 
-                <div class="dock-group" style="gap:14px;">
-                  <input type="range" id="brushSize" min="2" max="60" value="${this.size}" style="width: 80px;">
+                <div class="dock-group">
+                  <input type="range" id="brushSize" min="2" max="60" value="${this.size}">
                   <div class="color-picker-wrap">
                     <input type="color" id="nativeColor" value="${this.color}">
                   </div>
@@ -1227,6 +1229,12 @@
         },
         
         bindUI() {
+          $("#sketchBackBtn").addEventListener("click", () => {
+             if (room.connected && room.role !== "host") return toast("Only host can return.");
+             document.body.classList.remove('sketch-mode-active');
+             clearTimer(); app.activeGame = null; app.finished = false; showScreen("lobbyScreen"); syncRoom();
+          });
+          
           $$(".tool-btn[data-tool]").forEach(btn => btn.addEventListener("click", () => {
             this.tool = btn.dataset.tool; 
             $$(".tool-btn[data-tool]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
@@ -1282,7 +1290,7 @@
           };
           
           const down = (e) => { 
-            if(e.target.closest('.floating-dock') || e.target.closest('.sketch-award-row') || e.target.closest('.turn-banner')) return;
+            if(e.target.closest('.floating-dock') || e.target.closest('.sketch-award-row') || e.target.closest('.sketch-header')) return;
             e.preventDefault(); 
             this.drawing = true; 
             this.canvas.setPointerCapture(e.pointerId);
@@ -1316,7 +1324,9 @@
           
           const up = (e) => { 
             this.drawing = false; 
-            this.canvas.releasePointerCapture(e.pointerId);
+            if (this.canvas.hasPointerCapture(e.pointerId)) {
+                this.canvas.releasePointerCapture(e.pointerId);
+            }
           };
           
           this.canvas.addEventListener("pointerdown", down); 
@@ -1380,7 +1390,7 @@
         restore(d) { 
           this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true; 
           if (!this.canvas) this.start(); 
-          const title = $(".turn-banner span"); if (title) title.textContent = this.prompt; 
+          const title = $(".sketch-prompt span"); if (title) title.textContent = this.prompt; 
         }
       }
     };
