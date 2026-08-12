@@ -263,6 +263,7 @@
       flex: 1; position: relative; border-radius: 16px; overflow: hidden; 
       border: 2px solid var(--line); background: #fffdf5; box-shadow: inset 0 0 30px rgba(0,0,0,0.05);
       transition: background 0.3s, border-color 0.3s;
+      cursor: none; touch-action: none; /* Hide default cursor and prevent mobile scroll */
     }
     .adaptive-canvas-wrap.neon-mode { background: #0a0a0f; border-color: var(--p2); }
     
@@ -279,18 +280,18 @@
       background-image: radial-gradient(#fff 2px, transparent 2px);
     }
     
-    #drawCanvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; position: relative; z-index: 2;}
-    
-    /* Floating Glass Dock */
-    .floating-dock {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
-      display: flex; gap: 12px; align-items: center; padding: 12px;
-      background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255,255,255,0.7); 
-      border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); backdrop-filter: blur(20px);
-      transition: background 0.3s; flex-wrap: wrap; justify-content: center; width: max-content; max-width: 95%;
+    /* Dynamic Brush Cursor */
+    .brush-cursor {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      transform: translate(-50%, -50%); z-index: 100;
+      border: 1.5px solid rgba(0,0,0,0.6); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
+      display: none; transition: width 0.05s, height 0.05s; mix-blend-mode: difference;
     }
-    .neon-mode .floating-dock {
-      background: rgba(20, 20, 25, 0.85); border-color: rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    .neon-mode .brush-cursor { 
+      border-color: rgba(255,255,255,0.9); box-shadow: 0 0 10px currentColor; mix-blend-mode: normal; 
+    }
+    
+    #drawCanvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: none; position: relative; z-index: 2;}
     }
     
     .dock-group { display: flex; gap: 6px; align-items: center; padding-right: 12px; border-right: 1px solid var(--line); }
@@ -762,23 +763,39 @@
       send("SYNC", { score: app.score, names: app.roomNames, activeGame: app.activeGame, timeLeft: app.timeLeft, finished: app.finished, module: app.activeGame && modules[app.activeGame].snapshot ? modules[app.activeGame].snapshot() : null, ...extra });
     }
 
+    const peerConfig = {
+      config: {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" },
+          { urls: "stun:stun3.l.google.com:19302" }
+        ]
+      }
+    };
+
     function createRoom() {
       if (typeof Peer === "undefined") return toast("PeerJS not loaded.");
       closeRoom(); room.role = "host"; room.mySlot = 0; room.code = Math.floor(1000 + Math.random() * 9000).toString();
       app.roomNames = [localName(), partnerName()];
-      room.peer = new Peer(`${ROOM_PREFIX}${room.code}`, { config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] } });
+      room.peer = new Peer(`${ROOM_PREFIX}${room.code}`, peerConfig);
       room.peer.on("open", () => { $("#roomCodeInput").value = room.code; toast(`Room created: ${room.code}`); renderChrome(); });
       room.peer.on("connection", attachConnection);
-      room.peer.on("error", () => { toast("Room failed to open."); });
+      room.peer.on("error", (err) => { console.error("Host Error:", err); toast("Room error: " + err.type); });
       renderChrome();
     }
     function joinRoom() {
       if (typeof Peer === "undefined") return toast("PeerJS not loaded.");
       const code = $("#roomCodeInput").value.trim(); if (!/^\d{4}$/.test(code)) return toast("Enter 4 digit code.");
       closeRoom(); room.role = "guest"; room.mySlot = 1; room.code = code;
-      room.peer = new Peer({ config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] } });
-      room.peer.on("open", () => attachConnection(room.peer.connect(`${ROOM_PREFIX}${code}`, { reliable: true })));
-      room.peer.on("error", () => { toast("Could not join."); room.code = ""; renderChrome(); });
+      room.peer = new Peer(peerConfig);
+      room.peer.on("open", () => attachConnection(room.peer.connect(`${ROOM_PREFIX}${code}`)));
+      room.peer.on("error", (err) => { 
+        console.error("Guest Error:", err); 
+        if (err.type === 'peer-unavailable') toast("Room not found. Is the host ready?");
+        else toast("Connection error: " + (err.type || "unknown"));
+        room.code = ""; renderChrome(); 
+      });
       renderChrome();
     }
     function attachConnection(conn) {
@@ -1140,7 +1157,7 @@
       sketch: {
         canvas: null, ctx: null, drawing: false, 
         color: "#ff4f7b", size: 8, prompt: "", glow: true, rainbow: false, tool: 'pen', symmetry: 'none', grid: false,
-        lastX: null, lastY: null, hue: 0, points: [], undoStack: [],
+        lastX: null, lastY: null, hue: 0, points: [], undoStack: [], wrap: null, dpr: 1,
         
         start() {
           if (!this.prompt) this.prompt = sample(sketchPrompts);
@@ -1152,6 +1169,7 @@
               
               <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
                 <div class="canvas-grid-overlay" id="gridOverlay"></div>
+                <div class="brush-cursor" id="brushCursor"></div>
                 <canvas id="drawCanvas"></canvas>
               </div>
               
@@ -1196,15 +1214,34 @@
           `;
           
           this.canvas = $("#drawCanvas"); this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
-          const wrap = $("#canvasWrap");
+          this.wrap = $("#canvasWrap");
           
-          // Match actual pixel dimensions to container for sharpness
-          this.canvas.width = wrap.clientWidth;
-          this.canvas.height = wrap.clientHeight;
+          this.resizeCanvas();
+          window.addEventListener("resize", this.resizeCanvas.bind(this));
           
-          this.ctx.lineCap = "round"; this.ctx.lineJoin = "round"; 
           this.clear(false); this.undoStack = []; this.saveState();
           this.bindUI(); this.bindCanvas();
+        },
+
+        resizeCanvas() {
+          if (!this.wrap || !this.canvas) return;
+          const rect = this.wrap.getBoundingClientRect();
+          this.dpr = window.devicePixelRatio || 1;
+          
+          // Store old image to prevent clearing on resize
+          let oldData = null;
+          if (this.canvas.width > 0) oldData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+          // Retina Scaling
+          this.canvas.width = rect.width * this.dpr;
+          this.canvas.height = rect.height * this.dpr;
+          this.canvas.style.width = `${rect.width}px`;
+          this.canvas.style.height = `${rect.height}px`;
+          
+          this.ctx.scale(this.dpr, this.dpr);
+          this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
+          
+          if (oldData) this.ctx.putImageData(oldData, 0, 0);
         },
         
         bindUI() {
@@ -1218,7 +1255,11 @@
             $$(".tool-btn[data-sym]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
           }));
           
-          $("#brushSize").addEventListener("input", e => this.size = Number(e.target.value));
+          $("#brushSize").addEventListener("input", e => {
+            this.size = Number(e.target.value);
+            $("#brushCursor").style.width = `${this.size}px`;
+            $("#brushCursor").style.height = `${this.size}px`;
+          });
           
           $("#nativeColor").addEventListener("input", e => { this.color = e.target.value; this.rainbow = false; $("#rainbowToggle").classList.remove("active"); });
           $$(".swatch-mini").forEach(btn => btn.addEventListener("click", () => { this.color = btn.dataset.color; $("#nativeColor").value = this.color; this.rainbow = false; $("#rainbowToggle").classList.remove("active"); }));
@@ -1226,7 +1267,7 @@
           $("#rainbowToggle").addEventListener("click", (e) => { this.rainbow = !this.rainbow; e.currentTarget.classList.toggle("active", this.rainbow); });
           $("#glowToggle").addEventListener("click", (e) => { 
             this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
-            $("#canvasWrap").classList.toggle("neon-mode", this.glow); this.clear(true); 
+            this.wrap.classList.toggle("neon-mode", this.glow); this.clear(true); 
           });
           
           $("#toggleGrid").addEventListener("click", (e) => {
@@ -1237,10 +1278,11 @@
           $("#undoCanvas").addEventListener("click", () => this.undo());
           $("#clearCanvas").addEventListener("click", () => { this.saveState(); this.clear(true); });
           $("#downloadCanvas").addEventListener("click", () => {
-             // To save with background, create a temp canvas
-             const tempCanvas = document.createElement('canvas'); tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
+             const tempCanvas = document.createElement('canvas'); 
+             tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
              const tCtx = tempCanvas.getContext('2d');
-             tCtx.fillStyle = this.glow ? "#0a0a0f" : "#fffdf5"; tCtx.fillRect(0,0, tempCanvas.width, tempCanvas.height);
+             tCtx.fillStyle = this.glow ? "#0a0a0f" : "#fffdf5"; 
+             tCtx.fillRect(0,0, tempCanvas.width, tempCanvas.height);
              tCtx.drawImage(this.canvas, 0, 0);
              const link = document.createElement('a'); link.download = 'playroom-masterpiece.png'; 
              link.href = tempCanvas.toDataURL('image/png'); link.click();
@@ -1251,44 +1293,76 @@
         },
         
         bindCanvas() {
+          const cursor = $("#brushCursor");
+          
           const getNormPos = (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const pt = e.touches ? e.touches[0] : e;
-            return { x: (pt.clientX - rect.left) / rect.width, y: (pt.clientY - rect.top) / rect.height };
+            return { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
           };
+
           const updateCursor = (e) => {
-             const pt = e.touches ? e.touches[0] : e;
-             // We don't change actual css cursor dynamically to avoid lag, but could render a small div. 
-             // Skipping custom cursor div for performance on mobile.
+             if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
+             const rect = this.wrap.getBoundingClientRect();
+             cursor.style.display = 'block';
+             cursor.style.width = `${this.size}px`;
+             cursor.style.height = `${this.size}px`;
+             cursor.style.left = `${e.clientX - rect.left}px`;
+             cursor.style.top = `${e.clientY - rect.top}px`;
+             cursor.style.color = this.color;
           };
           
           const down = (e) => { 
             if(e.target.closest('.floating-dock') || e.target.closest('.sketch-award-row') || e.target.closest('.turn-banner')) return;
-            e.preventDefault(); this.drawing = true; const p = getNormPos(e); 
+            e.preventDefault(); 
+            this.drawing = true; 
+            this.canvas.setPointerCapture(e.pointerId);
+            
+            const p = getNormPos(e); 
             this.lastX = p.x; this.lastY = p.y;
             this.points = [{x: p.x, y: p.y}];
             
             this.saveState();
-            this.executeDraw(p.x, p.y, p.x, p.y, this.color, this.size, this.tool, this.symmetry, this.glow);
-            sendSketch({ name: "draw", x0: p.x, y0: p.y, x1: p.x, y1: p.y, c: this.color, s: this.size, t: this.tool, sym: this.symmetry, g: this.glow });
+            const pressure = e.pointerType !== 'mouse' && e.pressure ? Math.max(0.1, e.pressure) : 1;
+            const dynSize = this.size * pressure;
+            
+            this.executeDraw(p.x, p.y, p.x, p.y, this.color, dynSize, this.tool, this.symmetry, this.glow);
+            sendSketch({ name: "draw", x0: p.x, y0: p.y, x1: p.x, y1: p.y, c: this.color, s: dynSize, t: this.tool, sym: this.symmetry, g: this.glow });
+            updateCursor(e);
           };
+          
           const move = (e) => { 
-            if (!this.drawing) return; e.preventDefault(); const p = getNormPos(e); 
+            updateCursor(e);
+            if (!this.drawing) return; 
+            e.preventDefault(); 
+            const p = getNormPos(e); 
             if (this.rainbow) { this.hue = (this.hue + 4) % 360; this.color = `hsl(${this.hue}, 100%, 65%)`; }
             this.points.push({x: p.x, y: p.y});
             
-            this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, this.size, this.tool, this.symmetry, this.glow, this.points);
-            sendSketch({ name: "draw", x0: this.lastX, y0: this.lastY, x1: p.x, y1: p.y, c: this.color, s: this.size, t: this.tool, sym: this.symmetry, g: this.glow, isWeb: this.tool==='web' });
+            const pressure = e.pointerType !== 'mouse' && e.pressure ? Math.max(0.1, e.pressure) : 1;
+            const dynSize = this.size * pressure;
+            
+            this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, dynSize, this.tool, this.symmetry, this.glow, this.points);
+            sendSketch({ name: "draw", x0: this.lastX, y0: this.lastY, x1: p.x, y1: p.y, c: this.color, s: dynSize, t: this.tool, sym: this.symmetry, g: this.glow, isWeb: this.tool==='web' });
+            
             this.lastX = p.x; this.lastY = p.y;
           };
-          const up = () => { this.drawing = false; this.points = []; };
           
-          this.canvas.addEventListener("mousedown", down); this.canvas.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
-          this.canvas.addEventListener("touchstart", down, { passive: false }); this.canvas.addEventListener("touchmove", move, { passive: false }); this.canvas.addEventListener("touchend", up);
+          const up = (e) => { 
+            this.drawing = false; 
+            this.points = []; 
+            this.canvas.releasePointerCapture(e.pointerId);
+          };
+          
+          this.canvas.addEventListener("pointerdown", down); 
+          this.canvas.addEventListener("pointermove", move); 
+          this.canvas.addEventListener("pointerup", up);
+          this.canvas.addEventListener("pointerleave", () => { cursor.style.display = 'none'; });
         },
         
         executeDraw(nx0, ny0, nx1, ny1, color, size, tool, symmetry, glow, pointsArray = null) {
-           const w = this.canvas.width; const h = this.canvas.height;
+           const rect = this.wrap.getBoundingClientRect();
+           const w = rect.width; 
+           const h = rect.height;
            const x0 = nx0 * w; const y0 = ny0 * h; const x1 = nx1 * w; const y1 = ny1 * h;
            
            this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
@@ -1307,12 +1381,10 @@
                  this.ctx.fillRect(px1 + Math.cos(angle)*radius, py1 + Math.sin(angle)*radius, 1.5, 1.5);
                }
              } else if (tool === 'web' && nPts) {
-               // Normal line
                this.ctx.beginPath(); this.ctx.moveTo(px0, py0); this.ctx.lineTo(px1, py1); this.ctx.stroke();
-               // Web connections
                this.ctx.lineWidth = size / 4;
-               let threshold = 50 * 50; // 50px radius
-               for(let i=0; i<nPts.length; i++){
+               let threshold = 60 * 60; // 60px radius connection for webs
+               for(let i=0; i<nPts.length; i+=2){ 
                   let pnx = nPts[i].x * w; let pny = nPts[i].y * h;
                   let dx = pnx - px1; let dy = pny - py1;
                   if (dx*dx + dy*dy < threshold) {
@@ -1324,7 +1396,6 @@
              }
            };
 
-           // Apply Symmetry Transformations
            drawSegment(x0, y0, x1, y1, pointsArray);
            
            if (symmetry === 'mirror') {
@@ -1335,14 +1406,14 @@
                for(let i=1; i<8; i++) {
                    this.ctx.save();
                    this.ctx.translate(cx, cy); this.ctx.rotate((Math.PI * 2 / 8) * i); this.ctx.translate(-cx, -cy);
-                   drawSegment(x0, y0, x1, y1, null); // Web gets tricky with rotation array, so fallback to pen for branches
+                   drawSegment(x0 - cx, y0 - cy, x1 - cx, y1 - cy, null); 
                    this.ctx.restore();
                }
            }
         },
         
         saveState() {
-          if (this.undoStack.length > 8) this.undoStack.shift();
+          if (this.undoStack.length > 10) this.undoStack.shift();
           this.undoStack.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
         },
         
@@ -1350,7 +1421,6 @@
           if (this.undoStack.length > 0) {
             let imgData = this.undoStack.pop();
             this.ctx.putImageData(imgData, 0, 0);
-            // Send full sync image over WebRTC to guarantee perfection after undo
             if (room.connected) sendSketch({ name: "syncFull", data: this.canvas.toDataURL('image/webp', 0.8) });
           }
         },
