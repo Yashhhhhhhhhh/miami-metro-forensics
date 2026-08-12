@@ -3,206 +3,184 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SpellBound | Private Co-Op Word Sanctuary</title>
-  
-  <!-- Aesthetic Google Fonts -->
+  <meta name="theme-color" content="#111318" />
+  <title>Playroom For Two</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- PeerJS for Zero-Lag Private Peer-to-Peer Multiplayer -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Atmospheric Canvas Background -->
-  <canvas id="ambientCanvas"></canvas>
-  <div class="doodle-overlay"></div>
+  <canvas id="worldCanvas" aria-hidden="true"></canvas>
+  <div class="paper-noise" aria-hidden="true"></div>
+  <div class="doodle-field" aria-hidden="true">
+    <span class="doodle d1"></span>
+    <span class="doodle d2"></span>
+    <span class="doodle d3"></span>
+    <span class="doodle d4"></span>
+    <span class="doodle d5"></span>
+  </div>
+
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
   <div class="app-shell">
-    <!-- TOP NAVBAR -->
-    <header class="app-header">
-      <div class="brand">
-        <span class="brand-icon">✦</span>
-        <span class="brand-title">SpellBound</span>
-      </div>
-      <div class="nav-actions">
-        <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">🔊</button>
-        <button id="trophyRoomBtn" class="icon-btn" title="Trophy Room">🏆</button>
-      </div>
+    <header class="topbar">
+      <button class="brand-mark" id="homeBtn" type="button" aria-label="Home">
+        <span class="brand-sigil">2</span>
+        <span>
+          <strong>Playroom</strong>
+          <small>for two</small>
+        </span>
+      </button>
+
+      <nav class="top-actions" aria-label="App actions">
+        <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst" aria-label="Celebration burst">
+          <span>+</span>
+        </button>
+        <button class="icon-button" id="soundBtn" type="button" title="Toggle sound" aria-label="Toggle sound">
+          <span id="soundIcon">ON</span>
+        </button>
+        <button class="icon-button" id="statsBtn" type="button" title="Trophy room" aria-label="Trophy room">
+          <span>*</span>
+        </button>
+      </nav>
     </header>
 
-    <!-- MAIN CONTAINER -->
-    <main class="main-content">
-      
-      <!-- LOBBY SCREEN -->
+    <main>
       <section id="lobbyScreen" class="screen active">
-        <div class="lobby-hero">
-          <span class="eyebrow-tag">✨ Private Co-Op & Duel Sanctuary</span>
-          <h1>Spell, Connect, and Duel Together.</h1>
-          <p>A private space for two. Connect live across devices or play together on one screen.</p>
+        <div class="hero-zone">
+          <div class="hero-copy">
+            <p class="kicker">Human-made fun, no AI opponents</p>
+            <h1>Pick a tiny adventure and play it together.</h1>
+            <p class="hero-text">A polished two-player arcade for you both: fast games, silly games, clever games, cozy games, all saved locally and ready for GitHub Pages.</p>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="orbit o1"></div>
+            <div class="orbit o2"></div>
+            <div class="orbit o3"></div>
+            <div class="mascot-card one">A</div>
+            <div class="mascot-card two">B</div>
+            <div class="scribble-line"></div>
+          </div>
         </div>
 
-        <!-- PLAYER SETUP CARD -->
-        <div class="card setup-card">
-          <div class="card-title">
-            <h3>Player Profile</h3>
-            <span class="subtitle">Customize your in-game persona</span>
+        <section class="panel setup-panel" aria-label="Player setup">
+          <div>
+            <p class="section-label">Players</p>
+            <h2>Make it yours</h2>
           </div>
           <div class="setup-grid">
-            <div class="input-group">
-              <label for="playerNameInput">Your Name</label>
-              <input type="text" id="playerNameInput" value="Player 1" maxlength="12" />
-            </div>
-            <div class="input-group">
-              <label for="avatarSelect">Avatar Icon</label>
-              <select id="avatarSelect">
-                <option value="🌙">🌙 Moon</option>
-                <option value="🌹">🌹 Rose</option>
-                <option value="⚡">⚡ Spark</option>
-                <option value="🦋">🦋 Butterfly</option>
-                <option value="👑">👑 Crown</option>
-                <option value="🔥">🔥 Ember</option>
+            <label class="field-card">
+              <span>Your name</span>
+              <input id="playerOneInput" maxlength="16" autocomplete="off" />
+            </label>
+            <label class="field-card">
+              <span>Your partner</span>
+              <input id="playerTwoInput" maxlength="16" autocomplete="off" />
+            </label>
+            <label class="field-card">
+              <span>Mood color</span>
+              <select id="themeSelect">
+                <option value="sunset">Sunset arcade</option>
+                <option value="mint">Mint pop</option>
+                <option value="berry">Berry neon</option>
+                <option value="ink">Ink and gold</option>
               </select>
+            </label>
+            <label class="field-card">
+              <span>Round length</span>
+              <select id="roundLengthSelect">
+                <option value="45">45 seconds</option>
+                <option value="60">60 seconds</option>
+                <option value="90">90 seconds</option>
+              </select>
+            </label>
+          </div>
+          <div class="connection-panel">
+            <div>
+              <p class="section-label">Live room</p>
+              <strong id="connectionStatus">Same-screen mode is ready</strong>
+            </div>
+            <div class="room-controls">
+              <button id="createRoomBtn" class="plain-button" type="button">Create room</button>
+              <input id="roomCodeInput" maxlength="6" autocomplete="off" placeholder="Room code" />
+              <button id="joinRoomBtn" class="primary-button" type="button">Join</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-section" aria-label="Games">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">Games</p>
+              <h2>Seven fully playable modes</h2>
+            </div>
+            <div class="mini-scoreboard">
+              <span id="lobbyP1">You</span>
+              <strong id="lobbyScore">0 - 0</strong>
+              <span id="lobbyP2">Partner</span>
             </div>
           </div>
 
-          <div class="connection-mode-selector">
-            <button id="modeLocalBtn" class="mode-tab active">Pass & Play (Same Screen)</button>
-            <button id="modeOnlineBtn" class="mode-tab">Live Peer-to-Peer (2 Devices)</button>
-          </div>
-
-          <!-- ONLINE ROOM PANEL -->
-          <div id="onlinePanel" class="online-panel hidden">
-            <div class="room-box">
-              <div class="room-action">
-                <button id="createRoomBtn" class="btn btn-secondary">Create Private Room</button>
-                <span id="createdRoomCode" class="room-code-badge hidden">ROOM: ----</span>
-              </div>
-              <div class="divider">OR</div>
-              <div class="room-join">
-                <input type="text" id="joinRoomInput" placeholder="Enter 4-Digit Room Code" maxlength="6" />
-                <button id="joinRoomBtn" class="btn btn-primary">Join Room</button>
-              </div>
-            </div>
-            <div id="networkStatus" class="network-status">Status: Local Standby</div>
-          </div>
-        </div>
-
-        <!-- GAME MODE CARDS -->
-        <div class="modes-headline">
-          <h2>Select Game Mode</h2>
-          <p>Choose how you want to play tonight</p>
-        </div>
-
-        <div class="modes-grid">
-          <!-- Mode 1 -->
-          <div class="mode-card" data-mode="anagram">
-            <div class="mode-badge">Fast-Paced</div>
-            <div class="mode-icon">🔠</div>
-            <h3>Anagram Blitz</h3>
-            <p>Unscramble chaotic letter jumbles before the timer runs out. Earn streak multipliers!</p>
-            <button class="btn btn-primary btn-sm">Launch Duel</button>
-          </div>
-
-          <!-- Mode 2 -->
-          <div class="mode-card" data-mode="chain">
-            <div class="mode-badge">Turn-Based</div>
-            <div class="mode-icon">🔗</div>
-            <h3>Word Chain</h3>
-            <p>Build an endless string of words where each word must begin with the final letter of the last.</p>
-            <button class="btn btn-primary btn-sm">Start Chain</button>
-          </div>
-
-          <!-- Mode 3 -->
-          <div class="mode-card" data-mode="wordle">
-            <div class="mode-badge">Co-Op</div>
-            <div class="mode-icon">🧩</div>
-            <h3>Co-Op Wordle</h3>
-            <p>Combine forces to deduce the secret 5-letter word in 6 attempts or fewer.</p>
-            <button class="btn btn-primary btn-sm">Crack Code</button>
-          </div>
-
-          <!-- Mode 4 -->
-          <div class="mode-card" data-mode="grid">
-            <div class="mode-badge">Search Blitz</div>
-            <div class="mode-icon">🔍</div>
-            <h3>Letter Grid (Boggle)</h3>
-            <p>Trace pathways across a 4x4 letter matrix to uncover as many hidden words as possible.</p>
-            <button class="btn btn-primary btn-sm">Find Words</button>
-          </div>
-        </div>
+          <div id="gameGrid" class="game-grid"></div>
+        </section>
       </section>
 
-      <!-- GAME ARENA SCREEN -->
       <section id="arenaScreen" class="screen">
-        <!-- ARENA HUD -->
-        <div class="arena-hud card">
-          <div class="player-hud p1">
-            <span class="hud-avatar" id="p1AvatarDisplay">🌙</span>
-            <div class="hud-info">
-              <span class="hud-name" id="p1NameDisplay">Player 1</span>
-              <span class="hud-score" id="p1ScoreDisplay">0 pts</span>
+        <div class="arena-shell">
+          <aside class="score-rail panel">
+            <div class="score-player">
+              <span class="avatar-chip p1">A</span>
+              <span id="p1Name">You</span>
+              <strong id="p1Score">0</strong>
             </div>
-          </div>
-
-          <div class="hud-center">
-            <span class="game-mode-tag" id="activeModeTitle">Anagram Blitz</span>
-            <div class="timer-badge" id="timerBadge">60s</div>
-            <span class="turn-indicator" id="turnIndicator">Player 1's Turn</span>
-          </div>
-
-          <div class="player-hud p2">
-            <div class="hud-info align-right">
-              <span class="hud-name" id="p2NameDisplay">Partner</span>
-              <span class="hud-score" id="p2ScoreDisplay">0 pts</span>
+            <div class="score-player">
+              <span class="avatar-chip p2">B</span>
+              <span id="p2Name">Partner</span>
+              <strong id="p2Score">0</strong>
             </div>
-            <span class="hud-avatar" id="p2AvatarDisplay">🌹</span>
-          </div>
-        </div>
+            <div class="round-meter">
+              <span id="timerText">00</span>
+              <div class="meter-track"><div id="timerFill" class="meter-fill"></div></div>
+            </div>
+          </aside>
 
-        <!-- DYNAMIC GAME PLAY CONTAINER -->
-        <div class="arena-board card" id="arenaBoard">
-          <!-- Dynamic Content Injected Here by App.js -->
-        </div>
-
-        <!-- ARENA CONTROLS -->
-        <div class="arena-footer">
-          <button id="leaveGameBtn" class="btn btn-outline">Exit to Lobby</button>
+          <section class="arena-main panel">
+            <div class="arena-topline">
+              <button class="plain-button" id="backBtn" type="button">&lt; Lobby</button>
+              <div>
+                <p id="gameTag" class="section-label">Game</p>
+                <h2 id="gameTitle">Loading</h2>
+              </div>
+              <button class="plain-button" id="resetGameBtn" type="button">Restart</button>
+            </div>
+            <div id="gameMount" class="game-mount"></div>
+          </section>
         </div>
       </section>
-
-      <!-- TROPHY ROOM MODAL -->
-      <div id="trophyModal" class="modal-overlay hidden">
-        <div class="modal-card card">
-          <div class="modal-header">
-            <h3>🏆 Trophy Room & Stats</h3>
-            <button id="closeTrophyBtn" class="close-btn">&times;</button>
-          </div>
-          <div class="stats-grid">
-            <div class="stat-box">
-              <span class="stat-number" id="statGamesPlayed">0</span>
-              <span class="stat-label">Games Played</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-number" id="statWordsFound">0</span>
-              <span class="stat-label">Words Discovered</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-number" id="statHighestScore">0</span>
-              <span class="stat-label">Best Single Round</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-number" id="statCoopVictories">0</span>
-              <span class="stat-label">Co-Op Victories</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </main>
   </div>
+
+  <dialog id="statsDialog" class="stats-dialog">
+    <div class="dialog-card">
+      <header>
+        <div>
+          <p class="section-label">Trophy room</p>
+          <h2>Your saved play history</h2>
+        </div>
+        <button id="closeStatsBtn" class="icon-button" type="button" aria-label="Close">x</button>
+      </header>
+      <div class="stats-grid">
+        <div><span id="statGames">0</span><small>Games played</small></div>
+        <div><span id="statWinsP1">0</span><small id="statP1Label">Your wins</small></div>
+        <div><span id="statWinsP2">0</span><small id="statP2Label">Partner wins</small></div>
+        <div><span id="statStreak">0</span><small>Best streak</small></div>
+      </div>
+      <div id="achievementList" class="achievement-list"></div>
+      <button id="clearStatsBtn" class="danger-button" type="button">Clear saved stats</button>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

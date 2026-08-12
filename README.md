@@ -1,26 +1,32 @@
-# Atlas Research Space
+# Playroom For Two
 
-A dependency-free research workspace that aggregates public evidence from multiple open sources and organizes it into a saved dossier interface.
+A static, GitHub Pages-ready two-player game website for couples. It includes seven playable modes, animated graphics, local stats, sound effects, responsive layouts, and optional live room codes for two-device play.
 
-## What it does
+## Games
 
-- Searches Wikipedia, Wikidata, OpenAlex, Crossref, Wikimedia Commons, and the Internet Archive.
-- Groups results by evidence type so it is easier to compare public references, media, and scholarship.
-- Saves notes and dossiers in local browser storage.
-- Exports the current investigation as JSON.
+- Same Brain
+- Word Rush
+- Memory Match
+- Reflex Duel
+- Color Snap
+- Story Sparks
+- Doodle Pass
 
-## Run locally
+## Play Locally
 
-1. Open a terminal in this folder.
-2. Start a local server:
+Open `index.html` directly, or run a tiny local server:
 
 ```powershell
 python -m http.server 8000
 ```
 
-3. Open `http://localhost:8000` in a browser.
+Then open `http://localhost:8000`.
 
-## Notes
+## Play Together After GitHub Push
 
-- This is a public-source research workspace, not a guaranteed full-web crawler.
-- If you want true web-wide coverage, the next step is to connect a search API key and a crawler pipeline.
+1. Publish the repo with GitHub Pages.
+2. Send her the GitHub Pages URL.
+3. For same-screen play, open the site on one device and start any game.
+4. For two-device live play, you create a room, send her the 4 digit code, and she joins from the same site.
+
+Live play uses PeerJS over WebRTC. It needs internet access and works best when both browsers allow normal HTTPS connections.
