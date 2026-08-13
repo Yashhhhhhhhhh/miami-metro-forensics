@@ -210,6 +210,14 @@
     }
     .adaptive-canvas-wrap.neon-mode { background: #0a0a0f; }
     
+    /* DUAL CANVAS STACK */
+    #drawCanvas, #activeCanvas { 
+      position: absolute; inset: 0; width: 100%; height: 100%; 
+      touch-action: none; outline: none; background: transparent; 
+    }
+    #drawCanvas { z-index: 1; }
+    #activeCanvas { z-index: 10; }
+    
     .brush-cursor {
       position: absolute; border-radius: 50%; pointer-events: none;
       transform: translate(-50%, -50%); z-index: 100;
@@ -217,27 +225,26 @@
       display: none; transition: width 0.05s, height 0.05s; mix-blend-mode: difference;
     }
     .neon-mode .brush-cursor { border-color: rgba(255,255,255,0.9); box-shadow: 0 0 10px currentColor; mix-blend-mode: normal; }
-    #drawCanvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
     
     .floating-dock {
       position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(28, 30, 36, 0.95); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 999px; box-shadow: 0 24px 50px rgba(0,0,0,0.5);
-      backdrop-filter: blur(24px); padding: 8px 16px; z-index: 100;
-      max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; box-sizing: border-box;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(17, 19, 24, 0.85); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px; box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+      backdrop-filter: blur(20px); padding: 8px 12px; z-index: 100;
+      max-width: calc(100vw - 20px); overflow-x: auto; scrollbar-width: none;
     }
     .floating-dock::-webkit-scrollbar { display: none; }
     
-    .dock-group { display: flex; align-items: center; gap: 8px; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .dock-group { display: flex; align-items: center; gap: 6px; padding-right: 10px; border-right: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
     .dock-group:last-child { border: none; padding-right: 0; }
     
     .tool-btn {
-      display: grid; place-items: center; width: 40px; height: 40px; background: transparent; 
-      border: 2px solid transparent; border-radius: 12px; transition: all 0.2s;
+      display: grid; place-items: center; width: 36px; height: 36px; background: transparent; 
+      border: 2px solid transparent; border-radius: 10px; transition: all 0.2s;
       color: rgba(255,255,255,0.7); cursor: pointer; flex-shrink: 0;
     }
-    .tool-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
+    .tool-btn svg { width: 18px; height: 18px; stroke-width: 2.2; }
     .tool-btn:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
     .tool-btn.active { background: var(--p2); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--p2) 40%, transparent); border-color: color-mix(in srgb, var(--p2) 20%, white); }
     
@@ -247,13 +254,13 @@
       flex-shrink: 0;
     }
     .color-picker-wrap input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; border: none; padding:0; }
-    #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; flex-shrink: 0; }
+    #brushSize { width: 70px; accent-color: var(--p2); cursor: pointer; flex-shrink: 0; }
     
     .built-for-monica-watermark {
-      position: absolute; bottom: 12px; right: 14px;
-      font-family: monospace, sans-serif; font-size: 9px; font-weight: 800;
-      letter-spacing: 0.5em; color: rgba(25, 23, 22, 0.2);
-      text-transform: uppercase; pointer-events: none; z-index: 10;
+      position: absolute; bottom: 12px; right: 16px;
+      font-family: var(--font); font-size: 8px; font-weight: 800;
+      letter-spacing: 0.6em; color: rgba(25, 23, 22, 0.25);
+      text-transform: uppercase; pointer-events: none; z-index: 5;
       transition: color 0.4s ease;
     }
     .neon-mode .built-for-monica-watermark { color: rgba(255,255,255,0.15); }
@@ -342,8 +349,6 @@
       .sketch-brand { display: none; }
       .sketch-prompt { flex: 1 1 100%; font-size: 0.8rem; }
       .sketch-actions { flex: 1 1 100%; justify-content: center; }
-      .floating-dock { bottom: 12px; }
-      .built-for-monica-watermark { bottom: 65px; right: 12px; font-size: 8px; } /* Shifts above mobile dock */
     }
     @media (max-width: 620px) {
       .app-shell { width: min(100% - 18px, 1180px); padding-top: 10px; }
@@ -355,6 +360,13 @@
       .maze-grid { gap: 4px; padding: 8px; }
       .maze-cell { border-radius: 4px; font-size: 0.9rem;}
       .trap-card { font-size: 1.2rem; }
+      
+      .floating-dock { bottom: 12px; padding: 6px 10px; gap: 6px; }
+      .tool-btn { width: 32px; height: 32px; }
+      .tool-btn svg { width: 16px; height: 16px; }
+      .color-picker-wrap { width: 28px; height: 28px; }
+      #brushSize { width: 60px; }
+      .built-for-monica-watermark { bottom: 65px; font-size: 7px; right: 12px; }
     }
   </style>
 </head>
@@ -524,7 +536,7 @@
     const STORE_KEY = "playroom-arcade-v6";
     const ROOM_PREFIX = "playroom-arcade-v6-";
     
-    const vibe = (ms) => { setTimeout(() => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e){} }, 0); };
+    const vibe = (ms) => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
     const profile = { names: ["You", "Partner"], theme: "sunset", roundLength: 60, sound: true, stats: { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] } };
     const room = { peer: null, conn: null, code: "", connected: false, role: "local", mySlot: 0, suppress: false };
     const app = { activeGame: null, score: [0, 0], timer: null, timeLeft: 0, roomNames: ["You", "Partner"], finished: false };
@@ -1082,17 +1094,19 @@
       },
       
       /* ----------------------------------------------------
-         THE PEAK SKETCH ENGINE (FLAWLESS & ZERO-LATENCY)
+         THE PEAK SKETCH ENGINE: DUAL CANVAS VECTOR SYNC
          ---------------------------------------------------- */
       sketch: {
-        canvas: null, ctx: null, drawing: false, initialized: false,
+        canvas: null, ctx: null, activeCanvas: null, activeCtx: null,
+        drawing: false, initialized: false,
         color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen', symmetry: false,
-        paths: [], currentPath: null, remotePaths: {},
-        wrap: null, dpr: 1, _resize: null, rectW: 1, rectH: 1, syncQueue: [], syncInterval: null,
+        paths: [], remotePaths: {}, currentPath: null,
+        wrap: null, dpr: 1, _resize: null, rectW: 1, rectH: 1, rectCache: null,
+        syncQueue: [], syncInterval: null,
         
         start() {
           document.body.classList.add('sketch-mode-active');
-          $("#appShell").style.display = 'none';
+          $("#appShell").style.display = 'none'; // Full takeover
           
           if (!this.prompt) this.prompt = sample(sketchPrompts);
           
@@ -1110,8 +1124,9 @@
                 </header>
                 
                 <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
-                  <div class="brush-cursor" id="brushCursor"></div>
                   <canvas id="drawCanvas" touch-action="none"></canvas>
+                  <canvas id="activeCanvas" touch-action="none"></canvas>
+                  <div class="brush-cursor" id="brushCursor"></div>
                   <div class="built-for-monica-watermark">built for monica</div>
                 </div>
                 
@@ -1139,10 +1154,11 @@
             $(".prompt-text").textContent = this.prompt;
           }
           
-          this.canvas = $("#drawCanvas"); 
-          this.ctx = this.canvas.getContext("2d", { alpha: false }); // Better performance
           this.wrap = $("#canvasWrap");
-          this.syncQueue = [];
+          this.canvas = $("#drawCanvas"); 
+          this.ctx = this.canvas.getContext("2d", { alpha: true });
+          this.activeCanvas = $("#activeCanvas");
+          this.activeCtx = this.activeCanvas.getContext("2d", { alpha: true });
           
           if (!this.initialized) {
             this.bindUI(); 
@@ -1156,6 +1172,7 @@
           
           this.paths = [];
           this.remotePaths = {};
+          this.syncQueue = [];
           this.resizeCanvas();
           this.redrawAll(); 
           
@@ -1165,7 +1182,7 @@
                      sendSketch({ name: "drawBatch", id: this.currentPath.id, pts: this.syncQueue });
                      this.syncQueue = [];
                  }
-             }, 40); // 25 fps batching (Zero Lag)
+             }, 40); // 25 fps precise batching
           }
         },
         
@@ -1186,12 +1203,18 @@
           if (this.rectW && Math.abs((this.canvas.width / this.dpr) - rect.width) < 2 && Math.abs((this.canvas.height / this.dpr) - rect.height) < 2) return;
           
           this.rectW = rect.width; this.rectH = rect.height;
-          this.canvas.width = rect.width * this.dpr;
-          this.canvas.height = rect.height * this.dpr;
-          this.canvas.style.width = `${rect.width}px`;
-          this.canvas.style.height = `${rect.height}px`;
-          this.ctx.scale(this.dpr, this.dpr);
+          this.rectCache = rect;
           
+          const doResize = (cvs, ctx) => {
+              cvs.width = this.rectW * this.dpr;
+              cvs.height = this.rectH * this.dpr;
+              cvs.style.width = `${this.rectW}px`;
+              cvs.style.height = `${this.rectH}px`;
+              ctx.scale(this.dpr, this.dpr);
+              ctx.lineCap = "round"; ctx.lineJoin = "round";
+          };
+          doResize(this.canvas, this.ctx);
+          doResize(this.activeCanvas, this.activeCtx);
           this.redrawAll();
         },
         
@@ -1214,26 +1237,19 @@
              this.glow = !this.glow; 
              e.currentTarget.classList.toggle("active", this.glow); 
              this.wrap.classList.toggle("neon-mode", this.glow); 
-             this.redrawAll(); // Safely triggers visual refresh, does NOT wipe data
+             // Toggle theme globally for all paths
+             this.paths.forEach(p => p.glow = this.glow);
+             this.redrawAll(); 
           });
           
           $("#symToggle")?.addEventListener("click", (e) => {
              vibe(10); this.symmetry = !this.symmetry; e.currentTarget.classList.toggle("active", this.symmetry);
           });
           
-          $("#undoCanvas").addEventListener("click", () => { 
-              vibe(15); 
-              if(this.paths.length > 0) {
-                  this.paths.pop();
-                  this.redrawAll();
-                  if (room.connected) sendSketch({ name: "undo" });
-              }
-          });
+          $("#undoCanvas").addEventListener("click", () => { vibe(15); this.undo(); });
           
           $("#clearCanvas").addEventListener("click", () => { 
-              vibe(25); 
-              this.paths = [];
-              this.redrawAll();
+              vibe(25); this.paths = []; this.redrawAll();
               if (room.connected) sendSketch({ name: "clear", glow: this.glow });
           });
           
@@ -1260,9 +1276,9 @@
         bindCanvas() {
           const cursor = $("#brushCursor");
           
-          // Normalized mapping (solves the dot/NaN bug perfectly)
+          // Normalized mapping (0.0 to 1.0) for perfect mathematical sync
           const getPos = (e) => {
-            const rect = this.wrap.getBoundingClientRect();
+            const rect = this.rectCache;
             return { 
                 x: (e.clientX - rect.left) / rect.width, 
                 y: (e.clientY - rect.top) / rect.height 
@@ -1270,8 +1286,8 @@
           };
           
           const updateCursor = (e) => { 
-             if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
-             const rect = this.wrap.getBoundingClientRect();
+             if (e.pointerType === 'touch' || e.pointerType === 'pen') { cursor.style.display = 'none'; return; }
+             const rect = this.rectCache;
              cursor.style.display = 'block';
              cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`;
              cursor.style.left = `${e.clientX - rect.left}px`; cursor.style.top = `${e.clientY - rect.top}px`;
@@ -1279,10 +1295,10 @@
           };
           
           const down = (e) => { 
-             if(!e.isPrimary) return;
              if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
-             e.preventDefault(); this.drawing = true;
-             try { this.canvas.setPointerCapture(e.pointerId); } catch(err){}
+             e.preventDefault(); 
+             this.drawing = true;
+             this.rectCache = this.wrap.getBoundingClientRect(); // Fresh cache
              
              const p = getPos(e); 
              const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
@@ -1291,27 +1307,34 @@
              this.currentPath = {
                  id: Math.random().toString(36).substr(2, 9),
                  color: this.color, size: dynSize, tool: this.tool, glow: this.glow, sym: this.symmetry,
-                 points: [ {x: p.x, y: p.y} ]
+                 points: [ p ]
              };
-             this.lastP = {x: p.x, y: p.y};
+             this.lastP = p;
              
-             this.executeDrawSegment(this.lastP, this.lastP, this.currentPath);
-             if (room.connected) sendSketch({ name: "start", path: { ...this.currentPath } });
+             if (this.tool === 'eraser') {
+                 this.executeDrawSegment(p, p, this.currentPath, this.ctx);
+             } else {
+                 this.drawPathFull(this.currentPath, this.activeCtx);
+             }
+             
+             if (room.connected) sendSketch({ name: "start", path: { ...this.currentPath, points: [{x: p.x.toFixed(4), y: p.y.toFixed(4)}] } });
              updateCursor(e);
           };
           
           const move = (e) => { 
-             if(!e.isPrimary) return;
-             updateCursor(e);
-             if (!this.drawing || !this.currentPath) return; 
+             if (!this.drawing) { updateCursor(e); return; }
              e.preventDefault(); 
              
              const processPoint = (ev) => {
                  const p = getPos(ev);
                  this.currentPath.points.push(p);
-                 this.executeDrawSegment(this.lastP, p, this.currentPath);
                  this.syncQueue.push({x: p.x.toFixed(4), y: p.y.toFixed(4)});
-                 this.lastP = p;
+                 
+                 if (this.currentPath.tool === 'eraser') {
+                     // Eraser writes directly to main canvas instantly
+                     this.executeDrawSegment(this.lastP, p, this.currentPath, this.ctx);
+                     this.lastP = p;
+                 }
              };
              
              if (e.getCoalescedEvents) {
@@ -1320,119 +1343,115 @@
              } else {
                  processPoint(e);
              }
+             
+             // Brushes redraw cleanly on active layer to avoid sausage overlapping
+             if (this.currentPath.tool !== 'eraser') {
+                 this.activeCtx.clearRect(0, 0, this.rectW, this.rectH);
+                 this.drawPathFull(this.currentPath, this.activeCtx);
+             }
+             updateCursor(e);
           };
           
           const up = (e) => { 
-             if(!e.isPrimary || !this.drawing) return;
+             if (!this.drawing) return;
              this.drawing = false; 
-             try { this.canvas.releasePointerCapture(e.pointerId); } catch(err){}
              
              if (this.currentPath) {
+                 // Bake active brush down to main canvas
+                 if (this.currentPath.tool !== 'eraser') {
+                     this.drawPathFull(this.currentPath, this.ctx);
+                 }
+                 this.activeCtx.clearRect(0, 0, this.rectW, this.rectH);
+                 
                  this.paths.push(this.currentPath);
                  if (room.connected) sendSketch({ name: "end", id: this.currentPath.id });
                  this.currentPath = null;
              }
           };
           
-          this.canvas.addEventListener("pointerdown", down); 
-          this.canvas.addEventListener("pointermove", move); 
-          this.canvas.addEventListener("pointerup", up);
-          this.canvas.addEventListener("pointercancel", up);
-          this.canvas.addEventListener("pointerleave", () => { if(!this.drawing) cursor.style.display = 'none'; });
+          this.activeCanvas.addEventListener("pointerdown", down); 
+          window.addEventListener("pointermove", move); 
+          window.addEventListener("pointerup", up);
+          window.addEventListener("pointercancel", up);
         },
         
-        executeDrawSegment(p0, p1, path) {
-           const render = () => {
-               this.ctx.beginPath();
-               this.ctx.moveTo(p0.x * this.rectW, p0.y * this.rectH);
-               this.ctx.lineTo(p1.x * this.rectW, p1.y * this.rectH);
-               this.ctx.stroke();
+        executeDrawSegment(p0, p1, path, targetCtx) {
+           const render = (w, c, comp) => {
+               targetCtx.globalCompositeOperation = comp;
+               targetCtx.lineWidth = w;
+               targetCtx.strokeStyle = c;
+               targetCtx.beginPath();
+               targetCtx.moveTo(p0.x * this.rectW, p0.y * this.rectH);
+               targetCtx.lineTo(p1.x * this.rectW, p1.y * this.rectH);
+               targetCtx.stroke();
+               
                if (path.sym) {
                    const cx = this.rectW / 2;
-                   this.ctx.beginPath();
-                   this.ctx.moveTo(cx + (cx - p0.x * this.rectW), p0.y * this.rectH);
-                   this.ctx.lineTo(cx + (cx - p1.x * this.rectW), p1.y * this.rectH);
-                   this.ctx.stroke();
+                   targetCtx.beginPath();
+                   targetCtx.moveTo(cx + (cx - p0.x * this.rectW), p0.y * this.rectH);
+                   targetCtx.lineTo(cx + (cx - p1.x * this.rectW), p1.y * this.rectH);
+                   targetCtx.stroke();
                }
            };
-
-           this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
-           
+           targetCtx.lineCap = "round"; targetCtx.lineJoin = "round";
            if (path.tool === 'eraser') {
-               // Eraser logic - punches through background
-               this.ctx.globalCompositeOperation = 'source-over';
-               this.ctx.lineWidth = path.size * 2; 
-               this.ctx.strokeStyle = this.glow ? '#0a0a0f' : '#fdfcf9';
-               render();
-           } else if (path.glow) {
-               // High-performance Fake Neon (No shadowBlur lag)
-               this.ctx.globalCompositeOperation = 'screen';
-               this.ctx.lineWidth = path.size * 1.8; this.ctx.strokeStyle = path.color + '66';
-               render();
-               this.ctx.lineWidth = path.size * 0.4; this.ctx.strokeStyle = '#ffffff';
-               render();
-               this.ctx.globalCompositeOperation = 'source-over';
-           } else {
-               // Standard Ink
-               this.ctx.globalCompositeOperation = 'source-over';
-               this.ctx.lineWidth = path.size; this.ctx.strokeStyle = path.color;
-               render();
+               // Physically cuts through transparent canvas to reveal CSS background
+               render(path.size * 2, 'rgba(0,0,0,1)', 'destination-out');
            }
         },
         
-        drawPathFull(path) {
-            if(!path || path.points.length === 0) return;
+        drawPathFull(path, targetCtx) {
+            if(!path || !path.points || path.points.length === 0) return;
             
-            const render = () => {
-                 this.ctx.beginPath();
+            const render = (w, c, comp) => {
+                 targetCtx.globalCompositeOperation = comp;
+                 targetCtx.lineWidth = w;
+                 targetCtx.strokeStyle = c;
+                 targetCtx.beginPath();
                  const first = path.points[0];
-                 this.ctx.moveTo(first.x * this.rectW, first.y * this.rectH);
+                 targetCtx.moveTo(first.x * this.rectW, first.y * this.rectH);
                  for(let i=1; i<path.points.length; i++) {
-                     this.ctx.lineTo(path.points[i].x * this.rectW, path.points[i].y * this.rectH);
+                     targetCtx.lineTo(path.points[i].x * this.rectW, path.points[i].y * this.rectH);
                  }
-                 this.ctx.stroke();
+                 targetCtx.stroke();
                  
                  if (path.sym) {
                      const cx = this.rectW / 2;
-                     this.ctx.beginPath();
-                     this.ctx.moveTo(cx + (cx - first.x * this.rectW), first.y * this.rectH);
+                     targetCtx.beginPath();
+                     targetCtx.moveTo(cx + (cx - first.x * this.rectW), first.y * this.rectH);
                      for(let i=1; i<path.points.length; i++) {
-                         this.ctx.lineTo(cx + (cx - path.points[i].x * this.rectW), path.points[i].y * this.rectH);
+                         targetCtx.lineTo(cx + (cx - path.points[i].x * this.rectW), path.points[i].y * this.rectH);
                      }
-                     this.ctx.stroke();
+                     targetCtx.stroke();
                  }
             };
 
-            this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
+            targetCtx.lineCap = "round"; targetCtx.lineJoin = "round";
             
             if (path.tool === 'eraser') {
-               this.ctx.globalCompositeOperation = 'source-over';
-               this.ctx.lineWidth = path.size * 2; 
-               this.ctx.strokeStyle = this.glow ? '#0a0a0f' : '#fdfcf9';
-               render();
+               render(path.size * 2, 'rgba(0,0,0,1)', 'destination-out');
            } else if (path.glow) {
-               this.ctx.globalCompositeOperation = 'screen';
-               this.ctx.lineWidth = path.size * 1.8; this.ctx.strokeStyle = path.color + '66';
-               render();
-               this.ctx.lineWidth = path.size * 0.4; this.ctx.strokeStyle = '#ffffff'; 
-               render();
-               this.ctx.globalCompositeOperation = 'source-over';
+               // Zero-lag Fake Neon
+               render(path.size * 1.5, path.color + '88', 'screen');
+               render(path.size * 0.4, '#ffffff', 'source-over'); 
            } else {
-               this.ctx.globalCompositeOperation = 'source-over';
-               this.ctx.lineWidth = path.size; this.ctx.strokeStyle = path.color;
-               render();
+               render(path.size, path.color, 'source-over');
            }
         },
         
         redrawAll() {
-            // Fill Background Solidly based on Theme
-            this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.fillStyle = this.glow ? '#0a0a0f' : '#fdfcf9';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            // Re-render Math Paths perfectly
-            this.paths.forEach(p => this.drawPathFull(p));
-            Object.values(this.remotePaths).forEach(p => this.drawPathFull(p));
+            // Main canvas is transparent! CSS does the heavy lifting for themes.
+            this.ctx.clearRect(0, 0, this.rectW, this.rectH);
+            this.paths.forEach(p => this.drawPathFull(p, this.ctx));
+            Object.values(this.remotePaths).forEach(p => this.drawPathFull(p, this.ctx));
+        },
+        
+        undo() {
+            if(this.paths.length > 0) { 
+                this.paths.pop(); 
+                this.redrawAll(); 
+                if (room.connected) sendSketch({ name: "undo" });
+            }
         },
         
         award(slot) { vibe(40); if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
@@ -1450,23 +1469,22 @@
           }
           else if (p.name === "start") {
              this.remotePaths[p.path.id] = p.path;
-             const first = p.path.points[0];
-             this.executeDrawSegment(first, first, p.path);
+             this.executeDrawSegment(p.path.points[0], p.path.points[0], p.path, this.ctx);
           }
           else if (p.name === "drawBatch" && p.pts && this.remotePaths[p.id]) {
              const rPath = this.remotePaths[p.id];
              let lastP = rPath.points[rPath.points.length - 1];
              p.pts.forEach(pt => {
                  const newP = {x: parseFloat(pt.x), y: parseFloat(pt.y)};
+                 this.executeDrawSegment(lastP, newP, rPath, this.ctx);
                  rPath.points.push(newP);
-                 this.executeDrawSegment(lastP, newP, rPath);
                  lastP = newP;
              });
           }
           else if (p.name === "end" && this.remotePaths[p.id]) {
              this.paths.push(this.remotePaths[p.id]);
              delete this.remotePaths[p.id];
-             // Optional redrawAll here to perfectly finalize the path
+             this.redrawAll(); // Automatically cleans up joint overlaps perfectly!
           }
         },
         snapshot() { return { prompt: this.prompt, glow: this.glow, paths: this.paths }; },
