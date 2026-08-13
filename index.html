@@ -4,70 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#111318" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Playroom" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Playroom Arcade: Overdrive</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-### 2. Inject the PWA Engine
-This block dynamically generates the app icon, the installation manifest, and the service worker. Paste this right at the beginning of your `<script>` tag.
-
-```html:Playroom Arcade Master:index.html
-<!-- ... existing code ... -->
-      <button id="clearStatsBtn" class="danger-button" type="button" style="width:100%">Clear saved stats</button>
-      <button id="clearStatsBtn" class="danger-button" type="button">Clear saved stats</button>
-    </div>
-  </dialog>
-
-  <script>
-    (function initPWA() {
-      try {
-        // Generate a dynamic app icon (A pink rounded square with 'P')
-        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#ff6b8a"/><text x="50" y="68" font-family="system-ui, sans-serif" font-weight="900" font-size="50" fill="#fff" text-anchor="middle">P</text></svg>`;
-        const iconUrl = 'data:image/svg+xml;base64,' + btoa(iconSvg);
-        
-        // Inject Apple Touch Icon for iOS
-        const appleIcon = document.createElement('link');
-        appleIcon.rel = 'apple-touch-icon';
-        appleIcon.href = iconUrl;
-        document.head.appendChild(appleIcon);
-        
-        // Build the Web App Manifest dynamically
-        const manifest = {
-          name: "Playroom Arcade",
-          short_name: "Playroom",
-          start_url: window.location.pathname,
-          display: "standalone",
-          background_color: "#111318",
-          theme_color: "#111318",
-          icons: [{ src: iconUrl, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        const manifestLink = document.createElement('link');
-        manifestLink.rel = 'manifest';
-        manifestLink.href = URL.createObjectURL(manifestBlob);
-        document.head.appendChild(manifestLink);
-        
-        // Inject a dummy Service Worker (Strict requirement for Chrome/Android to prompt installation)
-        const swCode = `
-          self.addEventListener('install', e => self.skipWaiting());
-          self.addEventListener('activate', e => self.clients.claim());
-          self.addEventListener('fetch', e => {
-            e.respondWith(fetch(e.request).catch(() => new Response('App is installed.')));
-          });
-        `;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-        }
-      } catch(e) {}
-    })();
-
-    const $ = (selector) => document.querySelector(selector);
-    const $$ = (selector) => [...document.querySelectorAll(selector)];
-    const STORE_KEY = "playroom-arcade-v6";
-  
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   
   <style>
@@ -89,7 +34,7 @@ This block dynamically generates the app icon, the installation manifest, and th
     html { min-height: 100%; background: var(--bg); }
     body {
       min-height: 100dvh; margin: 0; color: var(--ink); font-family: var(--font); overflow-x: hidden;
-      background:
+      background: 
         radial-gradient(circle at 13% 13%, color-mix(in srgb, var(--p1) 36%, transparent), transparent 28rem),
         radial-gradient(circle at 83% 18%, color-mix(in srgb, var(--hot) 31%, transparent), transparent 24rem),
         radial-gradient(circle at 70% 88%, color-mix(in srgb, var(--p2) 32%, transparent), transparent 25rem),
@@ -414,7 +359,6 @@ This block dynamically generates the app icon, the installation manifest, and th
   </style>
 </head>
 <body>
-
   <!-- BACKGROUND FX -->
   <canvas id="worldCanvas" aria-hidden="true"></canvas>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -424,7 +368,6 @@ This block dynamically generates the app icon, the installation manifest, and th
     <span class="doodle d5"></span><span class="doodle d6"></span>
   </div>
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
-
   <!-- MAIN APP -->
   <div class="app-shell" id="appShell">
     <header class="topbar">
@@ -442,7 +385,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         </button>
       </nav>
     </header>
-
     <main>
       <!-- LOBBY SCREEN -->
       <section id="lobbyScreen" class="screen active">
@@ -458,7 +400,6 @@ This block dynamically generates the app icon, the installation manifest, and th
             <div class="scribble-line"></div>
           </div>
         </div>
-
         <section class="panel setup-panel" aria-label="Player setup">
           <div><p class="section-label">Players</p><h2>Make it yours</h2></div>
           <div class="setup-grid">
@@ -492,7 +433,6 @@ This block dynamically generates the app icon, the installation manifest, and th
             </div>
           </div>
         </section>
-
         <section class="game-section" aria-label="Games">
           <div class="section-heading">
             <div><p class="section-label">Modules</p><h2>Overcharged Arcade</h2></div>
@@ -501,7 +441,6 @@ This block dynamically generates the app icon, the installation manifest, and th
           <div id="gameGrid" class="game-grid"></div>
         </section>
       </section>
-
       <!-- ARENA SCREEN -->
       <section id="arenaScreen" class="screen">
         <div class="arena-shell">
@@ -532,7 +471,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       </section>
     </main>
   </div>
-
   <!-- STATS MODAL -->
   <dialog id="statsDialog" class="stats-dialog">
     <div class="dialog-card">
@@ -552,20 +490,53 @@ This block dynamically generates the app icon, the installation manifest, and th
       <button id="clearStatsBtn" class="danger-button" type="button" style="width:100%">Clear saved stats</button>
     </div>
   </dialog>
-
+  
   <!-- JAVASCRIPT ENGINE -->
   <script>
+    (function initPWA() {
+      try {
+        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#ff6b8a"/><text x="50" y="68" font-family="system-ui, sans-serif" font-weight="900" font-size="50" fill="#fff" text-anchor="middle">P</text></svg>`;
+        const iconUrl = 'data:image/svg+xml;base64,' + btoa(iconSvg);
+        
+        const appleIcon = document.createElement('link');
+        appleIcon.rel = 'apple-touch-icon';
+        appleIcon.href = iconUrl;
+        document.head.appendChild(appleIcon);
+        
+        const manifest = {
+          name: "Playroom Arcade",
+          short_name: "Playroom",
+          start_url: window.location.pathname,
+          display: "standalone",
+          background_color: "#111318",
+          theme_color: "#111318",
+          icons: [{ src: iconUrl, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = URL.createObjectURL(manifestBlob);
+        document.head.appendChild(manifestLink);
+        
+        const swCode = `
+          self.addEventListener('install', e => self.skipWaiting());
+          self.addEventListener('activate', e => self.clients.claim());
+          self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => new Response('App is installed.'))); });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+      } catch(e) {}
+    })();
+
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
     const STORE_KEY = "playroom-arcade-v6";
     const ROOM_PREFIX = "playroom-arcade-v6-";
     
     const vibe = (ms) => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
-
     const profile = { names: ["You", "Partner"], theme: "cosmic", roundLength: 60, sound: true, stats: { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] } };
     const room = { peer: null, conn: null, code: "", connected: false, role: "local", mySlot: 0, suppress: false };
     const app = { activeGame: null, score: [0, 0], timer: null, timeLeft: 0, roomNames: ["You", "Partner"], finished: false };
-
     const games = [
       { id: "cipher", title: "Hyper Cipher", tag: "Codebreaking", icon: "HC", color: "#ff4f7b", desc: "Hack rotating ciphers matrix-style. Type fast as the code visually scrambles." },
       { id: "maze", title: "Grid Runner", tag: "Fog of War", icon: "GR", color: "#2f7df6", desc: "Navigate a dark, volatile neon grid. You can only see adjacent tiles. Dodge hidden traps!" },
@@ -575,7 +546,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
       { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Draw with neon paint, full symmetry, and perfect sync." }
     ];
-
     const cipherRounds = [
       { encoded: "ORYYB", answer: "HELLO", hint: "Caesar +13. A classic opener." },
       { encoded: "Uifsf jt b wbvmu", answer: "THERE IS A VAULT", hint: "Shifted forward by 1." },
@@ -586,7 +556,7 @@ This block dynamically generates the app icon, the installation manifest, and th
     const remixPrompts = ["A luxury date night in a supermarket", "A spaceship crew arguing over the aux cable", "A detective scene inside a dramatic cafe"];
     const remixConstraints = ["include a fake brand name", "contain one terrible rhyme", "overconfident narrator", "mention a mysterious suitcase"];
     const sketchPrompts = ["Draw our future villain lair", "Draw a map to the world's most dramatic snack", "Draw the creature that guards our inside jokes", "Draw an epic battle between cats and vacuums"];
-
+    
     const audio = {
       ctx: null,
       unlock() {
@@ -607,7 +577,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       bad() { this.tone(130, 0.2, "sawtooth", 0.08); document.body.classList.add('screen-shake'); setTimeout(()=>document.body.classList.remove('screen-shake'), 400); },
       win() { [360, 470, 620, 840, 1020].forEach((f, i) => setTimeout(() => this.tone(f, 0.15, "sine", 0.05), i * 80)); }
     };
-
     function loadProfile() {
       try { const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
         Object.assign(profile, { names: saved.names || profile.names, theme: saved.theme || profile.theme, roundLength: saved.roundLength || profile.roundLength, sound: saved.sound ?? profile.sound, stats: saved.stats || profile.stats });
@@ -623,13 +592,12 @@ This block dynamically generates the app icon, the installation manifest, and th
     function initials(name) { return (name || "?").slice(0, 1).toUpperCase(); }
     function slotForLocalAction(physicalSide) { return !room.connected ? physicalSide : (physicalSide === 0 ? room.mySlot : (room.mySlot === 0 ? 1 : 0)); }
     function canonicalName(slot) { return room.connected ? app.roomNames[slot] : (slot === 0 ? localName() : partnerName()); }
-
     function toast(message) {
       const node = document.createElement("div"); node.className = "toast"; node.textContent = message;
       $("#toastHost").appendChild(node); setTimeout(() => node.remove(), 2800);
     }
     function setTheme(theme) { profile.theme = theme; document.body.dataset.theme = theme; saveProfile(); }
-
+    
     function renderChrome() {
       $("#playerOneInput").value = localName(); $("#playerTwoInput").value = partnerName();
       $("#themeSelect").value = profile.theme; $("#roundLengthSelect").value = String(profile.roundLength);
@@ -653,9 +621,7 @@ This block dynamically generates the app icon, the installation manifest, and th
         $("#connectionStatus").textContent = room.code ? `Waiting for partner in ${room.code}...` : "Same-screen mode is ready.";
       }
     }
-
     function showScreen(id) { $$(".screen").forEach(s => s.classList.remove("active")); $(`#${id}`).classList.add("active"); }
-
     function renderGameGrid() {
       $("#gameGrid").innerHTML = games.map((game) => `
         <article class="game-card" style="--card-color:${game.color}" data-game="${game.id}" tabindex="0" role="button">
@@ -666,7 +632,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       `).join("");
       $$(".game-card").forEach((card) => card.addEventListener("click", () => { vibe(15); startGame(card.dataset.game); }));
     }
-
     function startGame(id) {
       if (room.connected && room.role !== "host" && !room.suppress) return toast("Only the host can launch games.");
       clearTimer(); app.activeGame = id; app.finished = false;
@@ -680,12 +645,11 @@ This block dynamically generates the app icon, the installation manifest, and th
       showScreen("arenaScreen"); audio.synthHit();
       modules[id].start(); syncRoom();
     }
-
+    
     function addScore(slot, points) { app.score[slot] += points; renderChrome(); syncRoom(); vibe(40); }
     function setScore(score) { app.score = [Number(score[0] || 0), Number(score[1] || 0)]; renderChrome(); }
     function resetScores() { app.score = [0, 0]; renderChrome(); syncRoom(); }
     function winnerFromScore() { if (app.score[0] === app.score[1]) return null; return app.score[0] > app.score[1] ? 0 : 1; }
-
     function finishRound(message, winner = winnerFromScore()) {
       if (app.finished) return; clearTimer(); app.finished = true; profile.stats.games += 1;
       
@@ -702,7 +666,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       if (!$(".round-result")) $("#gameMount").insertAdjacentHTML("afterbegin", `<div class="round-result">${message}<span>SCOREBOARD LOCKED</span></div>`);
       syncRoom({ finishedMessage: message });
     }
-
     function startTimer(seconds, onEnd) {
       clearTimer(); app.timeLeft = seconds;
       
@@ -737,7 +700,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       if (!room.connected || room.role !== "host" || room.suppress) return;
       send("SYNC", { score: app.score, names: app.roomNames, activeGame: app.activeGame, timeLeft: app.timeLeft, finished: app.finished, module: app.activeGame && modules[app.activeGame].snapshot ? modules[app.activeGame].snapshot() : null, ...extra });
     }
-
     const peerConfig = {
       config: {
         iceServers: [
@@ -747,7 +709,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         ]
       }
     };
-
     function createRoom() {
       if (typeof Peer === "undefined") return toast("PeerJS not loaded.");
       closeRoom(); room.role = "host"; room.mySlot = 0; room.code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -823,12 +784,11 @@ This block dynamically generates the app icon, the installation manifest, and th
       if (room.conn) room.conn.close(); if (room.peer) room.peer.destroy();
       room.peer = null; room.conn = null; room.connected = false; room.code = ""; room.role = "local"; room.mySlot = 0;
     }
-
+    
     const shuffle = (items) => [...items].sort(() => Math.random() - 0.5);
     const sample = (items) => items[Math.floor(Math.random() * items.length)];
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     const safe = (txt) => String(txt).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
-
     const modules = {
       cipher: {
         round: 0, solved: [], scrambleTimer: null,
@@ -880,7 +840,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         snapshot() { return { round: this.round, solved: this.solved }; },
         restore(data) { this.round = data.round || 0; this.solved = data.solved || []; this.render(); }
       },
-
       maze: {
         size: 7, pos: { x: 0, y: 0 }, exit: { x: 6, y: 6 }, traps: [], gems: [], moves: 0,
         start() {
@@ -934,7 +893,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         snapshot() { return { pos: this.pos, traps: this.traps, gems: this.gems, moves: this.moves }; },
         restore(d) { this.pos = d.pos || this.pos; this.traps = d.traps || []; this.gems = d.gems || []; this.moves = d.moves || 0; this.render(); }
       },
-
       signal: {
         colors: ["red", "blue", "green", "gold"], sequence: [], input: [], showing: false,
         start() { this.sequence = [sample(this.colors), sample(this.colors)]; this.input = []; this.showing = false; this.render(); },
@@ -949,7 +907,7 @@ This block dynamically generates the app icon, the installation manifest, and th
             </div>
           `;
           $("#showSignalBtn").addEventListener("click", () => { vibe(15); this.flash(); });
-          $$(".signal-pad").forEach(pad => pad.addEventListener("pointerdown", () => {
+          $$(".signal-pad").forEach(pad => pad.addEventListener("pointerdown", () => { 
              if(!this.showing) { pad.classList.add("active"); vibe(20); }
              this.pick(slotForLocalAction(0), pad.dataset.color);
           }));
@@ -989,7 +947,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         snapshot() { return { sequence: this.sequence, input: this.input, showing: this.showing }; },
         restore(d) { this.sequence = d.sequence || []; this.input = d.input || []; this.showing = Boolean(d.showing); this.render(); }
       },
-
       trap: {
         tiles: [], bank: [0, 0], turn: 0,
         start() {
@@ -1053,7 +1010,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         snapshot() { return { tiles: this.tiles, bank: this.bank, turn: this.turn }; },
         restore(d) { this.tiles = d.tiles || []; this.bank = d.bank || [0, 0]; this.turn = d.turn || 0; this.render(); }
       },
-
       reflex: {
         phase: "wait", round: 0, timeout: null,
         start() { this.round = 0; this.next(); },
@@ -1094,7 +1050,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         snapshot() { return { phase: this.phase, round: this.round }; },
         restore(d) { this.phase = d.phase || "wait"; this.round = d.round || 0; this.render(); }
       },
-
       remix: {
         prompt: "", constraints: [], entries: [], turn: 0,
         start() { this.prompt = sample(remixPrompts); this.constraints = shuffle(remixConstraints).slice(0, 2); this.entries = []; this.turn = 0; this.render(); },
@@ -1130,7 +1085,6 @@ This block dynamically generates the app icon, the installation manifest, and th
         snapshot() { return { prompt: this.prompt, constraints: this.constraints, entries: this.entries, turn: this.turn }; },
         restore(d) { this.prompt = d.prompt || ""; this.constraints = d.constraints || []; this.entries = d.entries || []; this.turn = d.turn || 0; this.render(); }
       },
-
       sketch: {
         canvas: null, ctx: null, drawing: false, initialized: false,
         color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen',
@@ -1151,7 +1105,7 @@ This block dynamically generates the app icon, the installation manifest, and th
                   <div class="sketch-actions">
                     <button id="sketchA" class="award-btn p1-bg">Award ${canonicalName(0)}</button>
                     <button id="sketchB" class="award-btn p2-bg">Award ${canonicalName(1)}</button>
-                    <button id="sketchExit" class="award-btn danger-bg" title="Exit">✕</button>
+                    <button id="sketchExit" class="award-btn danger-bg" title="Exit"> </button>
                   </div>
                 </header>
                 
@@ -1210,7 +1164,6 @@ This block dynamically generates the app icon, the installation manifest, and th
           $("#appShell").style.display = 'flex';
           if(this._resize) window.removeEventListener("resize", this._resize);
         },
-
         resizeCanvas() {
           if (!this.wrap || !this.canvas) return;
           const rect = this.wrap.getBoundingClientRect();
@@ -1219,7 +1172,6 @@ This block dynamically generates the app icon, the installation manifest, and th
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
           if (this.canvas.width > 0) tempCanvas.getContext('2d').drawImage(this.canvas, 0, 0);
-
           this.canvas.width = rect.width * this.dpr;
           this.canvas.height = rect.height * this.dpr;
           this.canvas.style.width = `${rect.width}px`;
@@ -1251,14 +1203,14 @@ This block dynamically generates the app icon, the installation manifest, and th
           $("#nativeColor").addEventListener("input", e => { this.color = e.target.value; });
           
           $("#glowToggle").addEventListener("click", (e) => { 
-            vibe(10); this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
-            this.wrap.classList.toggle("neon-mode", this.glow); this.clear(true); 
-          });
+             vibe(10); this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
+             this.wrap.classList.toggle("neon-mode", this.glow); this.clear(true); 
+           });
           
           $("#undoCanvas").addEventListener("click", () => { vibe(15); this.undo(); });
           $("#clearCanvas").addEventListener("click", () => { vibe(25); this.saveState(); this.clear(true); });
-          $("#downloadCanvas").addEventListener("click", () => {
-             vibe(20);
+          $("#downloadCanvas").addEventListener("click", () => { 
+             vibe(20); 
              const tempCanvas = document.createElement('canvas'); 
              tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
              const tCtx = tempCanvas.getContext('2d');
@@ -1271,8 +1223,8 @@ This block dynamically generates the app icon, the installation manifest, and th
           
           $("#sketchA").addEventListener("click", () => this.award(slotForLocalAction(0)));
           $("#sketchB").addEventListener("click", () => this.award(slotForLocalAction(1)));
-          $("#sketchExit").addEventListener("click", () => {
-             if (room.connected && room.role !== "host") return toast("Only host can return.");
+          $("#sketchExit").addEventListener("click", () => { 
+             if (room.connected && room.role !== "host") return toast("Only host can return."); 
              clearTimer(); app.activeGame = null; app.finished = false; this.close(); showScreen("lobbyScreen"); syncRoom();
           });
         },
@@ -1282,12 +1234,11 @@ This block dynamically generates the app icon, the installation manifest, and th
           const getPos = (e) => {
             const rect = this.wrap.getBoundingClientRect();
             return { 
-              x: e.clientX - rect.left, y: e.clientY - rect.top, 
-              nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height 
-            };
+               x: e.clientX - rect.left, y: e.clientY - rect.top, 
+               nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height 
+             };
           };
-
-          const updateCursor = (e) => {
+          const updateCursor = (e) => { 
              if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
              const rect = this.wrap.getBoundingClientRect();
              cursor.style.display = 'block';
@@ -1297,38 +1248,38 @@ This block dynamically generates the app icon, the installation manifest, and th
           };
           
           const down = (e) => { 
-            if(!e.isPrimary) return; 
-            if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
+             if(!e.isPrimary) return;
+             if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
             e.preventDefault(); this.drawing = true; this.canvas.setPointerCapture(e.pointerId);
-            
+             
             const p = getPos(e); 
             this.lastX = p.x; this.lastY = p.y;
             this.saveState();
-            
+             
             const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
             const dynSize = this.size * pressure;
-            
+             
             this.executeDraw(p.x, p.y, p.x, p.y, this.color, dynSize, this.tool, this.glow);
             sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
             updateCursor(e);
           };
           
           const move = (e) => { 
-            if(!e.isPrimary) return;
+             if(!e.isPrimary) return;
             updateCursor(e);
             if (!this.drawing) return; 
             e.preventDefault(); 
             const p = getPos(e); 
-            
+              
             const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
             const dynSize = this.size * pressure;
-            
+             
             this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, dynSize, this.tool, this.glow);
-            
+             
             const nx0 = this.lastX / this.wrap.getBoundingClientRect().width;
             const ny0 = this.lastY / this.wrap.getBoundingClientRect().height;
             sendSketch({ name: "draw", nx0: nx0.toFixed(4), ny0: ny0.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
-            
+             
             this.lastX = p.x; this.lastY = p.y;
           };
           
@@ -1341,7 +1292,7 @@ This block dynamically generates the app icon, the installation manifest, and th
           this.canvas.addEventListener("pointerleave", () => { cursor.style.display = 'none'; this.drawing = false; });
         },
         
-        executeDraw(x0, y0, x1, y1, color, size, tool, glow) {
+        executeDraw(x0, y0, x1, y1, color, size, tool, glow) { 
            this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
            this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
            if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } else { this.ctx.shadowBlur = 0; }
@@ -1371,10 +1322,10 @@ This block dynamically generates the app icon, the installation manifest, and th
         },
         
         clear(sendIt) { 
-          this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0; 
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
-          if (sendIt) sendSketch({ name: "clear", glow: this.glow }); 
-        },
+           this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
+           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+           if (sendIt) sendSketch({ name: "clear", glow: this.glow }); 
+         },
         
         award(slot) { vibe(40); if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
         remoteAction(a) { if (a.name === "sketchAward") this.award(a.slot); },
@@ -1382,15 +1333,15 @@ This block dynamically generates the app icon, the installation manifest, and th
         remoteSketch(p) {
           if (!this.ctx || !this.wrap) return;
           if (p.name === "clear") { 
-            this.glow = p.glow; $("#canvasWrap").classList.toggle("neon-mode", this.glow); 
-            $('#glowToggle').classList.toggle("active", this.glow); this.clear(false); 
-          }
+             this.glow = p.glow; $("#canvasWrap").classList.toggle("neon-mode", this.glow); 
+             $('#glowToggle').classList.toggle("active", this.glow); this.clear(false); 
+           }
           else if (p.name === "syncFull") {
             const img = new Image();
-            img.onload = () => { 
-               this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
+            img.onload = () => {
+                this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
-               this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
                this.ctx.drawImage(img, 0, 0); this.ctx.restore();
             };
             img.src = p.data;
@@ -1402,14 +1353,14 @@ This block dynamically generates the app icon, the installation manifest, and th
         },
         snapshot() { return { prompt: this.prompt, glow: this.glow, image: this.canvas ? this.canvas.toDataURL('image/webp', 0.5) : null }; },
         restore(d) { 
-          this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true; 
-          if (!this.canvas) this.start(); 
-          const title = $(".prompt-text"); if (title) title.textContent = this.prompt; 
-          if(d.image) { this.remoteSketch({name: "syncFull", data: d.image}); }
+           this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true;
+           if (!this.canvas) this.start();
+           const title = $(".prompt-text"); if (title) title.textContent = this.prompt;
+           if(d.image) { this.remoteSketch({name: "syncFull", data: d.image}); }
         }
       }
     };
-
+    
     function renderStats() {
       $("#statGames").textContent = profile.stats.games;
       $("#statWinsP1").textContent = profile.stats.wins[0]; $("#statWinsP2").textContent = profile.stats.wins[1];
@@ -1421,7 +1372,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       const canvas = $("#worldCanvas");
       canvas.dispatchEvent(new CustomEvent("burst", { detail: { amount, x: canvas.width / 2, y: canvas.height * 0.18 } }));
     }
-
     function initBackground() {
       const canvas = $("#worldCanvas"); const ctx = canvas.getContext("2d");
       let dots = []; let shards = []; let mouse = { x: -1000, y: -1000 };
@@ -1474,7 +1424,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       });
       window.addEventListener("resize", resize); resize(); draw();
     }
-
     function bindApp() {
       $("#playerOneInput").addEventListener("input", e => { profile.names[0] = e.target.value.trim() || "You"; if (room.role === "host") app.roomNames[0] = localName(); if (room.role === "guest") send("HELLO", { name: localName(), slot: 1 }); saveProfile(); renderChrome(); syncRoom(); });
       $("#playerTwoInput").addEventListener("input", e => { profile.names[1] = e.target.value.trim() || "Partner"; if (!room.connected) app.roomNames[1] = partnerName(); saveProfile(); renderChrome(); });
@@ -1487,7 +1436,7 @@ This block dynamically generates the app icon, the installation manifest, and th
          clearTimer(); app.activeGame = null; app.finished = false; 
          if(modules.sketch.close) modules.sketch.close();
          showScreen("lobbyScreen"); syncRoom(); 
-      };
+       };
       $("#backBtn").addEventListener("click", onBack);
       $("#homeBtn").addEventListener("click", onBack);
       
@@ -1502,7 +1451,6 @@ This block dynamically generates the app icon, the installation manifest, and th
       $("#clearStatsBtn").addEventListener("click", () => { vibe(40); profile.stats = { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] }; resetScores(); saveProfile(); renderStats(); toast("Stats cleared."); });
       document.body.addEventListener("click", () => audio.unlock(), { once: true });
     }
-
     window.addEventListener("DOMContentLoaded", () => {
         loadProfile(); app.roomNames = [localName(), partnerName()]; setTheme(profile.theme);
         renderGameGrid(); renderChrome(); bindApp(); initBackground();
