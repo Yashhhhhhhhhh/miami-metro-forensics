@@ -9,6 +9,64 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+### 2. Inject the PWA Engine
+This block dynamically generates the app icon, the installation manifest, and the service worker. Paste this right at the beginning of your `<script>` tag.
+
+```html:Playroom Arcade Master:index.html
+<!-- ... existing code ... -->
+      <button id="clearStatsBtn" class="danger-button" type="button" style="width:100%">Clear saved stats</button>
+      <button id="clearStatsBtn" class="danger-button" type="button">Clear saved stats</button>
+    </div>
+  </dialog>
+
+  <script>
+    (function initPWA() {
+      try {
+        // Generate a dynamic app icon (A pink rounded square with 'P')
+        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#ff6b8a"/><text x="50" y="68" font-family="system-ui, sans-serif" font-weight="900" font-size="50" fill="#fff" text-anchor="middle">P</text></svg>`;
+        const iconUrl = 'data:image/svg+xml;base64,' + btoa(iconSvg);
+        
+        // Inject Apple Touch Icon for iOS
+        const appleIcon = document.createElement('link');
+        appleIcon.rel = 'apple-touch-icon';
+        appleIcon.href = iconUrl;
+        document.head.appendChild(appleIcon);
+        
+        // Build the Web App Manifest dynamically
+        const manifest = {
+          name: "Playroom Arcade",
+          short_name: "Playroom",
+          start_url: window.location.pathname,
+          display: "standalone",
+          background_color: "#111318",
+          theme_color: "#111318",
+          icons: [{ src: iconUrl, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = URL.createObjectURL(manifestBlob);
+        document.head.appendChild(manifestLink);
+        
+        // Inject a dummy Service Worker (Strict requirement for Chrome/Android to prompt installation)
+        const swCode = `
+          self.addEventListener('install', e => self.skipWaiting());
+          self.addEventListener('activate', e => self.clients.claim());
+          self.addEventListener('fetch', e => {
+            e.respondWith(fetch(e.request).catch(() => new Response('App is installed.')));
+          });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+        }
+      } catch(e) {}
+    })();
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+    const STORE_KEY = "playroom-arcade-v6";
   
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   
