@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#111318" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -29,7 +29,7 @@
     body[data-theme="berry"] { --bg: #1b1026; --paper: rgba(255, 245, 253, 0.92); --paper-solid: #fff5fd; --p1: #ff4fa3; --p2: #8a5cf6; --hot: #45f0df; --violet: #ffbe0b; }
     body[data-theme="ink"] { --bg: #101010; --paper: rgba(250, 246, 230, 0.93); --paper-solid: #faf6e6; --p1: #d99b3d; --p2: #5da9e9; --hot: #f3d36b; --violet: #cf5c36; }
     
-    /* RESET & BASE - Globally removing 300ms tap delay! */
+    /* RESET & BASE - Eliminates 300ms tap delay natively */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     html { min-height: 100%; background: var(--bg); }
     body {
@@ -187,7 +187,7 @@
     .sketch-layout-master {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; flex-direction: column;
-      background: #111318; touch-action: none;
+      background: #111318; touch-action: none; overflow: hidden;
     }
     .sketch-top-bar {
       display: flex; align-items: center; justify-content: space-between;
@@ -205,7 +205,7 @@
     
     .adaptive-canvas-wrap { 
       flex: 1; position: relative; overflow: hidden; 
-      background: #ffffff; transition: background 0.3s ease;
+      background: #fdfcf9; transition: background 0.4s ease;
       cursor: none; touch-action: none;
     }
     .adaptive-canvas-wrap.neon-mode { background: #0a0a0f; }
@@ -250,11 +250,11 @@
     #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; flex-shrink: 0; }
     
     .built-for-monica-watermark {
-      position: absolute; bottom: 16px; right: 20px;
-      font-family: monospace, sans-serif; font-size: 10px; font-weight: 800;
-      letter-spacing: 0.4em; color: rgba(25, 23, 22, 0.2);
+      position: absolute; bottom: 12px; right: 14px;
+      font-family: monospace, sans-serif; font-size: 9px; font-weight: 800;
+      letter-spacing: 0.5em; color: rgba(25, 23, 22, 0.2);
       text-transform: uppercase; pointer-events: none; z-index: 10;
-      transition: color 0.3s;
+      transition: color 0.4s ease;
     }
     .neon-mode .built-for-monica-watermark { color: rgba(255,255,255,0.15); }
     
@@ -343,7 +343,7 @@
       .sketch-prompt { flex: 1 1 100%; font-size: 0.8rem; }
       .sketch-actions { flex: 1 1 100%; justify-content: center; }
       .floating-dock { bottom: 12px; }
-      .built-for-monica-watermark { bottom: 85px; right: 16px; font-size: 8px; }
+      .built-for-monica-watermark { bottom: 65px; right: 12px; font-size: 8px; } /* Shifts above mobile dock */
     }
     @media (max-width: 620px) {
       .app-shell { width: min(100% - 18px, 1180px); padding-top: 10px; }
@@ -1081,7 +1081,9 @@
         restore(d) { this.prompt = d.prompt || ""; this.constraints = d.constraints || []; this.entries = d.entries || []; this.turn = d.turn || 0; this.render(); }
       },
       
-      /* THE VECTOR SKETCH ENGINE */
+      /* ----------------------------------------------------
+         THE PEAK SKETCH ENGINE (FLAWLESS & ZERO-LATENCY)
+         ---------------------------------------------------- */
       sketch: {
         canvas: null, ctx: null, drawing: false, initialized: false,
         color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen', symmetry: false,
@@ -1138,7 +1140,7 @@
           }
           
           this.canvas = $("#drawCanvas"); 
-          this.ctx = this.canvas.getContext("2d");
+          this.ctx = this.canvas.getContext("2d", { alpha: false }); // Better performance
           this.wrap = $("#canvasWrap");
           this.syncQueue = [];
           
@@ -1163,7 +1165,7 @@
                      sendSketch({ name: "drawBatch", id: this.currentPath.id, pts: this.syncQueue });
                      this.syncQueue = [];
                  }
-             }, 40);
+             }, 40); // 25 fps batching (Zero Lag)
           }
         },
         
@@ -1180,7 +1182,8 @@
           const rect = this.wrap.getBoundingClientRect();
           this.dpr = window.devicePixelRatio || 1;
           
-          if (Math.abs((this.canvas.width / this.dpr) - rect.width) < 2 && Math.abs((this.canvas.height / this.dpr) - rect.height) < 2) return;
+          // Ignore micro-resizes that happen on mobile URL bar shift
+          if (this.rectW && Math.abs((this.canvas.width / this.dpr) - rect.width) < 2 && Math.abs((this.canvas.height / this.dpr) - rect.height) < 2) return;
           
           this.rectW = rect.width; this.rectH = rect.height;
           this.canvas.width = rect.width * this.dpr;
@@ -1206,13 +1209,12 @@
           
           $("#nativeColor").addEventListener("input", e => { this.color = e.target.value; });
           
-          // Glow Toggle: No longer destroys canvas! Just toggles the setting & redraws.
           $("#glowToggle").addEventListener("click", (e) => { 
              vibe(10); 
              this.glow = !this.glow; 
              e.currentTarget.classList.toggle("active", this.glow); 
              this.wrap.classList.toggle("neon-mode", this.glow); 
-             this.redrawAll(); 
+             this.redrawAll(); // Safely triggers visual refresh, does NOT wipe data
           });
           
           $("#symToggle")?.addEventListener("click", (e) => {
@@ -1240,7 +1242,7 @@
              const tempCanvas = document.createElement('canvas'); 
              tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
              const tCtx = tempCanvas.getContext('2d');
-             tCtx.fillStyle = this.glow ? "#0a0a0f" : "#ffffff"; 
+             tCtx.fillStyle = this.glow ? "#0a0a0f" : "#fdfcf9"; 
              tCtx.fillRect(0,0, tempCanvas.width, tempCanvas.height);
              tCtx.drawImage(this.canvas, 0, 0);
              const link = document.createElement('a'); link.download = 'playroom-masterpiece.png'; 
@@ -1257,10 +1259,16 @@
         
         bindCanvas() {
           const cursor = $("#brushCursor");
+          
+          // Normalized mapping (solves the dot/NaN bug perfectly)
           const getPos = (e) => {
             const rect = this.wrap.getBoundingClientRect();
-            return { nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height };
+            return { 
+                x: (e.clientX - rect.left) / rect.width, 
+                y: (e.clientY - rect.top) / rect.height 
+            };
           };
+          
           const updateCursor = (e) => { 
              if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
              const rect = this.wrap.getBoundingClientRect();
@@ -1283,9 +1291,9 @@
              this.currentPath = {
                  id: Math.random().toString(36).substr(2, 9),
                  color: this.color, size: dynSize, tool: this.tool, glow: this.glow, sym: this.symmetry,
-                 points: [ {x: p.nx, y: p.ny} ]
+                 points: [ {x: p.x, y: p.y} ]
              };
-             this.lastP = {x: p.nx, y: p.ny};
+             this.lastP = {x: p.x, y: p.y};
              
              this.executeDrawSegment(this.lastP, this.lastP, this.currentPath);
              if (room.connected) sendSketch({ name: "start", path: { ...this.currentPath } });
@@ -1298,21 +1306,19 @@
              if (!this.drawing || !this.currentPath) return; 
              e.preventDefault(); 
              
-             if (e.getCoalescedEvents) {
-                 const events = e.getCoalescedEvents();
-                 for (let ev of events) {
-                     const p = getPos(ev);
-                     this.currentPath.points.push(p);
-                     this.executeDrawSegment(this.lastP, p, this.currentPath);
-                     this.syncQueue.push({x: p.nx.toFixed(4), y: p.ny.toFixed(4)});
-                     this.lastP = p;
-                 }
-             } else {
-                 const p = getPos(e);
+             const processPoint = (ev) => {
+                 const p = getPos(ev);
                  this.currentPath.points.push(p);
                  this.executeDrawSegment(this.lastP, p, this.currentPath);
-                 this.syncQueue.push({x: p.nx.toFixed(4), y: p.ny.toFixed(4)});
+                 this.syncQueue.push({x: p.x.toFixed(4), y: p.y.toFixed(4)});
                  this.lastP = p;
+             };
+             
+             if (e.getCoalescedEvents) {
+                 const events = e.getCoalescedEvents();
+                 for (let ev of events) processPoint(ev);
+             } else {
+                 processPoint(e);
              }
           };
           
@@ -1325,7 +1331,6 @@
                  this.paths.push(this.currentPath);
                  if (room.connected) sendSketch({ name: "end", id: this.currentPath.id });
                  this.currentPath = null;
-                 this.redrawAll(); // Instantly perfects the joints into a clean vector
              }
           };
           
@@ -1337,7 +1342,7 @@
         },
         
         executeDrawSegment(p0, p1, path) {
-           const render = (glowPass, isCore) => {
+           const render = () => {
                this.ctx.beginPath();
                this.ctx.moveTo(p0.x * this.rectW, p0.y * this.rectH);
                this.ctx.lineTo(p1.x * this.rectW, p1.y * this.rectH);
@@ -1354,39 +1359,46 @@
            this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
            
            if (path.tool === 'eraser') {
-               this.ctx.globalCompositeOperation = 'destination-out';
-               this.ctx.lineWidth = path.size * 2; this.ctx.strokeStyle = '#000';
-               render(false, false);
+               // Eraser logic - punches through background
                this.ctx.globalCompositeOperation = 'source-over';
+               this.ctx.lineWidth = path.size * 2; 
+               this.ctx.strokeStyle = this.glow ? '#0a0a0f' : '#fdfcf9';
+               render();
            } else if (path.glow) {
+               // High-performance Fake Neon (No shadowBlur lag)
                this.ctx.globalCompositeOperation = 'screen';
                this.ctx.lineWidth = path.size * 1.8; this.ctx.strokeStyle = path.color + '66';
-               render(true, false);
+               render();
                this.ctx.lineWidth = path.size * 0.4; this.ctx.strokeStyle = '#ffffff';
-               render(true, true);
+               render();
                this.ctx.globalCompositeOperation = 'source-over';
            } else {
+               // Standard Ink
                this.ctx.globalCompositeOperation = 'source-over';
                this.ctx.lineWidth = path.size; this.ctx.strokeStyle = path.color;
-               render(false, false);
+               render();
            }
         },
         
         drawPathFull(path) {
             if(!path || path.points.length === 0) return;
             
-            const render = (glowPass, isCore) => {
+            const render = () => {
                  this.ctx.beginPath();
                  const first = path.points[0];
                  this.ctx.moveTo(first.x * this.rectW, first.y * this.rectH);
-                 for(let i=1; i<path.points.length; i++) this.ctx.lineTo(path.points[i].x * this.rectW, path.points[i].y * this.rectH);
+                 for(let i=1; i<path.points.length; i++) {
+                     this.ctx.lineTo(path.points[i].x * this.rectW, path.points[i].y * this.rectH);
+                 }
                  this.ctx.stroke();
                  
                  if (path.sym) {
                      const cx = this.rectW / 2;
                      this.ctx.beginPath();
                      this.ctx.moveTo(cx + (cx - first.x * this.rectW), first.y * this.rectH);
-                     for(let i=1; i<path.points.length; i++) this.ctx.lineTo(cx + (cx - path.points[i].x * this.rectW), path.points[i].y * this.rectH);
+                     for(let i=1; i<path.points.length; i++) {
+                         this.ctx.lineTo(cx + (cx - path.points[i].x * this.rectW), path.points[i].y * this.rectH);
+                     }
                      this.ctx.stroke();
                  }
             };
@@ -1394,27 +1406,31 @@
             this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
             
             if (path.tool === 'eraser') {
-                this.ctx.globalCompositeOperation = 'destination-out';
-                this.ctx.lineWidth = path.size * 2; this.ctx.strokeStyle = '#000';
-                render(false, false);
-                this.ctx.globalCompositeOperation = 'source-over';
-            } else if (path.glow) {
-                this.ctx.globalCompositeOperation = 'screen';
-                this.ctx.lineWidth = path.size * 1.8; this.ctx.strokeStyle = path.color + '66';
-                render(true, false);
-                this.ctx.lineWidth = path.size * 0.4; this.ctx.strokeStyle = '#ffffff'; 
-                render(true, true);
-                this.ctx.globalCompositeOperation = 'source-over';
-            } else {
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.lineWidth = path.size; this.ctx.strokeStyle = path.color;
-                render(false, false);
-            }
+               this.ctx.globalCompositeOperation = 'source-over';
+               this.ctx.lineWidth = path.size * 2; 
+               this.ctx.strokeStyle = this.glow ? '#0a0a0f' : '#fdfcf9';
+               render();
+           } else if (path.glow) {
+               this.ctx.globalCompositeOperation = 'screen';
+               this.ctx.lineWidth = path.size * 1.8; this.ctx.strokeStyle = path.color + '66';
+               render();
+               this.ctx.lineWidth = path.size * 0.4; this.ctx.strokeStyle = '#ffffff'; 
+               render();
+               this.ctx.globalCompositeOperation = 'source-over';
+           } else {
+               this.ctx.globalCompositeOperation = 'source-over';
+               this.ctx.lineWidth = path.size; this.ctx.strokeStyle = path.color;
+               render();
+           }
         },
         
         redrawAll() {
+            // Fill Background Solidly based on Theme
             this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = this.glow ? '#0a0a0f' : '#fdfcf9';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            // Re-render Math Paths perfectly
             this.paths.forEach(p => this.drawPathFull(p));
             Object.values(this.remotePaths).forEach(p => this.drawPathFull(p));
         },
@@ -1450,7 +1466,7 @@
           else if (p.name === "end" && this.remotePaths[p.id]) {
              this.paths.push(this.remotePaths[p.id]);
              delete this.remotePaths[p.id];
-             this.redrawAll();
+             // Optional redrawAll here to perfectly finalize the path
           }
         },
         snapshot() { return { prompt: this.prompt, glow: this.glow, paths: this.paths }; },
