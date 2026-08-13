@@ -1169,7 +1169,8 @@
           }
           
           this.canvas = $("#drawCanvas"); 
-          this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
+          // GPU Hardware Acceleration Unlocked
+          this.ctx = this.canvas.getContext("2d");
           this.wrap = $("#canvasWrap");
           
           if (!this.initialized) {
@@ -1290,13 +1291,13 @@
              
              const p = getPos(e); 
              this.lastP = p;
-             this.saveState();
              
              const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
              const dynSize = this.size * pressure;
              
-             this.executeDraw(p.x, p.y, p.x, p.y, this.color, dynSize, this.tool, this.glow, this.sym);
-             sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.sym });
+             // Draw a tiny line to force a dot on tap
+             this.executeDraw(p.x, p.y, p.x + 0.01, p.y + 0.01, this.color, dynSize, this.tool, this.glow, this.sym);
+             sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: (p.nx + 0.0001).toFixed(4), ny1: (p.ny + 0.0001).toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.sym });
              updateCursor(e);
           };
           
@@ -1309,28 +1310,32 @@
              
              const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
              const dynSize = this.size * pressure;
-             
-             // Quadratic Bezier Smoothing Logic
-             const midX = (this.lastP.x + p.x) / 2;
-             const midY = (this.lastP.y + p.y) / 2;
 
-             this.executeDraw(this.lastP.x, this.lastP.y, midX, midY, this.color, dynSize, this.tool, this.glow, this.sym);
+             this.executeDraw(this.lastP.x, this.lastP.y, p.x, p.y, this.color, dynSize, this.tool, this.glow, this.sym);
              
-             const nx0 = this.lastP.nx; const ny0 = this.lastP.ny;
-             const nmidX = (this.lastP.nx + p.nx) / 2; const nmidY = (this.lastP.ny + p.ny) / 2;
+             sendSketch({ name: "draw", nx0: this.lastP.nx.toFixed(4), ny0: this.lastP.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.sym });
              
-             sendSketch({ name: "draw", nx0: nx0.toFixed(4), ny0: ny0.toFixed(4), nx1: nmidX.toFixed(4), ny1: nmidY.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.sym });
-             
-             this.lastP = { x: midX, y: midY, nx: nmidX, ny: nmidY };
+             this.lastP = p;
           };
           
-          const up = (e) => { this.drawing = false; this.canvas.releasePointerCapture(e.pointerId); };
+          const up = (e) => { 
+            if(!this.drawing) return;
+            this.drawing = false; 
+            this.canvas.releasePointerCapture(e.pointerId); 
+            this.saveState(); // Saved state moved to mouseup to prevent massive touch stutter
+          };
           
           this.canvas.addEventListener("pointerdown", down); 
           this.canvas.addEventListener("pointermove", move); 
           this.canvas.addEventListener("pointerup", up);
           this.canvas.addEventListener("pointercancel", up);
-          this.canvas.addEventListener("pointerleave", () => { cursor.style.display = 'none'; this.drawing = false; });
+          this.canvas.addEventListener("pointerleave", () => { 
+             if(this.drawing) {
+                 this.drawing = false;
+                 this.saveState();
+             }
+             cursor.style.display = 'none'; 
+          });
         },
         
         executeDraw(x0, y0, x1, y1, color, size, tool, glow, sym) { 
@@ -1340,13 +1345,16 @@
            if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } else { this.ctx.shadowBlur = 0; }
            if (tool === 'eraser') { this.ctx.globalCompositeOperation = 'destination-out'; this.ctx.lineWidth = size * 2; this.ctx.shadowBlur = 0; } else { this.ctx.globalCompositeOperation = 'source-over'; }
            
-           this.ctx.beginPath(); this.ctx.moveTo(x0, y0); this.ctx.quadraticCurveTo(x0, y0, x1, y1); this.ctx.stroke();
+           this.ctx.beginPath(); 
+           this.ctx.moveTo(x0, y0); 
+           this.ctx.lineTo(x1, y1); 
+           this.ctx.stroke();
            
            if (sym) {
                const rectW = this.canvas.width / this.dpr;
                this.ctx.beginPath(); 
                this.ctx.moveTo(rectW - x0, y0); 
-               this.ctx.quadraticCurveTo(rectW - x0, y0, rectW - x1, y1); 
+               this.ctx.lineTo(rectW - x1, y1); 
                this.ctx.stroke();
            }
         },
