@@ -789,6 +789,7 @@
     const sample = (items) => items[Math.floor(Math.random() * items.length)];
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     const safe = (txt) => String(txt).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+    
     const modules = {
       cipher: {
         round: 0, solved: [], scrambleTimer: null,
@@ -1087,12 +1088,13 @@
       },
       sketch: {
         canvas: null, ctx: null, drawing: false, initialized: false,
-        color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen',
+        color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen', symmetry: false,
         lastX: null, lastY: null, undoStack: [], wrap: null, dpr: 1, _resize: null,
+        rectW: 1, rectH: 1, rectLeft: 0, rectTop: 0,
         
         start() {
           document.body.classList.add('sketch-mode-active');
-          $("#appShell").style.display = 'none'; // Full takeover
+          $("#appShell").style.display = 'none';
           
           if (!this.prompt) this.prompt = sample(sketchPrompts);
           
@@ -1105,7 +1107,7 @@
                   <div class="sketch-actions">
                     <button id="sketchA" class="award-btn p1-bg">Award ${canonicalName(0)}</button>
                     <button id="sketchB" class="award-btn p2-bg">Award ${canonicalName(1)}</button>
-                    <button id="sketchExit" class="award-btn danger-bg" title="Exit"> </button>
+                    <button id="sketchExit" class="award-btn danger-bg" title="Exit">✕</button>
                   </div>
                 </header>
                 
@@ -1124,6 +1126,7 @@
                     <input type="range" id="brushSize" min="2" max="60" value="${this.size}">
                     <div class="color-picker-wrap"><input type="color" id="nativeColor" value="${this.color}"></div>
                     <button class="tool-btn active" id="glowToggle" title="Neon Glow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg></button>
+                    <button class="tool-btn" id="symToggle" title="Mirror Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M16 8l4 4-4 4"></path><path d="M8 8l-4 4 4 4"></path></svg></button>
                   </div>
                   <div class="dock-group" style="border:none;">
                     <button id="undoCanvas" class="tool-btn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path></svg></button>
@@ -1154,8 +1157,6 @@
           
           this.resizeCanvas();
           this.clear(false); 
-          this.undoStack = []; 
-          this.saveState();
         },
         
         close() {
@@ -1169,9 +1170,13 @@
           const rect = this.wrap.getBoundingClientRect();
           this.dpr = window.devicePixelRatio || 1;
           
+          // Strict check to prevent micro-resizes on mobile hiding address bars
+          if (Math.abs((this.canvas.width / this.dpr) - rect.width) < 2 && Math.abs((this.canvas.height / this.dpr) - rect.height) < 2) return;
+          
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
           if (this.canvas.width > 0) tempCanvas.getContext('2d').drawImage(this.canvas, 0, 0);
+          
           this.canvas.width = rect.width * this.dpr;
           this.canvas.height = rect.height * this.dpr;
           this.canvas.style.width = `${rect.width}px`;
@@ -1205,10 +1210,14 @@
           $("#glowToggle").addEventListener("click", (e) => { 
              vibe(10); this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
              this.wrap.classList.toggle("neon-mode", this.glow); this.clear(true); 
-           });
+          });
+          
+          $("#symToggle")?.addEventListener("click", (e) => {
+             vibe(10); this.symmetry = !this.symmetry; e.currentTarget.classList.toggle("active", this.symmetry);
+          });
           
           $("#undoCanvas").addEventListener("click", () => { vibe(15); this.undo(); });
-          $("#clearCanvas").addEventListener("click", () => { vibe(25); this.saveState(); this.clear(true); });
+          $("#clearCanvas").addEventListener("click", () => { vibe(25); this.clear(true); });
           $("#downloadCanvas").addEventListener("click", () => { 
              vibe(20); 
              const tempCanvas = document.createElement('canvas'); 
@@ -1232,73 +1241,90 @@
         bindCanvas() {
           const cursor = $("#brushCursor");
           const getPos = (e) => {
-            const rect = this.wrap.getBoundingClientRect();
             return { 
-               x: e.clientX - rect.left, y: e.clientY - rect.top, 
-               nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height 
+               x: e.clientX - this.rectLeft, y: e.clientY - this.rectTop, 
+               nx: (e.clientX - this.rectLeft) / this.rectW, ny: (e.clientY - this.rectTop) / this.rectH 
              };
           };
+          
           const updateCursor = (e) => { 
              if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
-             const rect = this.wrap.getBoundingClientRect();
              cursor.style.display = 'block';
              cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`;
-             cursor.style.left = `${e.clientX - rect.left}px`; cursor.style.top = `${e.clientY - rect.top}px`;
+             cursor.style.left = `${e.clientX - this.rectLeft}px`; cursor.style.top = `${e.clientY - this.rectTop}px`;
              cursor.style.color = this.color;
           };
           
           const down = (e) => { 
              if(!e.isPrimary) return;
              if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
-            e.preventDefault(); this.drawing = true; this.canvas.setPointerCapture(e.pointerId);
+             e.preventDefault(); this.drawing = true;
+             try { this.canvas.setPointerCapture(e.pointerId); } catch(err){}
              
-            const p = getPos(e); 
-            this.lastX = p.x; this.lastY = p.y;
-            this.saveState();
+             // Cache dom read to make move loop hyper-fast
+             const rect = this.wrap.getBoundingClientRect();
+             this.rectW = rect.width; this.rectH = rect.height;
+             this.rectLeft = rect.left; this.rectTop = rect.top;
              
-            const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
-            const dynSize = this.size * pressure;
+             const p = getPos(e); 
+             this.lastX = p.x; this.lastY = p.y;
              
-            this.executeDraw(p.x, p.y, p.x, p.y, this.color, dynSize, this.tool, this.glow);
-            sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
-            updateCursor(e);
+             const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
+             const dynSize = this.size * pressure;
+             
+             // draw small offset dot on tap without movement
+             this.executeDraw(p.x, p.y, p.x + 0.1, p.y, this.color, dynSize, this.tool, this.glow, this.symmetry);
+             sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.symmetry });
+             updateCursor(e);
           };
           
           const move = (e) => { 
              if(!e.isPrimary) return;
-            updateCursor(e);
-            if (!this.drawing) return; 
-            e.preventDefault(); 
-            const p = getPos(e); 
+             if (!this.drawing) { updateCursor(e); return; }
+             e.preventDefault(); 
+             const p = getPos(e); 
               
-            const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
-            const dynSize = this.size * pressure;
+             const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
+             const dynSize = this.size * pressure;
              
-            this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, dynSize, this.tool, this.glow);
+             this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, dynSize, this.tool, this.glow, this.symmetry);
              
-            const nx0 = this.lastX / this.wrap.getBoundingClientRect().width;
-            const ny0 = this.lastY / this.wrap.getBoundingClientRect().height;
-            sendSketch({ name: "draw", nx0: nx0.toFixed(4), ny0: ny0.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
+             const nx0 = this.lastX / this.rectW;
+             const ny0 = this.lastY / this.rectH;
+             sendSketch({ name: "draw", nx0: nx0.toFixed(4), ny0: ny0.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.symmetry });
              
-            this.lastX = p.x; this.lastY = p.y;
+             this.lastX = p.x; this.lastY = p.y;
+             updateCursor(e);
           };
           
-          const up = (e) => { this.drawing = false; this.canvas.releasePointerCapture(e.pointerId); };
+          const up = (e) => { 
+             if(!e.isPrimary || !this.drawing) return;
+             this.drawing = false; 
+             try { this.canvas.releasePointerCapture(e.pointerId); } catch(err){}
+             this.saveState(); // Lag free undo storage on up
+          };
           
           this.canvas.addEventListener("pointerdown", down); 
           this.canvas.addEventListener("pointermove", move); 
           this.canvas.addEventListener("pointerup", up);
           this.canvas.addEventListener("pointercancel", up);
-          this.canvas.addEventListener("pointerleave", () => { cursor.style.display = 'none'; this.drawing = false; });
+          this.canvas.addEventListener("pointerleave", () => { if(!this.drawing) cursor.style.display = 'none'; });
         },
         
-        executeDraw(x0, y0, x1, y1, color, size, tool, glow) { 
+        executeDraw(x0, y0, x1, y1, color, size, tool, glow, sym) { 
            this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
            this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
            if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } else { this.ctx.shadowBlur = 0; }
            if (tool === 'eraser') { this.ctx.globalCompositeOperation = 'destination-out'; this.ctx.lineWidth = size * 2; this.ctx.shadowBlur = 0; } else { this.ctx.globalCompositeOperation = 'source-over'; }
            
            this.ctx.beginPath(); this.ctx.moveTo(x0, y0); this.ctx.lineTo(x1, y1); this.ctx.stroke();
+           
+           if(sym) {
+               const cx = this.canvas.width / this.dpr / 2;
+               const mx0 = cx + (cx - x0);
+               const mx1 = cx + (cx - x1);
+               this.ctx.beginPath(); this.ctx.moveTo(mx0, y0); this.ctx.lineTo(mx1, y1); this.ctx.stroke();
+           }
         },
         
         saveState() {
@@ -1307,8 +1333,9 @@
         },
         
         undo() {
-          if (this.undoStack.length > 0) {
-            const dataUrl = this.undoStack.pop();
+          if (this.undoStack.length > 1) {
+            this.undoStack.pop();
+            const dataUrl = this.undoStack[this.undoStack.length - 1];
             const img = new Image();
             img.onload = () => {
               this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
@@ -1324,8 +1351,15 @@
         clear(sendIt) { 
            this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-           if (sendIt) sendSketch({ name: "clear", glow: this.glow }); 
-         },
+           if (sendIt) {
+               sendSketch({ name: "clear", glow: this.glow });
+               this.undoStack = [];
+               this.saveState();
+           } else {
+               this.undoStack = [];
+               this.saveState();
+           }
+        },
         
         award(slot) { vibe(40); if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
         remoteAction(a) { if (a.name === "sketchAward") this.award(a.slot); },
@@ -1348,7 +1382,7 @@
           }
           else if (p.name === "draw") {
             const rect = this.wrap.getBoundingClientRect();
-            this.executeDraw(p.nx0 * rect.width, p.ny0 * rect.height, p.nx1 * rect.width, p.ny1 * rect.height, p.c, p.s, p.t, p.g);
+            this.executeDraw(p.nx0 * rect.width, p.ny0 * rect.height, p.nx1 * rect.width, p.ny1 * rect.height, p.c, p.s, p.t, p.g, p.sym);
           }
         },
         snapshot() { return { prompt: this.prompt, glow: this.glow, image: this.canvas ? this.canvas.toDataURL('image/webp', 0.5) : null }; },
