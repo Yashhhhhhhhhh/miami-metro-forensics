@@ -13,55 +13,37 @@
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   
   <style>
+    /* CORE VARIABLES & THEMES */
     :root {
-      --bg: #111318;
-      --ink: #191716;
-      --paper: rgba(255, 250, 239, 0.91);
-      --paper-solid: #fffaf0;
-      --muted: #6e665e;
-      --line: rgba(25, 23, 22, 0.14);
-      --shadow: 0 28px 80px rgba(16, 17, 22, 0.28);
-      --p1: #ff6b8a;
-      --p2: #3bb4ff;
-      --hot: #ff9f1c;
-      --mint: #38d9a9;
-      --violet: #8a5cf6;
-      --danger: #e84b4b;
+      --bg: #111318; --ink: #191716; --paper: rgba(255, 250, 239, 0.91); --paper-solid: #fffaf0;
+      --muted: #6e665e; --line: rgba(25, 23, 22, 0.14); --shadow: 0 28px 80px rgba(16, 17, 22, 0.28);
+      --p1: #ff6b8a; --p2: #3bb4ff; --hot: #ff9f1c; --mint: #38d9a9; --violet: #8a5cf6; --danger: #e84b4b;
       --radius: 18px;
-      --font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --font: "Inter", system-ui, -apple-system, sans-serif;
       --display: "DM Serif Display", Georgia, serif;
     }
-    body[data-theme="mint"] {
-      --bg: #08251f; --paper: rgba(238, 255, 247, 0.92); --paper-solid: #eefff7;
-      --p1: #06c78c; --p2: #2f7df6; --hot: #ffd166; --violet: #814ce7;
-    }
-    body[data-theme="berry"] {
-      --bg: #1b1026; --paper: rgba(255, 245, 253, 0.92); --paper-solid: #fff5fd;
-      --p1: #ff4fa3; --p2: #8a5cf6; --hot: #45f0df; --violet: #ffbe0b;
-    }
-    body[data-theme="ink"] {
-      --bg: #101010; --paper: rgba(250, 246, 230, 0.93); --paper-solid: #faf6e6;
-      --p1: #d99b3d; --p2: #5da9e9; --hot: #f3d36b; --violet: #cf5c36;
-    }
+    body[data-theme="mint"] { --bg: #08251f; --paper: rgba(238, 255, 247, 0.92); --paper-solid: #eefff7; --p1: #06c78c; --p2: #2f7df6; --hot: #ffd166; --violet: #814ce7; }
+    body[data-theme="berry"] { --bg: #1b1026; --paper: rgba(255, 245, 253, 0.92); --paper-solid: #fff5fd; --p1: #ff4fa3; --p2: #8a5cf6; --hot: #45f0df; --violet: #ffbe0b; }
+    body[data-theme="ink"] { --bg: #101010; --paper: rgba(250, 246, 230, 0.93); --paper-solid: #faf6e6; --p1: #d99b3d; --p2: #5da9e9; --hot: #f3d36b; --violet: #cf5c36; }
     
-    * { box-sizing: border-box; }
+    /* RESET & BASE */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html { min-height: 100%; background: var(--bg); }
     body {
-      min-height: 100dvh; margin: 0; color: var(--ink);
-      font-family: var(--font); overflow-x: hidden;
+      min-height: 100dvh; margin: 0; color: var(--ink); font-family: var(--font); overflow-x: hidden;
       background:
         radial-gradient(circle at 13% 13%, color-mix(in srgb, var(--p1) 36%, transparent), transparent 28rem),
         radial-gradient(circle at 83% 18%, color-mix(in srgb, var(--hot) 31%, transparent), transparent 24rem),
         radial-gradient(circle at 70% 88%, color-mix(in srgb, var(--p2) 32%, transparent), transparent 25rem),
         linear-gradient(135deg, #151820, var(--bg));
-      cursor: crosshair;
     }
     
-    button, input, select { font: inherit; cursor: pointer; }
+    button, input, select { font: inherit; cursor: pointer; outline: none; }
     input { cursor: text; }
     button { color: inherit; transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.95) !important; }
     
+    /* BACKGROUND FX */
     #worldCanvas, .paper-noise, .doodle-field { position: fixed; inset: 0; pointer-events: none; }
     #worldCanvas { z-index: 0; }
     .paper-noise {
@@ -71,11 +53,8 @@
     }
     .doodle-field { z-index: 2; overflow: hidden; }
     .doodle {
-      position: absolute; width: 90px; aspect-ratio: 1;
-      border: 4px solid rgba(255, 250, 239, 0.62);
-      filter: drop-shadow(0 16px 24px rgba(0,0,0,0.16));
-      animation: drift 12s ease-in-out infinite alternate;
-      backdrop-filter: blur(4px);
+      position: absolute; width: 90px; aspect-ratio: 1; border: 4px solid rgba(255, 250, 239, 0.62);
+      filter: drop-shadow(0 16px 24px rgba(0,0,0,0.16)); animation: drift 12s ease-in-out infinite alternate; backdrop-filter: blur(4px);
     }
     .d1 { left: 4%; top: 19%; border-radius: 43% 57% 48% 52%; border-color: color-mix(in srgb, var(--p1) 70%, white); width: 110px; }
     .d2 { right: 6%; top: 12%; width: 64px; border-radius: 999px; animation-delay: -2s; border-color: color-mix(in srgb, var(--hot) 75%, white); }
@@ -83,54 +62,38 @@
     .d4 { right: 14%; bottom: 12%; width: 120px; border-radius: 999px 999px 30px 30px; animation-delay: -1s; border-color: color-mix(in srgb, var(--mint) 74%, white); }
     .d5 { left: 48%; top: 6%; width: 38px; border-radius: 20%; animation-delay: -5s; border-width: 6px; rotate: 45deg; }
     .d6 { right: 45%; bottom: 8%; width: 80px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; animation-delay: -7s; border-color: color-mix(in srgb, var(--violet) 70%, white); }
-    @keyframes drift {
-      0% { translate: 0 0; rotate: -7deg; }
-      50% { translate: 15px -35px; rotate: 12deg; scale: 1.05; }
-      100% { translate: -10px -15px; rotate: -4deg; }
-    }
+    @keyframes drift { 0% { translate: 0 0; rotate: -7deg; } 50% { translate: 15px -35px; rotate: 12deg; scale: 1.05; } 100% { translate: -10px -15px; rotate: -4deg; } }
     
-    .app-shell {
-      position: relative; z-index: 4;
-      width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 18px 0 42px; display: flex; flex-direction: column; min-height: 100dvh;
-    }
+    /* LAYOUT SHELL */
+    .app-shell { position: relative; z-index: 4; width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 18px 0 42px; display: flex; flex-direction: column; min-height: 100dvh; }
     main { flex: 1; display: flex; flex-direction: column; }
     
+    /* TOPBAR */
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; transition: opacity 0.3s; }
     .brand-mark, .icon-button, .plain-button, .danger-button { border: 0; cursor: pointer; }
     .brand-mark {
       display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px;
-      background: rgba(255, 250, 239, 0.78); border: 1px solid rgba(255,255,255,0.5);
-      border-radius: 999px; box-shadow: 0 16px 36px rgba(0,0,0,0.14); backdrop-filter: blur(16px);
-      transition: transform 0.2s, box-shadow 0.2s;
+      background: rgba(255, 250, 239, 0.78); border: 1px solid rgba(255,255,255,0.5); border-radius: 999px; box-shadow: 0 16px 36px rgba(0,0,0,0.14); backdrop-filter: blur(16px); transition: transform 0.2s, box-shadow 0.2s;
     }
     .brand-mark:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-    .brand-sigil {
-      display: grid; place-items: center; width: 42px; aspect-ratio: 1; color: #fff; font-weight: 900;
-      background: conic-gradient(from 220deg, var(--p1), var(--hot), var(--p2), var(--p1)); border-radius: 50%;
-      animation: spin-slow 10s linear infinite;
-    }
+    .brand-sigil { display: grid; place-items: center; width: 42px; aspect-ratio: 1; color: #fff; font-weight: 900; background: conic-gradient(from 220deg, var(--p1), var(--hot), var(--p2), var(--p1)); border-radius: 50%; animation: spin-slow 10s linear infinite; }
     @keyframes spin-slow { to { rotate: 360deg; } }
     .brand-mark strong, .brand-mark small { display: block; line-height: 1; text-align: left; }
     .brand-mark strong { font-size: 0.98rem; }
     .brand-mark small { margin-top: 3px; color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
     
     .top-actions { display: flex; gap: 10px; }
-    .icon-button {
-      display: grid; place-items: center; width: 44px; aspect-ratio: 1; color: var(--paper-solid);
-      font-weight: 900; background: rgba(17, 19, 24, 0.42); border: 1px solid rgba(255,255,255,0.22);
-      border-radius: 14px; backdrop-filter: blur(14px); transition: transform 180ms ease, background 180ms ease;
-    }
+    .icon-button { display: grid; place-items: center; width: 44px; aspect-ratio: 1; color: var(--paper-solid); font-weight: 900; background: rgba(17, 19, 24, 0.42); border: 1px solid rgba(255,255,255,0.22); border-radius: 14px; backdrop-filter: blur(14px); transition: transform 180ms ease, background 180ms ease; }
     .icon-button:hover, .plain-button:hover { transform: translateY(-2px); background: rgba(17, 19, 24, 0.6); }
     
+    /* SCREENS */
     .screen { display: none; flex: 1; flex-direction: column; }
     .screen.active { display: flex; animation: rise 420ms cubic-bezier(.2,.8,.2,1); }
     @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
     
+    /* HERO ZONE */
     .hero-zone { display: grid; grid-template-columns: 1.06fr 0.94fr; gap: 22px; align-items: stretch; min-height: 360px; }
-    .hero-copy, .hero-art, .panel {
-      background: var(--paper); border: 1px solid rgba(255,255,255,0.68);
-      border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(18px);
-    }
+    .hero-copy, .hero-art, .panel { background: var(--paper); border: 1px solid rgba(255,255,255,0.68); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
     .hero-copy { padding: clamp(26px, 5vw, 58px); overflow: hidden; position: relative; }
     .kicker, .section-label { margin: 0 0 8px; color: var(--p1); font-size: 0.75rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
     h1 { max-width: 760px; margin-bottom: 18px; font-family: var(--display); font-size: clamp(3.3rem, 8vw, 7.8rem); line-height: 0.88; letter-spacing: 0; }
@@ -138,90 +101,53 @@
     h3 { margin-bottom: 8px; font-size: 1.1rem; }
     .hero-text { max-width: 660px; margin-bottom: 0; color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.7; }
     
-    .hero-art {
-      position: relative; min-height: 360px; overflow: hidden;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 13rem),
-                  linear-gradient(135deg, color-mix(in srgb, var(--p2) 24%, white), color-mix(in srgb, var(--hot) 28%, white));
-    }
+    .hero-art { position: relative; min-height: 360px; overflow: hidden; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 13rem), linear-gradient(135deg, color-mix(in srgb, var(--p2) 24%, white), color-mix(in srgb, var(--hot) 28%, white)); }
     .orbit { position: absolute; border: 2px dashed rgba(25, 23, 22, 0.24); border-radius: 50%; animation: spin 18s linear infinite; }
     .o1 { width: 360px; left: 8%; top: 10%; aspect-ratio: 1; }
     .o2 { width: 240px; right: 8%; bottom: 2%; animation-duration: 13s; animation-direction: reverse; aspect-ratio: 1;}
     .o3 { width: 120px; left: 22%; bottom: 18%; animation-duration: 8s; aspect-ratio: 1;}
     
-    .mascot-card {
-      position: absolute; display: grid; place-items: center; width: min(170px, 35vw); aspect-ratio: 3 / 4;
-      color: #fff; font-size: 5rem; font-weight: 900; border: 5px solid rgba(255,255,255,0.65);
-      border-radius: 22px; box-shadow: 0 28px 48px rgba(0,0,0,0.18); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
+    .mascot-card { position: absolute; display: grid; place-items: center; width: min(170px, 35vw); aspect-ratio: 3 / 4; color: #fff; font-size: 5rem; font-weight: 900; border: 5px solid rgba(255,255,255,0.65); border-radius: 22px; box-shadow: 0 28px 48px rgba(0,0,0,0.18); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .mascot-card:hover { transform: scale(1.1) rotate(0deg) !important; z-index: 10; }
     .mascot-card.one { left: 18%; top: 18%; background: linear-gradient(135deg, var(--p1), var(--hot)); rotate: -12deg; animation: bob 3.4s ease-in-out infinite; }
     .mascot-card.two { right: 18%; bottom: 13%; background: linear-gradient(135deg, var(--p2), var(--violet)); rotate: 10deg; animation: bob 3.8s ease-in-out infinite reverse; }
     .scribble-line { position: absolute; left: 13%; right: 13%; bottom: 24%; height: 24px; border-bottom: 6px solid rgba(25,23,22,0.2); border-radius: 50%; rotate: -7deg; }
-    @keyframes bob { 50% { translate: 0 -14px; } }
     
+    /* INPUTS & SETUP */
     .setup-panel, .game-section { margin-top: 22px; }
     .setup-panel { padding: 24px; }
     .setup-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
-    .connection-panel {
-      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; margin-top: 18px; padding: 14px;
-      background: rgba(255,255,255,0.48); border: 2px dashed color-mix(in srgb, var(--p2) 62%, transparent); border-radius: 16px;
-      transition: background 0.3s;
-    }
+    .connection-panel { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; margin-top: 18px; padding: 14px; background: rgba(255,255,255,0.48); border: 2px dashed color-mix(in srgb, var(--p2) 62%, transparent); border-radius: 16px; transition: background 0.3s; }
     .connection-panel.live { background: color-mix(in srgb, var(--mint) 15%, transparent); border-color: var(--mint); border-style: solid; }
     .connection-panel strong { display: block; line-height: 1.35; font-size: 1.1rem; }
     
     .room-controls { display: grid; grid-template-columns: auto minmax(118px, 150px) auto; gap: 8px; }
     .room-controls input { min-height: 42px; text-align: center; text-transform: uppercase; font-size: 1.2rem; letter-spacing: 0.2em; }
     .field-card { display: grid; gap: 9px; color: var(--muted); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
-    input, select {
-      width: 100%; min-height: 48px; color: var(--ink); background: rgba(255,255,255,0.68);
-      border: 1px solid var(--line); border-radius: 12px; outline: 0; padding: 0 14px; font-size: 0.98rem; font-weight: 800;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
+    input, select { width: 100%; min-height: 48px; color: var(--ink); background: rgba(255,255,255,0.68); border: 1px solid var(--line); border-radius: 12px; outline: 0; padding: 0 14px; font-size: 0.98rem; font-weight: 800; transition: border-color 0.2s, box-shadow 0.2s; }
     input:focus, select:focus { border-color: var(--p2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--p2) 18%, transparent); }
     
+    /* LOBBY ELEMENTS */
     .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
-    .mini-scoreboard {
-      display: flex; align-items: center; gap: 9px; padding: 10px 12px; color: var(--paper-solid);
-      background: rgba(17,19,24,0.48); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; backdrop-filter: blur(12px);
-    }
+    .mini-scoreboard { display: flex; align-items: center; gap: 9px; padding: 10px 12px; color: var(--paper-solid); background: rgba(17,19,24,0.48); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; backdrop-filter: blur(12px); }
     .mini-scoreboard span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; font-weight: 800; }
     .mini-scoreboard strong { color: var(--hot); font-size: 1.1rem; }
     
-    .game-grid {
-      display: grid; grid-template-columns: repeat(7, minmax(260px, 1fr)); gap: 15px; overflow-x: auto;
-      padding: 4px 4px 24px; scroll-snap-type: x mandatory; scrollbar-width: thin;
-    }
-    .game-card {
-      position: relative; min-height: 270px; padding: 22px; color: var(--ink); background: var(--paper);
-      border: 1px solid rgba(255,255,255,0.72); border-radius: var(--radius); box-shadow: 0 18px 48px rgba(0,0,0,0.18);
-      cursor: pointer; overflow: hidden; scroll-snap-align: start; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
-    }
+    .game-grid { display: grid; grid-template-columns: repeat(7, minmax(260px, 1fr)); gap: 15px; overflow-x: auto; padding: 4px 4px 24px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+    .game-card { position: relative; min-height: 270px; padding: 22px; color: var(--ink); background: var(--paper); border: 1px solid rgba(255,255,255,0.72); border-radius: var(--radius); box-shadow: 0 18px 48px rgba(0,0,0,0.18); cursor: pointer; overflow: hidden; scroll-snap-align: start; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s; }
     .game-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 32px 70px rgba(0,0,0,0.25); z-index: 2; }
-    .game-card::before {
-      content: ""; position: absolute; inset: -35% -30% auto auto; width: 190px; aspect-ratio: 1;
-      background: var(--card-color); border-radius: 50%; opacity: 0.15; transition: transform 0.4s ease;
-    }
+    .game-card::before { content: ""; position: absolute; inset: -35% -30% auto auto; width: 190px; aspect-ratio: 1; background: var(--card-color); border-radius: 50%; opacity: 0.15; transition: transform 0.4s ease; }
     .game-card:hover::before { transform: scale(1.5); opacity: 0.25; }
-    .game-card .card-icon {
-      display: grid; place-items: center; width: 66px; aspect-ratio: 1; margin-bottom: 16px; color: #fff;
-      background: var(--card-color); border-radius: 16px; font-size: 1.85rem; font-weight: 900;
-      box-shadow: 0 14px 28px color-mix(in srgb, var(--card-color) 34%, transparent);
-    }
+    .game-card .card-icon { display: grid; place-items: center; width: 66px; aspect-ratio: 1; margin-bottom: 16px; color: #fff; background: var(--card-color); border-radius: 16px; font-size: 1.85rem; font-weight: 900; box-shadow: 0 14px 28px color-mix(in srgb, var(--card-color) 34%, transparent); }
     .game-card p { color: var(--muted); line-height: 1.55; }
-    .game-card footer {
-      position: absolute; left: 22px; right: 22px; bottom: 22px; display: flex; align-items: center;
-      justify-content: space-between; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
-    }
+    .game-card footer { position: absolute; left: 22px; right: 22px; bottom: 22px; display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
     .game-card footer span:last-child { color: var(--card-color); background: color-mix(in srgb, var(--card-color) 15%, transparent); padding: 4px 10px; border-radius: 8px; }
     
+    /* ARENA SHELL */
     .arena-shell { display: grid; grid-template-columns: 220px 1fr; gap: 18px; flex: 1; min-height: 0; }
     .score-rail, .arena-main { padding: 18px; }
     .score-rail { align-self: start; display: grid; gap: 14px; position: sticky; top: 18px; }
-    .score-player {
-      display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: 12px;
-      background: rgba(255,255,255,0.52); border: 1px solid var(--line); border-radius: 14px; transition: background 0.3s;
-    }
+    .score-player { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.52); border: 1px solid var(--line); border-radius: 14px; transition: background 0.3s; }
     .score-player.active { background: #fff; border-color: var(--p2); box-shadow: 0 0 15px color-mix(in srgb, var(--p2) 30%, transparent); }
     .score-player span:not(.avatar-chip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 900; }
     .score-player strong { font-size: 1.4rem; }
@@ -242,23 +168,18 @@
     
     .plain-button, .danger-button, .primary-button { min-height: 42px; padding: 0 15px; border-radius: 12px; font-weight: 900; border: none; }
     .plain-button { background: rgba(255,255,255,0.64); border: 1px solid var(--line); }
-    .primary-button {
-      color: #fff; background: linear-gradient(135deg, var(--p1), var(--p2)); cursor: pointer;
-      box-shadow: 0 16px 30px color-mix(in srgb, var(--p2) 24%, transparent); transition: transform 0.1s, box-shadow 0.2s, filter 0.2s;
-    }
+    .primary-button { color: #fff; background: linear-gradient(135deg, var(--p1), var(--p2)); cursor: pointer; box-shadow: 0 16px 30px color-mix(in srgb, var(--p2) 24%, transparent); transition: transform 0.1s, box-shadow 0.2s, filter 0.2s; }
     .primary-button:hover { filter: brightness(1.1); box-shadow: 0 20px 40px color-mix(in srgb, var(--p2) 34%, transparent); }
     .danger-button { color: #fff; background: var(--danger); }
     
     .game-mount { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 600px;}
     .game-panel { display: flex; flex-direction: column; flex: 1; gap: 16px; }
     .instruction { color: var(--muted); line-height: 1.55; text-align: center; font-weight: 600; margin-top: auto; padding-top: 10px; }
-    .turn-banner {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px;
-      color: #fff; background: linear-gradient(135deg, var(--p1), var(--p2)); border-radius: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;
-      box-shadow: 0 10px 20px color-mix(in srgb, var(--p1) 20%, transparent); z-index: 10;
-    }
+    .turn-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; color: #fff; background: linear-gradient(135deg, var(--p1), var(--p2)); border-radius: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 10px 20px color-mix(in srgb, var(--p1) 20%, transparent); z-index: 10; }
     
-    /* SKETCH MODE MASTER STYLES */
+    /* -------------------------------------
+       SKETCH MASTER: FULLSCREEN PRO STUDIO
+       ------------------------------------- */
     body.sketch-mode-active { overflow: hidden !important; touch-action: none !important; }
     .sketch-layout-master {
       position: fixed; inset: 0; z-index: 9999;
@@ -273,11 +194,12 @@
     .sketch-brand { font-size: 0.8rem; font-weight: 900; letter-spacing: 0.15em; color: rgba(255,255,255,0.6); }
     .sketch-prompt { flex: 1; text-align: center; font-size: 0.95rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; }
     .sketch-actions { display: flex; gap: 10px; }
+    
     .award-btn { padding: 8px 16px; border-radius: 999px; font-weight: 900; font-size: 0.8rem; color: #fff; border: none; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     .award-btn.p1-bg { background: linear-gradient(135deg, var(--p1), #ff7b9a); }
     .award-btn.p2-bg { background: linear-gradient(135deg, var(--p2), #5bc0ff); }
-    .award-btn:active { transform: scale(0.95); }
-
+    .award-btn.danger-bg { background: linear-gradient(135deg, #444, #222); border: 1px solid rgba(255,255,255,0.2); }
+    
     .adaptive-canvas-wrap { 
       flex: 1; position: relative; overflow: hidden; 
       background: #fffdf5; transition: background 0.3s;
@@ -300,14 +222,17 @@
       background: rgba(28, 30, 36, 0.95); border: 1px solid rgba(255,255,255,0.1);
       border-radius: 999px; box-shadow: 0 24px 50px rgba(0,0,0,0.5);
       backdrop-filter: blur(24px); padding: 8px 16px; z-index: 100;
+      max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none;
     }
-    .dock-group { display: flex; align-items: center; gap: 8px; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); }
+    .floating-dock::-webkit-scrollbar { display: none; }
+    
+    .dock-group { display: flex; align-items: center; gap: 8px; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
     .dock-group:last-child { border: none; padding-right: 0; }
     
     .tool-btn {
       display: grid; place-items: center; width: 40px; height: 40px; background: transparent; 
       border: 2px solid transparent; border-radius: 12px; transition: all 0.2s;
-      color: rgba(255,255,255,0.7); cursor: pointer;
+      color: rgba(255,255,255,0.7); cursor: pointer; flex-shrink: 0;
     }
     .tool-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
     .tool-btn:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
@@ -316,32 +241,25 @@
     .color-picker-wrap { 
       position: relative; width: 32px; height: 32px; border-radius: 50%; 
       overflow: hidden; border: 2px solid rgba(255,255,255,0.4); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      flex-shrink: 0;
     }
     .color-picker-wrap input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; border: none; padding:0; }
-    #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; }
+    #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; flex-shrink: 0; }
     
     .built-for-monica-watermark {
-      position: absolute; bottom: 12px; right: 16px;
-      font-family: monospace, sans-serif; font-size: 9px; font-weight: 800;
-      letter-spacing: 0.3em; color: rgba(25, 23, 22, 0.25);
+      position: absolute; bottom: 16px; right: 20px;
+      font-family: monospace, sans-serif; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.4em; color: rgba(25, 23, 22, 0.2);
       text-transform: uppercase; pointer-events: none; z-index: 10;
       transition: color 0.3s;
     }
-    .neon-mode .built-for-monica-watermark { color: rgba(255,255,255,0.2); }
+    .neon-mode .built-for-monica-watermark { color: rgba(255,255,255,0.15); }
     
+    /* GAMES STYLES */
     .big-prompt { padding: clamp(20px, 4vw, 42px); text-align: center; background: rgba(0,0,0,0.8); border: 1px solid var(--mint); border-radius: 18px; box-shadow: inset 0 0 30px rgba(56, 217, 169, 0.2); }
     .vault-label { color: var(--mint); font-family: monospace; font-size: 0.9rem; letter-spacing: 0.2em; display: block; margin-bottom: 10px; opacity: 0.8; }
-    .glitch-text {
-      display: block; font-family: monospace; font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1;
-      color: #fff; text-shadow: 2px 0 var(--danger), -2px 0 var(--p2);
-      animation: glitch-skew 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
-    }
-    @keyframes glitch-skew {
-      0%, 95% { transform: skew(0deg); text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); }
-      96% { transform: skew(-10deg); text-shadow: -4px 0 var(--mint), 4px 0 var(--danger); }
-      97% { transform: skew(10deg); text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); }
-      98% { transform: skew(0deg); }
-    }
+    .glitch-text { display: block; font-family: monospace; font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1; color: #fff; text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); animation: glitch-skew 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite; }
+    @keyframes glitch-skew { 0%, 95% { transform: skew(0deg); text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); } 96% { transform: skew(-10deg); text-shadow: -4px 0 var(--mint), 4px 0 var(--danger); } 97% { transform: skew(10deg); text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); } 98% { transform: skew(0deg); } }
     .answer-row { display: flex; gap: 10px; }
     .answer-row input { flex: 1; font-family: monospace; font-size: 1.5rem; text-transform: uppercase; }
     .word-log, .story-log { display: flex; flex-wrap: wrap; gap: 8px; min-height: 82px; align-content: flex-start; padding: 12px; background: rgba(255,255,255,0.48); border: 1px solid var(--line); border-radius: 16px; }
@@ -349,14 +267,8 @@
     .pill.p2 { background: var(--p2); }
     @keyframes pop-in { from { transform: scale(0.5); opacity: 0; } }
     
-    .maze-grid {
-      display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: rgba(10, 12, 16, 0.95);
-      padding: 12px; border-radius: 18px; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); position: relative; overflow: hidden;
-    }
-    .maze-cell {
-      aspect-ratio: 1; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(255,255,255,0.02);
-      color: transparent; transition: all 0.3s ease; position: relative; display: grid; place-items: center; font-size: 1.2rem;
-    }
+    .maze-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: rgba(10, 12, 16, 0.95); padding: 12px; border-radius: 18px; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); position: relative; overflow: hidden; }
+    .maze-cell { aspect-ratio: 1; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(255,255,255,0.02); color: transparent; transition: all 0.3s ease; position: relative; display: grid; place-items: center; font-size: 1.2rem; }
     .maze-cell.here { background: var(--p2); box-shadow: 0 0 20px var(--p2), inset 0 0 10px #fff; color: #fff; font-weight: 900; z-index: 2; transform: scale(1.1); border-radius: 50%; }
     .maze-cell.exit { background: var(--p1); box-shadow: 0 0 20px var(--p1); animation: pulse-exit 1s infinite alternate; }
     .maze-cell.gem { color: var(--hot); text-shadow: 0 0 10px var(--hot); }
@@ -367,25 +279,13 @@
     .pad-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     
     .signal-board { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; }
-    .signal-pad {
-      border-radius: 24px; border: 4px solid transparent; opacity: 0.3; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-      color: transparent; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-    }
+    .signal-pad { border-radius: 24px; border: 4px solid transparent; opacity: 0.3; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); color: transparent; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
     .signal-pad::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent); }
-    .signal-pad.red { background: var(--danger); } .signal-pad.blue { background: var(--p2); }
-    .signal-pad.green { background: var(--mint); } .signal-pad.gold { background: var(--hot); }
-    .signal-pad.active, .signal-pad:active {
-      opacity: 1; transform: scale(0.96) translateY(4px);
-      box-shadow: 0 0 40px currentColor, inset 0 0 0 rgba(0,0,0,0); border-color: #fff;
-    }
+    .signal-pad.red { background: var(--danger); } .signal-pad.blue { background: var(--p2); } .signal-pad.green { background: var(--mint); } .signal-pad.gold { background: var(--hot); }
+    .signal-pad.active, .signal-pad:active { opacity: 1; transform: scale(0.96) translateY(4px); box-shadow: 0 0 40px currentColor, inset 0 0 0 rgba(0,0,0,0); border-color: #fff; }
     
     .trap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex: 1; }
-    .trap-card {
-      border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); background: linear-gradient(135deg, rgba(17,19,24,0.3), rgba(17,19,24,0.1));
-      box-shadow: inset 0 4px 10px rgba(255,255,255,0.2), 0 8px 15px rgba(0,0,0,0.1);
-      font-weight: 900; font-size: 1.8rem; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
-      transform-style: preserve-3d; position: relative; color: transparent;
-    }
+    .trap-card { border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); background: linear-gradient(135deg, rgba(17,19,24,0.3), rgba(17,19,24,0.1)); box-shadow: inset 0 4px 10px rgba(255,255,255,0.2), 0 8px 15px rgba(0,0,0,0.1); font-weight: 900; font-size: 1.8rem; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s; transform-style: preserve-3d; position: relative; color: transparent; }
     .trap-card:not(.open):hover { transform: translateY(-4px) scale(1.05); border-color: rgba(255,255,255,0.6); }
     .trap-card.open { transform: rotateY(180deg); color: #fff; box-shadow: none; border: none; pointer-events: none; }
     .trap-card.safe { background: var(--p2); box-shadow: 0 0 20px color-mix(in srgb, var(--p2) 40%, transparent); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
@@ -394,12 +294,7 @@
     .trap-card span { display: inline-block; transform: rotateY(180deg); }
     
     .reaction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; }
-    .reaction-pad {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: #fff; background: rgba(17,19,24,0.6); border: 4px solid var(--line);
-      font-size: clamp(1.5rem, 5vw, 3.5rem); font-weight: 900; text-align: center; user-select: none;
-      border-radius: 24px; transition: all 0.1s; position: relative; overflow: hidden;
-    }
+    .reaction-pad { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; background: rgba(17,19,24,0.6); border: 4px solid var(--line); font-size: clamp(1.5rem, 5vw, 3.5rem); font-weight: 900; text-align: center; user-select: none; border-radius: 24px; transition: all 0.1s; position: relative; overflow: hidden; }
     .reaction-pad small { font-size: 1.2rem; opacity: 0.8; margin-top: 10px; letter-spacing: 0.1em; }
     .reaction-pad.go { background: var(--mint); box-shadow: 0 0 60px color-mix(in srgb, var(--mint) 60%, transparent); border-color: #fff; transform: scale(1.02); }
     .reaction-pad.fake { background: var(--danger); box-shadow: 0 0 60px color-mix(in srgb, var(--danger) 60%, transparent); }
@@ -408,28 +303,14 @@
     .reaction-pad.glitch::after { content: '%^&*'; position: absolute; color: var(--hot); right: 5px; font-family: monospace; font-size: 4rem; }
     
     .screen-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-    @keyframes shake {
-      10%, 90% { transform: translate3d(-3px, 0, 0); }
-      20%, 80% { transform: translate3d(5px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-10px, 0, 0); }
-      40%, 60% { transform: translate3d(10px, 0, 0); }
-    }
+    @keyframes shake { 10%, 90% { transform: translate3d(-3px, 0, 0); } 20%, 80% { transform: translate3d(5px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-10px, 0, 0); } 40%, 60% { transform: translate3d(10px, 0, 0); } }
     
-    .round-result {
-      position: absolute; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
-      padding: 30px; text-align: center; background: rgba(17,19,24,0.95); backdrop-filter: blur(10px);
-      border-radius: 16px; font-weight: 900; font-size: 2.5rem; color: #fff; flex-direction: column; gap: 20px;
-      animation: stamp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    .round-result { position: absolute; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 30px; text-align: center; background: rgba(17,19,24,0.95); backdrop-filter: blur(10px); border-radius: 16px; font-weight: 900; font-size: 2.5rem; color: #fff; flex-direction: column; gap: 20px; animation: stamp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
     .round-result span { color: var(--p2); font-size: 1.5rem; font-family: monospace; }
     @keyframes stamp-in { 0% { transform: scale(2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     
     .toast-host { position: fixed; z-index: 10000; left: 50%; top: 18px; display: grid; gap: 8px; width: min(420px, calc(100% - 24px)); transform: translateX(-50%); pointer-events: none; }
-    .toast {
-      padding: 14px 18px; color: #fff; background: rgba(17,19,24,0.95); border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 14px; box-shadow: 0 18px 44px rgba(0,0,0,0.4); font-weight: 800; text-align: center;
-      animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    .toast { padding: 14px 18px; color: #fff; background: rgba(17,19,24,0.95); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; box-shadow: 0 18px 44px rgba(0,0,0,0.4); font-weight: 800; text-align: center; animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes toastIn { from { opacity: 0; transform: translateY(-20px) scale(0.9); } }
     
     .stats-dialog { width: min(680px, calc(100% - 24px)); padding: 0; color: var(--ink); background: transparent; border: 0; }
@@ -443,7 +324,7 @@
     .stats-grid small, .achievement-list small { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;}
     .achievement-list { display: grid; gap: 10px; margin-bottom: 24px; max-height: 200px; overflow-y: auto; padding-right: 10px;}
     
-    /* Responsive overrides */
+    /* RESPONSIVE OVERRIDES */
     @media (max-width: 900px) {
       .hero-zone, .arena-shell { grid-template-columns: 1fr; }
       .hero-art { min-height: 270px; }
@@ -454,16 +335,12 @@
       #timerText { font-size: 1.5rem; margin-bottom: 5px; }
     }
     @media (max-width: 768px) {
-      /* Mobile Perfect Sketch layout */
       .sketch-top-bar { flex-wrap: wrap; padding: 10px; justify-content: center; gap: 10px; }
       .sketch-brand { display: none; }
       .sketch-prompt { flex: 1 1 100%; font-size: 0.8rem; }
       .sketch-actions { flex: 1 1 100%; justify-content: center; }
-      .floating-dock { bottom: 12px; width: calc(100% - 16px); padding: 8px 10px; gap: 4px; justify-content: space-between; max-width: 420px; }
-      .dock-group { padding-right: 6px; gap: 4px; }
-      .tool-btn { width: 34px; height: 34px; }
-      #brushSize { width: 50px; }
-      .built-for-monica-watermark { bottom: 72px; right: 12px; font-size: 8px; }
+      .floating-dock { bottom: 12px; }
+      .built-for-monica-watermark { bottom: 85px; right: 16px; font-size: 8px; }
     }
     @media (max-width: 620px) {
       .app-shell { width: min(100% - 18px, 1180px); padding-top: 10px; }
@@ -480,6 +357,7 @@
 </head>
 <body>
 
+  <!-- BACKGROUND FX -->
   <canvas id="worldCanvas" aria-hidden="true"></canvas>
   <div class="paper-noise" aria-hidden="true"></div>
   <div class="doodle-field" aria-hidden="true">
@@ -489,11 +367,12 @@
   </div>
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
-  <div class="app-shell">
+  <!-- MAIN APP -->
+  <div class="app-shell" id="appShell">
     <header class="topbar">
       <button class="brand-mark" id="homeBtn" type="button" aria-label="Home">
         <span class="brand-sigil">P</span>
-        <span><strong>Playroom</strong><small>arcade v5</small></span>
+        <span><strong>Playroom</strong><small>arcade v6</small></span>
       </button>
       <nav class="top-actions" aria-label="App actions">
         <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst">
@@ -507,6 +386,7 @@
     </header>
 
     <main>
+      <!-- LOBBY SCREEN -->
       <section id="lobbyScreen" class="screen active">
         <div class="hero-zone">
           <div class="hero-copy">
@@ -564,6 +444,7 @@
         </section>
       </section>
 
+      <!-- ARENA SCREEN -->
       <section id="arenaScreen" class="screen">
         <div class="arena-shell">
           <aside class="score-rail panel">
@@ -594,6 +475,7 @@
     </main>
   </div>
 
+  <!-- STATS MODAL -->
   <dialog id="statsDialog" class="stats-dialog">
     <div class="dialog-card">
       <header>
@@ -613,17 +495,16 @@
     </div>
   </dialog>
 
+  <!-- JAVASCRIPT ENGINE -->
   <script>
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
-    const STORE_KEY = "playroom-arcade-v5";
-    const ROOM_PREFIX = "playroom-arcade-v5-";
+    const STORE_KEY = "playroom-arcade-v6";
+    const ROOM_PREFIX = "playroom-arcade-v6-";
     
-    // Core Application State
-    const profile = {
-      names: ["You", "Partner"], theme: "cosmic", roundLength: 60, sound: true,
-      stats: { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] }
-    };
+    const vibe = (ms) => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
+
+    const profile = { names: ["You", "Partner"], theme: "cosmic", roundLength: 60, sound: true, stats: { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] } };
     const room = { peer: null, conn: null, code: "", connected: false, role: "local", mySlot: 0, suppress: false };
     const app = { activeGame: null, score: [0, 0], timer: null, timeLeft: 0, roomNames: ["You", "Partner"], finished: false };
 
@@ -634,7 +515,7 @@
       { id: "trap", title: "Blast Tiles", tag: "Minesweeper-lite", icon: "BT", color: "#38d9a9", desc: "Safe tiles reveal how many bombs touch them! Use logic to build streaks, or risk an explosion." },
       { id: "reflex", title: "Rift Overcharge", tag: "Fake-out duel", icon: "RO", color: "#ff9f1c", desc: "Wait for the green. Beware the violent RGB glitch phases designed to mess with your brain." },
       { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
-      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An adaptive digital studio. Draw with neon paint, full symmetry, and perfect sync." }
+      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Draw with neon paint, full symmetry, and perfect sync." }
     ];
 
     const cipherRounds = [
@@ -678,7 +559,6 @@
     function localName() { return profile.names[0] || "You"; }
     function partnerName() { return profile.names[1] || "Partner"; }
     
-    // Core Identity Engine
     function getLocalScore() { return room.connected ? app.score[room.mySlot] : app.score[0]; }
     function getRemoteScore() { return room.connected ? app.score[room.mySlot === 0 ? 1 : 0] : app.score[1]; }
     function getRemoteName() { return room.connected ? app.roomNames[room.mySlot === 0 ? 1 : 0] : partnerName(); }
@@ -726,7 +606,7 @@
           <footer><span>${game.tag}</span><span>Launch</span></footer>
         </article>
       `).join("");
-      $$(".game-card").forEach((card) => card.addEventListener("click", () => startGame(card.dataset.game)));
+      $$(".game-card").forEach((card) => card.addEventListener("click", () => { vibe(15); startGame(card.dataset.game); }));
     }
 
     function startGame(id) {
@@ -736,20 +616,14 @@
       $("#gameTag").textContent = game.tag; $("#gameTitle").textContent = game.title;
       $("#timerText").textContent = "--"; $("#timerFill").style.width = "100%"; $("#timerFill").classList.remove("danger");
       
-      // Cleanup previous sketch mode state if any
       document.body.classList.remove('sketch-mode-active');
-      
-      if(id === 'sketch') {
-         $("#arenaTopline").style.display = 'none';
-      } else {
-         $("#arenaTopline").style.display = 'grid';
-      }
+      $("#appShell").style.display = 'flex';
       
       showScreen("arenaScreen"); audio.synthHit();
       modules[id].start(); syncRoom();
     }
 
-    function addScore(slot, points) { app.score[slot] += points; renderChrome(); syncRoom(); }
+    function addScore(slot, points) { app.score[slot] += points; renderChrome(); syncRoom(); vibe(40); }
     function setScore(score) { app.score = [Number(score[0] || 0), Number(score[1] || 0)]; renderChrome(); }
     function resetScores() { app.score = [0, 0]; renderChrome(); syncRoom(); }
     function winnerFromScore() { if (app.score[0] === app.score[1]) return null; return app.score[0] > app.score[1] ? 0 : 1; }
@@ -765,6 +639,7 @@
       saveProfile(); renderChrome(); audio.win(); celebrate(50);
       
       document.body.classList.remove('sketch-mode-active');
+      $("#appShell").style.display = 'flex';
       
       if (!$(".round-result")) $("#gameMount").insertAdjacentHTML("afterbegin", `<div class="round-result">${message}<span>SCOREBOARD LOCKED</span></div>`);
       syncRoom({ finishedMessage: message });
@@ -779,7 +654,6 @@
         $("#timerFill").style.width = `${pct}%`;
         if(app.timeLeft <= 10) $("#timerFill").classList.add("danger");
         
-        // Update sketch timer if it exists
         const sketchTimer = $("#sketchTimerDisplay");
         if(sketchTimer) sketchTimer.textContent = app.timeLeft > 0 ? `${app.timeLeft}s` : "DONE";
       };
@@ -811,8 +685,7 @@
         iceServers: [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
-          { urls: "stun:stun2.l.google.com:19302" },
-          { urls: "stun:stun3.l.google.com:19302" }
+          { urls: "stun:stun.cloudflare.com:3478" }
         ]
       }
     };
@@ -831,13 +704,14 @@
       if (typeof Peer === "undefined") return toast("PeerJS not loaded.");
       const code = $("#roomCodeInput").value.trim(); if (!/^\d{4}$/.test(code)) return toast("Enter 4 digit code.");
       closeRoom(); room.role = "guest"; room.mySlot = 1; room.code = code;
+      
+      const btn = $("#joinRoomBtn"); btn.textContent = "Syncing..."; btn.disabled = true;
       room.peer = new Peer(peerConfig);
       room.peer.on("open", () => attachConnection(room.peer.connect(`${ROOM_PREFIX}${code}`)));
       room.peer.on("error", (err) => { 
-        console.error("Guest Error:", err); 
         if (err.type === 'peer-unavailable') toast("Room not found. Is the host ready?");
         else toast("Connection error: " + (err.type || "unknown"));
-        room.code = ""; renderChrome(); 
+        room.code = ""; renderChrome(); btn.textContent = "Join"; btn.disabled = false;
       });
       renderChrome();
     }
@@ -849,6 +723,7 @@
         send("HELLO", { name: localName(), slot: room.mySlot });
         if (room.role === "host") syncRoom();
         toast("Arcade Link Established!"); renderChrome();
+        const btn = $("#joinRoomBtn"); btn.textContent = "Join"; btn.disabled = false;
       });
       conn.on("data", handleMessage);
       conn.on("close", () => { room.connected = false; toast("Partner disconnected."); renderChrome(); });
@@ -873,10 +748,6 @@
         if (app.activeGame) {
           const game = games.find(e => e.id === app.activeGame);
           $("#gameTag").textContent = game.tag; $("#gameTitle").textContent = game.title;
-          
-          if(app.activeGame === 'sketch') { $("#arenaTopline").style.display = 'none'; } 
-          else { $("#arenaTopline").style.display = 'grid'; }
-          
           showScreen("arenaScreen");
         } else showScreen("lobbyScreen");
       }
@@ -932,8 +803,8 @@
               <div class="word-log">${this.solved.map((item) => `<span class="pill ${item.slot===room.mySlot ? "" : "p2"}">${safe(item.answer)}</span>`).join("")}</div>
             </div>
           `;
-          $("#cipherSubmit").addEventListener("click", () => this.submit(slotForLocalAction(0), $("#cipherInput").value));
-          $("#cipherInput").addEventListener("keydown", (e) => { if (e.key === "Enter") this.submit(slotForLocalAction(0), $("#cipherInput").value); });
+          $("#cipherSubmit").addEventListener("click", () => { vibe(15); this.submit(slotForLocalAction(0), $("#cipherInput").value); });
+          $("#cipherInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { vibe(15); this.submit(slotForLocalAction(0), $("#cipherInput").value); } });
           setTimeout(() => $("#cipherInput").focus(), 100);
         },
         submit(slot, raw) {
@@ -944,7 +815,7 @@
             audio.synthHit(); celebrate(15);
             if (this.round >= cipherRounds.length) finishRound("Mainframe breached. Hack complete.");
             else { this.render(); this.scramble(); }
-          } else { audio.bad(); toast("Access Denied."); $('#cipherText').style.animation = "shake 0.3s"; }
+          } else { audio.bad(); vibe([50, 50]); toast("Access Denied."); $('#cipherText').style.animation = "shake 0.3s"; }
           syncRoom();
         },
         remoteAction(action) { if (action.name === "cipherSubmit") this.submit(1, action.raw); },
@@ -985,6 +856,7 @@
             </div>
           `;
           $$("[data-move]").forEach(btn => btn.addEventListener("click", () => {
+            vibe(15);
             const [dx, dy] = btn.dataset.move.split(",").map(Number);
             this.move(slotForLocalAction(0), dx, dy);
           }));
@@ -995,7 +867,7 @@
           if (nx === this.pos.x && ny === this.pos.y) return;
           this.pos = { x: nx, y: ny }; this.moves += 1; const index = ny * this.size + nx;
           if (this.gems.includes(index)) { this.gems = this.gems.filter(g => g !== index); addScore(slot, 5); audio.pop(); }
-          if (this.traps.includes(index)) { addScore(slot ? 0 : 1, 3); toast("Trap hit! Partner steals 3."); audio.bad(); }
+          if (this.traps.includes(index)) { addScore(slot ? 0 : 1, 3); toast("Trap hit! Partner steals 3."); audio.bad(); vibe([50,50]); }
           if (nx === this.exit.x && ny === this.exit.y) { addScore(0, 15); addScore(1, 15); finishRound("System escaped. Co-op bonus!", null); } 
           else this.render();
           syncRoom();
@@ -1018,9 +890,9 @@
               <button id="showSignalBtn" class="primary-button" type="button" style="padding:20px; font-size:1.2rem; margin-top:20px;">INITIATE SEQUENCE</button>
             </div>
           `;
-          $("#showSignalBtn").addEventListener("click", () => this.flash());
+          $("#showSignalBtn").addEventListener("click", () => { vibe(15); this.flash(); });
           $$(".signal-pad").forEach(pad => pad.addEventListener("pointerdown", () => {
-             if(!this.showing) pad.classList.add("active");
+             if(!this.showing) { pad.classList.add("active"); vibe(20); }
              this.pick(slotForLocalAction(0), pad.dataset.color);
           }));
           $$(".signal-pad").forEach(pad => pad.addEventListener("pointerup", () => pad.classList.remove("active")));
@@ -1046,7 +918,7 @@
           const expected = this.sequence[this.input.length - 1];
           if (color !== expected) {
             addScore(slot ? 0 : 1, 4); toast("Sequence broken. Partner steals 4.");
-            this.input = []; this.sequence = [sample(this.colors), sample(this.colors)]; audio.bad(); this.render();
+            this.input = []; this.sequence = [sample(this.colors), sample(this.colors)]; audio.bad(); vibe([50,50]); this.render();
           } else if (this.input.length === this.sequence.length) {
             addScore(0, this.sequence.length); addScore(1, this.sequence.length);
             this.sequence.push(sample(this.colors)); this.input = []; celebrate(5);
@@ -1100,15 +972,15 @@
               <p class="instruction">Logic puzzle: Safe tiles reveal how many bombs touch them! Blue=+2, Green=+5.</p>
             </div>
           `;
-          $$(".trap-card").forEach(card => card.addEventListener("click", () => this.reveal(slotForLocalAction(0), Number(card.dataset.tile))));
-          $("#bankTrapBtn").addEventListener("click", () => this.bankNow(slotForLocalAction(0)));
+          $$(".trap-card").forEach(card => card.addEventListener("click", () => { vibe(10); this.reveal(slotForLocalAction(0), Number(card.dataset.tile)); }));
+          $("#bankTrapBtn").addEventListener("click", () => { vibe(20); this.bankNow(slotForLocalAction(0)); });
         },
         reveal(slot, index) {
           if (isLiveGuest()) return sendAction({ name: "trapReveal", index });
           if (slot !== this.turn) return toast(`Not your turn.`);
           const tile = this.tiles[index]; if (!tile || tile.open) return;
           tile.open = true;
-          if (tile.kind === "bomb") { this.bank[slot] = 0; this.turn = slot ? 0 : 1; audio.bad(); }
+          if (tile.kind === "bomb") { this.bank[slot] = 0; this.turn = slot ? 0 : 1; audio.bad(); vibe([60,60]); }
           else { this.bank[slot] += tile.kind === "bonus" ? 5 : 2; audio.pop(); }
           if (this.tiles.filter(t => t.kind !== 'bomb').every(t => t.open)) finishRound("Minefield cleared."); else this.render();
           syncRoom();
@@ -1149,13 +1021,13 @@
               </div>
             </div>
           `;
-          $$(".reaction-pad").forEach(pad => pad.addEventListener("pointerdown", () => this.tap(slotForLocalAction(Number(pad.dataset.slot)))));
+          $$(".reaction-pad").forEach(pad => pad.addEventListener("pointerdown", () => { vibe(15); this.tap(slotForLocalAction(Number(pad.dataset.slot))); }));
         },
         tap(slot) {
           if (isLiveGuest()) return sendAction({ name: "reflexTap" });
           clearTimeout(this.timeout);
           if (this.phase === "go") { addScore(slot, 3); toast(`Direct Hit!`); audio.synthHit(); } 
-          else { addScore(slot ? 0 : 1, 3); toast(`Misfire! Partner scores.`); audio.bad(); }
+          else { addScore(slot ? 0 : 1, 3); toast(`Misfire! Partner scores.`); audio.bad(); vibe([50,50]); }
           this.round += 1;
           if (this.round >= 9) finishRound("Rift stabilized."); else setTimeout(() => this.next(), 800);
           syncRoom();
@@ -1183,9 +1055,9 @@
               ${this.entries.length >= 6 ? `<div class="pad-row"><button class="plain-button" data-vote="0" type="button">Award ${canonicalName(0)}</button><button class="plain-button" data-vote="1" type="button">Award ${canonicalName(1)}</button></div>` : ""}
             </div>
           `;
-          $("#remixSubmit")?.addEventListener("click", () => this.add(slotForLocalAction(0), $("#remixInput").value));
-          $("#remixInput")?.addEventListener("keydown", (e) => { if (e.key === "Enter") this.add(slotForLocalAction(0), $("#remixInput").value); });
-          $$("[data-vote]").forEach(btn => btn.addEventListener("click", () => this.vote(slotForLocalAction(Number(btn.dataset.vote)))));
+          $("#remixSubmit")?.addEventListener("click", () => { vibe(15); this.add(slotForLocalAction(0), $("#remixInput").value); });
+          $("#remixInput")?.addEventListener("keydown", (e) => { if (e.key === "Enter") { vibe(15); this.add(slotForLocalAction(0), $("#remixInput").value); } });
+          $$("[data-vote]").forEach(btn => btn.addEventListener("click", () => { vibe(20); this.vote(slotForLocalAction(Number(btn.dataset.vote))); }));
         },
         add(slot, text) {
           if (isLiveGuest()) { sendAction({ name: "remixAdd", text }); $("#remixInput").value = ""; return; }
@@ -1202,75 +1074,83 @@
       },
 
       sketch: {
-        canvas: null, ctx: null, drawing: false, 
+        canvas: null, ctx: null, drawing: false, initialized: false,
         color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen',
-        lastX: null, lastY: null, undoStack: [], wrap: null, dpr: 1,
+        lastX: null, lastY: null, undoStack: [], wrap: null, dpr: 1, _resize: null,
         
         start() {
           document.body.classList.add('sketch-mode-active');
+          $("#appShell").style.display = 'none'; // Full takeover
+          
           if (!this.prompt) this.prompt = sample(sketchPrompts);
           
-          $("#gameMount").innerHTML = `
-            <div class="sketch-layout-master" id="sketchLayoutMaster">
-              <header class="sketch-top-bar">
-                <div class="sketch-brand">PRO STUDIO</div>
-                <div class="sketch-prompt prompt-text">${safe(this.prompt)}</div>
-                <div class="sketch-actions">
-                  <button id="sketchA" class="award-btn p1-bg">Award ${canonicalName(0)}</button>
-                  <button id="sketchB" class="award-btn p2-bg">Award ${canonicalName(1)}</button>
-                </div>
-              </header>
-              
-              <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
-                <div class="brush-cursor" id="brushCursor"></div>
-                <canvas id="drawCanvas" touch-action="none"></canvas>
-                <div class="built-for-monica-watermark">built for monica</div>
-              </div>
-              
-              <div class="floating-dock">
-                <div class="dock-group">
-                  <button class="tool-btn active" data-tool="pen" title="Pro Pen">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                  </button>
-                  <button class="tool-btn" data-tool="eraser" title="Eraser">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L20 9C20.5 9.5 20.5 10.5 20 11L11 20"></path><path d="M10 11l5 5"></path></svg>
-                  </button>
-                </div>
-                
-                <div class="dock-group">
-                  <input type="range" id="brushSize" min="2" max="60" value="${this.size}">
-                  <div class="color-picker-wrap">
-                    <input type="color" id="nativeColor" value="${this.color}">
+          if (!$("#sketchLayoutMaster")) {
+            document.body.insertAdjacentHTML("beforeend", `
+              <div class="sketch-layout-master" id="sketchLayoutMaster">
+                <header class="sketch-top-bar">
+                  <div class="sketch-brand">PRO STUDIO</div>
+                  <div class="sketch-prompt prompt-text">${safe(this.prompt)}</div>
+                  <div class="sketch-actions">
+                    <button id="sketchA" class="award-btn p1-bg">Award ${canonicalName(0)}</button>
+                    <button id="sketchB" class="award-btn p2-bg">Award ${canonicalName(1)}</button>
+                    <button id="sketchExit" class="award-btn danger-bg" title="Exit">✕</button>
                   </div>
-                  <button class="tool-btn active" id="glowToggle" title="Neon Glow">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg>
-                  </button>
+                </header>
+                
+                <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
+                  <div class="brush-cursor" id="brushCursor"></div>
+                  <canvas id="drawCanvas" touch-action="none"></canvas>
+                  <div class="built-for-monica-watermark">built for monica</div>
                 </div>
                 
-                <div class="dock-group" style="border:none;">
-                  <button id="undoCanvas" class="tool-btn" title="Undo">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path></svg>
-                  </button>
-                  <button id="clearCanvas" class="tool-btn" title="Clear Canvas">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
-                  </button>
-                  <button id="downloadCanvas" class="tool-btn" title="Save Masterpiece">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  </button>
+                <div class="floating-dock">
+                  <div class="dock-group">
+                    <button class="tool-btn active" data-tool="pen" title="Pro Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
+                    <button class="tool-btn" data-tool="eraser" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L20 9C20.5 9.5 20.5 10.5 20 11L11 20"></path><path d="M10 11l5 5"></path></svg></button>
+                  </div>
+                  <div class="dock-group">
+                    <input type="range" id="brushSize" min="2" max="60" value="${this.size}">
+                    <div class="color-picker-wrap"><input type="color" id="nativeColor" value="${this.color}"></div>
+                    <button class="tool-btn active" id="glowToggle" title="Neon Glow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg></button>
+                  </div>
+                  <div class="dock-group" style="border:none;">
+                    <button id="undoCanvas" class="tool-btn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path></svg></button>
+                    <button id="clearCanvas" class="tool-btn" title="Clear Canvas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg></button>
+                    <button id="downloadCanvas" class="tool-btn" title="Save Masterpiece"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+                  </div>
                 </div>
               </div>
-            </div>
-          `;
+            `);
+          } else {
+            $("#sketchLayoutMaster").style.display = "flex";
+            $(".prompt-text").textContent = this.prompt;
+          }
           
           this.canvas = $("#drawCanvas"); 
           this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
           this.wrap = $("#canvasWrap");
           
-          this.resizeCanvas();
-          window.addEventListener("resize", this.resizeCanvas.bind(this));
+          if (!this.initialized) {
+            this.bindUI(); 
+            this.bindCanvas();
+            this.initialized = true;
+          }
           
-          this.clear(false); this.undoStack = []; this.saveState();
-          this.bindUI(); this.bindCanvas();
+          if (this._resize) window.removeEventListener("resize", this._resize);
+          this._resize = this.resizeCanvas.bind(this);
+          window.addEventListener("resize", this._resize);
+          
+          this.resizeCanvas();
+          this.clear(false); 
+          this.undoStack = []; 
+          this.saveState();
+        },
+        
+        close() {
+          if($("#sketchLayoutMaster")) $("#sketchLayoutMaster").style.display = "none";
+          document.body.classList.remove('sketch-mode-active');
+          $("#appShell").style.display = 'flex';
+          if(this._resize) window.removeEventListener("resize", this._resize);
         },
 
         resizeCanvas() {
@@ -1278,8 +1158,9 @@
           const rect = this.wrap.getBoundingClientRect();
           this.dpr = window.devicePixelRatio || 1;
           
-          let oldData = null;
-          if (this.canvas.width > 0) oldData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
+          if (this.canvas.width > 0) tempCanvas.getContext('2d').drawImage(this.canvas, 0, 0);
 
           this.canvas.width = rect.width * this.dpr;
           this.canvas.height = rect.height * this.dpr;
@@ -1289,31 +1170,37 @@
           this.ctx.scale(this.dpr, this.dpr);
           this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
           
-          if (oldData) this.ctx.putImageData(oldData, 0, 0);
+          if (tempCanvas.width > 0) {
+            this.ctx.save();
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            this.ctx.drawImage(tempCanvas, 0, 0);
+            this.ctx.restore();
+          }
         },
         
         bindUI() {
           $$(".tool-btn[data-tool]").forEach(btn => btn.addEventListener("click", () => {
-            this.tool = btn.dataset.tool; 
+            vibe(10); this.tool = btn.dataset.tool; 
             $$(".tool-btn[data-tool]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
           }));
           
           $("#brushSize").addEventListener("input", e => {
             this.size = Number(e.target.value);
-            $("#brushCursor").style.width = `${this.size}px`;
-            $("#brushCursor").style.height = `${this.size}px`;
+            const cursor = $("#brushCursor");
+            if(cursor) { cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`; }
           });
           
           $("#nativeColor").addEventListener("input", e => { this.color = e.target.value; });
           
           $("#glowToggle").addEventListener("click", (e) => { 
-            this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
+            vibe(10); this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
             this.wrap.classList.toggle("neon-mode", this.glow); this.clear(true); 
           });
           
-          $("#undoCanvas").addEventListener("click", () => this.undo());
-          $("#clearCanvas").addEventListener("click", () => { this.saveState(); this.clear(true); });
+          $("#undoCanvas").addEventListener("click", () => { vibe(15); this.undo(); });
+          $("#clearCanvas").addEventListener("click", () => { vibe(25); this.saveState(); this.clear(true); });
           $("#downloadCanvas").addEventListener("click", () => {
+             vibe(20);
              const tempCanvas = document.createElement('canvas'); 
              tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
              const tCtx = tempCanvas.getContext('2d');
@@ -1326,19 +1213,19 @@
           
           $("#sketchA").addEventListener("click", () => this.award(slotForLocalAction(0)));
           $("#sketchB").addEventListener("click", () => this.award(slotForLocalAction(1)));
+          $("#sketchExit").addEventListener("click", () => {
+             if (room.connected && room.role !== "host") return toast("Only host can return.");
+             clearTimer(); app.activeGame = null; app.finished = false; this.close(); showScreen("lobbyScreen"); syncRoom();
+          });
         },
         
         bindCanvas() {
           const cursor = $("#brushCursor");
-          
           const getPos = (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            // Using modern pointer events for exact precision across mouse/touch/stylus
+            const rect = this.wrap.getBoundingClientRect();
             return { 
-              x: e.clientX - rect.left, 
-              y: e.clientY - rect.top, 
-              nx: (e.clientX - rect.left) / rect.width, 
-              ny: (e.clientY - rect.top) / rect.height 
+              x: e.clientX - rect.left, y: e.clientY - rect.top, 
+              nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height 
             };
           };
 
@@ -1346,19 +1233,15 @@
              if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
              const rect = this.wrap.getBoundingClientRect();
              cursor.style.display = 'block';
-             cursor.style.width = `${this.size}px`;
-             cursor.style.height = `${this.size}px`;
-             cursor.style.left = `${e.clientX - rect.left}px`;
-             cursor.style.top = `${e.clientY - rect.top}px`;
+             cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`;
+             cursor.style.left = `${e.clientX - rect.left}px`; cursor.style.top = `${e.clientY - rect.top}px`;
              cursor.style.color = this.color;
           };
           
           const down = (e) => { 
-            if(!e.isPrimary) return; // Ignore multi-touch ghosts
+            if(!e.isPrimary) return; 
             if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
-            e.preventDefault(); 
-            this.drawing = true; 
-            this.canvas.setPointerCapture(e.pointerId);
+            e.preventDefault(); this.drawing = true; this.canvas.setPointerCapture(e.pointerId);
             
             const p = getPos(e); 
             this.lastX = p.x; this.lastY = p.y;
@@ -1368,7 +1251,7 @@
             const dynSize = this.size * pressure;
             
             this.executeDraw(p.x, p.y, p.x, p.y, this.color, dynSize, this.tool, this.glow);
-            sendSketch({ name: "draw", nx0: p.nx, ny0: p.ny, nx1: p.nx, ny1: p.ny, c: this.color, s: dynSize, t: this.tool, g: this.glow });
+            sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
             updateCursor(e);
           };
           
@@ -1383,17 +1266,16 @@
             const dynSize = this.size * pressure;
             
             this.executeDraw(this.lastX, this.lastY, p.x, p.y, this.color, dynSize, this.tool, this.glow);
-            sendSketch({ name: "draw", nx0: this.lastX / this.wrap.getBoundingClientRect().width, ny0: this.lastY / this.wrap.getBoundingClientRect().height, nx1: p.nx, ny1: p.ny, c: this.color, s: dynSize, t: this.tool, g: this.glow });
+            
+            const nx0 = this.lastX / this.wrap.getBoundingClientRect().width;
+            const ny0 = this.lastY / this.wrap.getBoundingClientRect().height;
+            sendSketch({ name: "draw", nx0: nx0.toFixed(4), ny0: ny0.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
             
             this.lastX = p.x; this.lastY = p.y;
           };
           
-          const up = (e) => { 
-            this.drawing = false; 
-            this.canvas.releasePointerCapture(e.pointerId);
-          };
+          const up = (e) => { this.drawing = false; this.canvas.releasePointerCapture(e.pointerId); };
           
-          // Unified, high-performance Pointer Events
           this.canvas.addEventListener("pointerdown", down); 
           this.canvas.addEventListener("pointermove", move); 
           this.canvas.addEventListener("pointerup", up);
@@ -1404,26 +1286,29 @@
         executeDraw(x0, y0, x1, y1, color, size, tool, glow) {
            this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
            this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
-           
-           if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } 
-           else { this.ctx.shadowBlur = 0; }
-           
-           if (tool === 'eraser') { this.ctx.globalCompositeOperation = 'destination-out'; this.ctx.lineWidth = size * 2; this.ctx.shadowBlur = 0; } 
-           else { this.ctx.globalCompositeOperation = 'source-over'; }
+           if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } else { this.ctx.shadowBlur = 0; }
+           if (tool === 'eraser') { this.ctx.globalCompositeOperation = 'destination-out'; this.ctx.lineWidth = size * 2; this.ctx.shadowBlur = 0; } else { this.ctx.globalCompositeOperation = 'source-over'; }
            
            this.ctx.beginPath(); this.ctx.moveTo(x0, y0); this.ctx.lineTo(x1, y1); this.ctx.stroke();
         },
         
         saveState() {
           if (this.undoStack.length > 15) this.undoStack.shift();
-          this.undoStack.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
+          this.undoStack.push(this.canvas.toDataURL('image/webp', 0.5));
         },
         
         undo() {
           if (this.undoStack.length > 0) {
-            let imgData = this.undoStack.pop();
-            this.ctx.putImageData(imgData, 0, 0);
-            if (room.connected) sendSketch({ name: "syncFull", data: this.canvas.toDataURL('image/webp', 0.8) });
+            const dataUrl = this.undoStack.pop();
+            const img = new Image();
+            img.onload = () => {
+              this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
+              this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+              this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+              this.ctx.drawImage(img, 0, 0); this.ctx.restore();
+            };
+            img.src = dataUrl;
+            if (room.connected) sendSketch({ name: "syncFull", data: dataUrl });
           }
         },
         
@@ -1433,7 +1318,7 @@
           if (sendIt) sendSketch({ name: "clear", glow: this.glow }); 
         },
         
-        award(slot) { if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
+        award(slot) { vibe(40); if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
         remoteAction(a) { if (a.name === "sketchAward") this.award(a.slot); },
         
         remoteSketch(p) {
@@ -1443,8 +1328,13 @@
             $('#glowToggle').classList.toggle("active", this.glow); this.clear(false); 
           }
           else if (p.name === "syncFull") {
-            let img = new Image();
-            img.onload = () => { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); this.ctx.drawImage(img, 0, 0); };
+            const img = new Image();
+            img.onload = () => { 
+               this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
+               this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
+               this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+               this.ctx.drawImage(img, 0, 0); this.ctx.restore();
+            };
             img.src = p.data;
           }
           else if (p.name === "draw") {
@@ -1452,11 +1342,12 @@
             this.executeDraw(p.nx0 * rect.width, p.ny0 * rect.height, p.nx1 * rect.width, p.ny1 * rect.height, p.c, p.s, p.t, p.g);
           }
         },
-        snapshot() { return { prompt: this.prompt, glow: this.glow }; },
+        snapshot() { return { prompt: this.prompt, glow: this.glow, image: this.canvas ? this.canvas.toDataURL('image/webp', 0.5) : null }; },
         restore(d) { 
           this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true; 
           if (!this.canvas) this.start(); 
           const title = $(".prompt-text"); if (title) title.textContent = this.prompt; 
+          if(d.image) { this.remoteSketch({name: "syncFull", data: d.image}); }
         }
       }
     };
@@ -1477,8 +1368,11 @@
       const canvas = $("#worldCanvas"); const ctx = canvas.getContext("2d");
       let dots = []; let shards = []; let mouse = { x: -1000, y: -1000 };
       
-      window.addEventListener('mousemove', (e) => { mouse.x = e.clientX * devicePixelRatio; mouse.y = e.clientY * devicePixelRatio; });
+      const updateMouse = (e) => { mouse.x = (e.touches ? e.touches[0].clientX : e.clientX) * devicePixelRatio; mouse.y = (e.touches ? e.touches[0].clientY : e.clientY) * devicePixelRatio; };
+      window.addEventListener('mousemove', updateMouse);
+      window.addEventListener('touchmove', updateMouse, {passive: true});
       window.addEventListener('mouseout', () => { mouse.x = -1000; mouse.y = -1000; });
+      window.addEventListener('touchend', () => { mouse.x = -1000; mouse.y = -1000; });
       
       const resize = () => {
         canvas.width = window.innerWidth * devicePixelRatio; canvas.height = window.innerHeight * devicePixelRatio;
@@ -1490,7 +1384,7 @@
       };
       const draw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        dots.forEach((dot, i) => {
+        dots.forEach((dot) => {
           dot.x += dot.vx; dot.y += dot.vy;
           if (dot.x < 0 || dot.x > canvas.width) dot.vx *= -1;
           if (dot.y < 0 || dot.y > canvas.height) dot.vy *= -1;
@@ -1501,7 +1395,6 @@
             ctx.beginPath(); ctx.moveTo(dot.x, dot.y); ctx.lineTo(mouse.x, mouse.y);
             ctx.strokeStyle = dot.c; ctx.globalAlpha = 0.2; ctx.stroke();
           }
-          
           ctx.globalAlpha = 0.6; ctx.fillStyle = dot.c; ctx.beginPath(); ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2); ctx.fill();
         });
         
@@ -1529,17 +1422,26 @@
       $("#playerTwoInput").addEventListener("input", e => { profile.names[1] = e.target.value.trim() || "Partner"; if (!room.connected) app.roomNames[1] = partnerName(); saveProfile(); renderChrome(); });
       $("#themeSelect").addEventListener("change", e => setTheme(e.target.value));
       $("#roundLengthSelect").addEventListener("change", e => { profile.roundLength = Number(e.target.value); saveProfile(); });
-      $("#backBtn").addEventListener("click", () => { if (room.connected && room.role !== "host") return toast("Only host can return."); clearTimer(); app.activeGame = null; app.finished = false; document.body.classList.remove('sketch-mode-active'); showScreen("lobbyScreen"); syncRoom(); });
-      $("#homeBtn").addEventListener("click", () => { if (app.activeGame && room.connected && room.role !== "host") return toast("Only host can return."); clearTimer(); app.activeGame = null; app.finished = false; document.body.classList.remove('sketch-mode-active'); showScreen("lobbyScreen"); syncRoom(); });
-      $("#resetGameBtn").addEventListener("click", () => startGame(app.activeGame));
-      $("#createRoomBtn").addEventListener("click", createRoom);
-      $("#joinRoomBtn").addEventListener("click", joinRoom);
+      
+      const onBack = () => { 
+         vibe(15);
+         if (room.connected && room.role !== "host") return toast("Only host can return."); 
+         clearTimer(); app.activeGame = null; app.finished = false; 
+         if(modules.sketch.close) modules.sketch.close();
+         showScreen("lobbyScreen"); syncRoom(); 
+      };
+      $("#backBtn").addEventListener("click", onBack);
+      $("#homeBtn").addEventListener("click", onBack);
+      
+      $("#resetGameBtn").addEventListener("click", () => { vibe(15); startGame(app.activeGame); });
+      $("#createRoomBtn").addEventListener("click", () => { vibe(15); createRoom(); });
+      $("#joinRoomBtn").addEventListener("click", () => { vibe(15); joinRoom(); });
       $("#roomCodeInput").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4));
-      $("#soundBtn").addEventListener("click", () => { profile.sound = !profile.sound; saveProfile(); renderChrome(); });
-      $("#sparkBtn").addEventListener("click", () => celebrate());
-      $("#statsBtn").addEventListener("click", () => { renderStats(); $("#statsDialog").showModal(); });
-      $("#closeStatsBtn").addEventListener("click", () => $("#statsDialog").close());
-      $("#clearStatsBtn").addEventListener("click", () => { profile.stats = { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] }; resetScores(); saveProfile(); renderStats(); toast("Stats cleared."); });
+      $("#soundBtn").addEventListener("click", () => { vibe(15); profile.sound = !profile.sound; saveProfile(); renderChrome(); });
+      $("#sparkBtn").addEventListener("click", () => { vibe(40); celebrate(); });
+      $("#statsBtn").addEventListener("click", () => { vibe(15); renderStats(); $("#statsDialog").showModal(); });
+      $("#closeStatsBtn").addEventListener("click", () => { vibe(10); $("#statsDialog").close(); });
+      $("#clearStatsBtn").addEventListener("click", () => { vibe(40); profile.stats = { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] }; resetScores(); saveProfile(); renderStats(); toast("Stats cleared."); });
       document.body.addEventListener("click", () => audio.unlock(), { once: true });
     }
 
