@@ -362,7 +362,6 @@
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; manifestLink.href = URL.createObjectURL(manifestBlob); document.head.appendChild(manifestLink);
         
-        /* Advanced PWA: Intercepts network to work 100% offline via Cache API */
         const swCode = `
           const CACHE_NAME = 'playroom-v7';
           self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.pathname]))); self.skipWaiting(); }); 
@@ -410,7 +409,7 @@
           <div class="hero-copy">
             <p class="kicker">Two humans. One private arcade.</p>
             <h1>Crack codes, dodge traps, and paint masterpieces together.</h1>
-            <p class="hero-text">A live two-player playground built for phones and laptops. Now featuring advanced physics, true Fog of War, Minesweeper mechanics, and a pro-grade synchronized sketch lab with Bezier smoothing.</p>
+            <p class="hero-text">A live two-player playground built for phones and laptops. Now featuring advanced physics, true Fog of War, Minesweeper mechanics, and a pro-grade synchronized sketch lab with zero-latency rendering.</p>
           </div>
           <div class="hero-art" aria-hidden="true">
             <div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
@@ -511,7 +510,6 @@
     </div>
   </dialog>
   
-  <!-- JAVASCRIPT ENGINE -->
   <script>
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -530,7 +528,7 @@
       { id: "trap", title: "Blast Tiles", tag: "Minesweeper-lite", icon: "BT", color: "#38d9a9", desc: "Safe tiles reveal how many bombs touch them! Use logic to build streaks, or risk an explosion." },
       { id: "reflex", title: "Rift Overcharge", tag: "Fake-out duel", icon: "RO", color: "#ff9f1c", desc: "Wait for the green. Beware the violent RGB glitch phases designed to mess with your brain." },
       { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
-      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Precision Bezier smoothing, mirror symmetry, and perfect sync." }
+      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Precision drawing, mirror symmetry, and zero-latency sync." }
     ];
     
     const cipherRounds = [
@@ -1004,7 +1002,7 @@
                   if(t.open) {
                     if(t.kind === 'bomb') content = "!";
                     else if(t.kind === 'bonus') content = "+5";
-                    else content = t.adj > 0 ? t.adj : "";
+                    else content = parseInt(t.adj) > 0 ? t.adj : "";
                   }
                   return `<button class="trap-card ${t.open ? `open ${t.kind}` : ""}" data-tile="${i}" type="button"><span>${content}</span></button>`;
                 }).join("")}
@@ -1116,12 +1114,13 @@
       
       sketch: {
         canvas: null, ctx: null, drawing: false, initialized: false,
-        color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen', sym: false,
+        color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen',
         lastP: null, undoStack: [], wrap: null, dpr: 1, _resize: null,
+        syncBuffer: [], syncTimer: null,
         
         start() {
           document.body.classList.add('sketch-mode-active');
-          $("#appShell").style.display = 'none'; // Full immersive takeover
+          $("#appShell").style.display = 'none'; 
           
           if (!this.prompt) this.prompt = sample(sketchPrompts);
           
@@ -1153,7 +1152,6 @@
                     <input type="range" id="brushSize" min="2" max="60" value="${this.size}">
                     <div class="color-picker-wrap"><input type="color" id="nativeColor" value="${this.color}"></div>
                     <button class="tool-btn active" id="glowToggle" title="Neon Glow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg></button>
-                    <button class="tool-btn" id="symToggle" title="Mirror Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M16 8l4 4-4 4"></path><path d="M8 8l-4 4 4 4"></path></svg></button>
                   </div>
                   <div class="dock-group" style="border:none;">
                     <button id="undoCanvas" class="tool-btn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path></svg></button>
@@ -1169,8 +1167,7 @@
           }
           
           this.canvas = $("#drawCanvas"); 
-          // GPU Hardware Acceleration Unlocked
-          this.ctx = this.canvas.getContext("2d");
+          this.ctx = this.canvas.getContext("2d"); // GPU Hardware Acceleration Unlocked
           this.wrap = $("#canvasWrap");
           
           if (!this.initialized) {
@@ -1187,9 +1184,14 @@
           this.clear(false); 
           this.undoStack = []; 
           this.saveState();
+          
+          // Start the 33fps WebRTC Batch Sync to kill network lag
+          if (this.syncTimer) clearInterval(this.syncTimer);
+          this.syncTimer = setInterval(() => this.flushSync(), 30);
         },
         
         close() {
+          if (this.syncTimer) clearInterval(this.syncTimer);
           if($("#sketchLayoutMaster")) $("#sketchLayoutMaster").style.display = "none";
           document.body.classList.remove('sketch-mode-active');
           $("#appShell").style.display = 'flex';
@@ -1215,7 +1217,7 @@
           
           if (tempCanvas.width > 0) {
             this.ctx.save();
-            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Restore 1:1 pixel mapping to prevent blur
             this.ctx.drawImage(tempCanvas, 0, 0);
             this.ctx.restore();
           }
@@ -1237,11 +1239,8 @@
           
           $("#glowToggle").addEventListener("click", (e) => { 
             vibe(10); this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
-            this.wrap.classList.toggle("neon-mode", this.glow); this.clear(true); 
-          });
-
-          $("#symToggle").addEventListener("click", (e) => {
-             vibe(10); this.sym = !this.sym; e.currentTarget.classList.toggle("active", this.sym);
+            this.wrap.classList.toggle("neon-mode", this.glow);
+            // CRITICAL FIX: Removed this.clear(true) so toggling themes does NOT wipe the canvas!
           });
           
           $("#undoCanvas").addEventListener("click", () => { vibe(15); this.undo(); });
@@ -1280,7 +1279,7 @@
              const rect = this.wrap.getBoundingClientRect();
              cursor.style.display = 'block';
              cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`;
-             cursor.style.left = `${e.clientX - rect.left}px`; cursor.style.top = `${e.clientY - rect.top}px`;
+             cursor.style.transform = `translate(${e.clientX - rect.left}px, ${e.clientY - rect.top}px) translate(-50%, -50%)`;
              cursor.style.color = this.color;
           };
           
@@ -1295,9 +1294,10 @@
              const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
              const dynSize = this.size * pressure;
              
-             // Draw a tiny line to force a dot on tap
-             this.executeDraw(p.x, p.y, p.x + 0.01, p.y + 0.01, this.color, dynSize, this.tool, this.glow, this.sym);
-             sendSketch({ name: "draw", nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: (p.nx + 0.0001).toFixed(4), ny1: (p.ny + 0.0001).toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.sym });
+             // Draw a tiny line to force a circular dot on stationary tap
+             this.executeDraw(p.x, p.y, p.x + 0.01, p.y + 0.01, this.color, dynSize, this.tool, this.glow);
+             
+             this.syncBuffer.push({ nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: (p.nx + 0.0001).toFixed(4), ny1: (p.ny + 0.0001).toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
              updateCursor(e);
           };
           
@@ -1311,9 +1311,10 @@
              const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
              const dynSize = this.size * pressure;
 
-             this.executeDraw(this.lastP.x, this.lastP.y, p.x, p.y, this.color, dynSize, this.tool, this.glow, this.sym);
+             this.executeDraw(this.lastP.x, this.lastP.y, p.x, p.y, this.color, dynSize, this.tool, this.glow);
              
-             sendSketch({ name: "draw", nx0: this.lastP.nx.toFixed(4), ny0: this.lastP.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow, sym: this.sym });
+             // Push to local buffer instead of flooding the network
+             this.syncBuffer.push({ nx0: this.lastP.nx.toFixed(4), ny0: this.lastP.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
              
              this.lastP = p;
           };
@@ -1322,7 +1323,7 @@
             if(!this.drawing) return;
             this.drawing = false; 
             this.canvas.releasePointerCapture(e.pointerId); 
-            this.saveState(); // Saved state moved to mouseup to prevent massive touch stutter
+            this.saveState(); // Saved state moved to mouseup to prevent touch-down stutter
           };
           
           this.canvas.addEventListener("pointerdown", down); 
@@ -1330,15 +1331,12 @@
           this.canvas.addEventListener("pointerup", up);
           this.canvas.addEventListener("pointercancel", up);
           this.canvas.addEventListener("pointerleave", () => { 
-             if(this.drawing) {
-                 this.drawing = false;
-                 this.saveState();
-             }
+             if(this.drawing) { this.drawing = false; this.saveState(); }
              cursor.style.display = 'none'; 
           });
         },
         
-        executeDraw(x0, y0, x1, y1, color, size, tool, glow, sym) { 
+        executeDraw(x0, y0, x1, y1, color, size, tool, glow) { 
            this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
            this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
            
@@ -1349,14 +1347,13 @@
            this.ctx.moveTo(x0, y0); 
            this.ctx.lineTo(x1, y1); 
            this.ctx.stroke();
-           
-           if (sym) {
-               const rectW = this.canvas.width / this.dpr;
-               this.ctx.beginPath(); 
-               this.ctx.moveTo(rectW - x0, y0); 
-               this.ctx.lineTo(rectW - x1, y1); 
-               this.ctx.stroke();
-           }
+        },
+        
+        flushSync() {
+          if (this.syncBuffer.length > 0 && room.connected && !room.suppress) {
+            sendSketch({ name: "batch", strokes: this.syncBuffer });
+            this.syncBuffer = [];
+          }
         },
         
         saveState() {
@@ -1404,9 +1401,11 @@
             };
             img.src = p.data;
           }
-          else if (p.name === "draw") {
+          else if (p.name === "batch") {
             const rect = this.wrap.getBoundingClientRect();
-            this.executeDraw(p.nx0 * rect.width, p.ny0 * rect.height, p.nx1 * rect.width, p.ny1 * rect.height, p.c, p.s, p.t, p.g, p.sym);
+            p.strokes.forEach(s => {
+               this.executeDraw(s.nx0 * rect.width, s.ny0 * rect.height, s.nx1 * rect.width, s.ny1 * rect.height, s.c, s.s, s.t, s.g);
+            });
           }
         },
         snapshot() { return { prompt: this.prompt, glow: this.glow, image: this.canvas ? this.canvas.toDataURL('image/webp', 0.5) : null }; },
