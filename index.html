@@ -29,10 +29,12 @@
     body[data-theme="ink"] { --bg: #101010; --paper: rgba(250, 246, 230, 0.93); --paper-solid: #faf6e6; --p1: #d99b3d; --p2: #5da9e9; --hot: #f3d36b; --violet: #cf5c36; }
     
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    /* Mobile Fix: Prevent pull-to-refresh and bounce scrolling globally */
+    html, body { overscroll-behavior: none; }
     html { min-height: 100%; background: var(--bg); }
     body {
       min-height: 100dvh; margin: 0; color: var(--ink); font-family: var(--font); overflow-x: hidden;
-      -webkit-user-select: none; user-select: none; /* Prevents accidental highlighting during frantic tapping */
+      -webkit-user-select: none; user-select: none; /* Prevents accidental highlighting */
       background: 
         radial-gradient(circle at 13% 13%, color-mix(in srgb, var(--p1) 36%, transparent), transparent 28rem),
         radial-gradient(circle at 83% 18%, color-mix(in srgb, var(--hot) 31%, transparent), transparent 24rem),
@@ -41,7 +43,8 @@
     }
     
     button, input, select { font: inherit; cursor: pointer; outline: none; }
-    input { cursor: text; user-select: auto; -webkit-user-select: auto; } /* Re-enable selection only for typing inputs */
+    /* Mobile Fix: Lock input font size to 16px minimum to stop iOS auto-zoom */
+    input, select { cursor: text; user-select: auto; -webkit-user-select: auto; font-size: 16px !important; } 
     button { color: inherit; transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s, box-shadow 0.2s; will-change: transform; }
     button:active { transform: scale(0.95) !important; }
     
@@ -65,7 +68,7 @@
     .d6 { right: 45%; bottom: 8%; width: 80px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; animation-delay: -7s; border-color: color-mix(in srgb, var(--violet) 70%, white); }
     @keyframes drift { 0% { translate: 0 0; rotate: -7deg; } 50% { translate: 15px -35px; rotate: 12deg; scale: 1.05; } 100% { translate: -10px -15px; rotate: -4deg; } }
     
-    .app-shell { position: relative; z-index: 4; width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 0 42px; display: flex; flex-direction: column; min-height: 100dvh; }
+    .app-shell { position: relative; z-index: 4; width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 0 calc(42px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; min-height: 100dvh; }
     main { flex: 1; display: flex; flex-direction: column; }
     
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; transition: opacity 0.3s; }
@@ -120,9 +123,9 @@
     .connection-panel strong { display: block; line-height: 1.35; font-size: 1.1rem; }
     
     .room-controls { display: grid; grid-template-columns: auto minmax(118px, 150px) auto; gap: 8px; }
-    .room-controls input { min-height: 42px; text-align: center; text-transform: uppercase; font-size: 1.2rem; letter-spacing: 0.2em; }
+    .room-controls input { min-height: 42px; text-align: center; text-transform: uppercase; letter-spacing: 0.2em; font-size: 1.2rem !important; }
     .field-card { display: grid; gap: 9px; color: var(--muted); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
-    input, select { width: 100%; min-height: 48px; color: var(--ink); background: rgba(255,255,255,0.68); border: 1px solid var(--line); border-radius: 12px; outline: 0; padding: 0 14px; font-size: 0.98rem; font-weight: 800; transition: border-color 0.2s, box-shadow 0.2s; }
+    input, select { width: 100%; min-height: 48px; color: var(--ink); background: rgba(255,255,255,0.68); border: 1px solid var(--line); border-radius: 12px; outline: 0; padding: 0 14px; font-weight: 800; transition: border-color 0.2s, box-shadow 0.2s; }
     input:focus, select:focus { border-color: var(--p2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--p2) 18%, transparent); }
     
     .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
@@ -239,7 +242,7 @@
     .color-picker-wrap input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; border: none; padding:0; }
     #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; flex-shrink: 0; }
     
-    /* Elegant, unobtrusive watermark */
+    /* Elegant, adaptive watermark */
     .built-for-monica-watermark {
       position: absolute; bottom: calc(16px + env(safe-area-inset-bottom)); right: 20px;
       font-family: monospace, sans-serif; font-size: 10px; font-weight: 800;
@@ -363,7 +366,7 @@
         const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; manifestLink.href = URL.createObjectURL(manifestBlob); document.head.appendChild(manifestLink);
         
         const swCode = `
-          const CACHE_NAME = 'playroom-v7';
+          const CACHE_NAME = 'playroom-v8';
           self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.pathname]))); self.skipWaiting(); }); 
           self.addEventListener('activate', e => self.clients.claim()); 
           self.addEventListener('fetch', e => { 
@@ -385,12 +388,11 @@
   </div>
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
   
-  <!-- MAIN APP -->
   <div class="app-shell" id="appShell">
     <header class="topbar">
       <button class="brand-mark" id="homeBtn" type="button" aria-label="Home">
         <span class="brand-sigil">P</span>
-        <span><strong>Playroom</strong><small>arcade v7</small></span>
+        <span><strong>Playroom</strong><small>arcade v8</small></span>
       </button>
       <nav class="top-actions" aria-label="App actions">
         <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst">
@@ -513,8 +515,8 @@
   <script>
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
-    const STORE_KEY = "playroom-arcade-v7";
-    const ROOM_PREFIX = "playroom-arcade-v7-";
+    const STORE_KEY = "playroom-arcade-v8";
+    const ROOM_PREFIX = "playroom-arcade-v8-";
     
     const vibe = (ms) => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
     const profile = { names: ["You", "Partner"], theme: "cosmic", roundLength: 60, sound: true, stats: { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] } };
@@ -528,7 +530,7 @@
       { id: "trap", title: "Blast Tiles", tag: "Minesweeper-lite", icon: "BT", color: "#38d9a9", desc: "Safe tiles reveal how many bombs touch them! Use logic to build streaks, or risk an explosion." },
       { id: "reflex", title: "Rift Overcharge", tag: "Fake-out duel", icon: "RO", color: "#ff9f1c", desc: "Wait for the green. Beware the violent RGB glitch phases designed to mess with your brain." },
       { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
-      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Precision drawing, mirror symmetry, and zero-latency sync." }
+      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Precision drawing, full symmetry, and zero-latency sync." }
     ];
     
     const cipherRounds = [
@@ -1203,6 +1205,10 @@
           const rect = this.wrap.getBoundingClientRect();
           this.dpr = window.devicePixelRatio || 1;
           
+          // Mobile Safari frequently triggers resize events when scrolling hides the URL bar.
+          // Only physically wipe and resize if the width fundamentally changed (device rotation).
+          if (this.canvas.style.width === `${rect.width}px` && this.canvas.style.height === `${rect.height}px`) return;
+          
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
           if (this.canvas.width > 0) tempCanvas.getContext('2d').drawImage(this.canvas, 0, 0);
@@ -1267,18 +1273,25 @@
         
         bindCanvas() {
           const cursor = $("#brushCursor");
+          
+          // Mobile Precision Coordinate Engine
           const getPos = (e) => {
             const rect = this.wrap.getBoundingClientRect();
+            // ClientX/Y accurately reflects coordinates regardless of scroll/zoom
             return { 
-               x: e.clientX - rect.left, y: e.clientY - rect.top, 
-               nx: (e.clientX - rect.left) / rect.width, ny: (e.clientY - rect.top) / rect.height 
+               x: e.clientX - rect.left, 
+               y: e.clientY - rect.top, 
+               nx: (e.clientX - rect.left) / rect.width, 
+               ny: (e.clientY - rect.top) / rect.height 
              };
           };
+          
           const updateCursor = (e) => { 
              if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
              const rect = this.wrap.getBoundingClientRect();
              cursor.style.display = 'block';
              cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`;
+             // Hardware accelerated cursor translation
              cursor.style.transform = `translate(${e.clientX - rect.left}px, ${e.clientY - rect.top}px) translate(-50%, -50%)`;
              cursor.style.color = this.color;
           };
@@ -1286,7 +1299,11 @@
           const down = (e) => { 
              if(!e.isPrimary) return;
              if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
-             e.preventDefault(); this.drawing = true; this.canvas.setPointerCapture(e.pointerId);
+             
+             // Stops native browser gestures on touch-down inside canvas
+             e.preventDefault(); 
+             this.drawing = true; 
+             this.canvas.setPointerCapture(e.pointerId);
              
              const p = getPos(e); 
              this.lastP = p;
@@ -1305,6 +1322,7 @@
              if(!e.isPrimary) return;
              updateCursor(e);
              if (!this.drawing) return; 
+             
              e.preventDefault(); 
              const p = getPos(e); 
              
