@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumière Studio | Premium Cinema</title>
     
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -18,74 +16,78 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    colors: { theater: { 950: '#020204', 900: '#07070a', 850: '#0d0d12', 800: '#13131a' }, accent: { 500: '#E50914', 600: '#B80710' } }
+                    colors: { 
+                        theater: { 950: '#030304', 900: '#09090b', 850: '#121214', 800: '#18181b' }, 
+                        accent: { 500: '#991b1b', 600: '#7f1d1d' } // Deep Titan Crimson
+                    }
                 }
             }
         }
     </script>
     
-    <!-- Core Infrastructure -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>
     
     <style>
-        body { background-color: #020204; color: #f3f4f6; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.5s ease; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #262633; border-radius: 2px; }
+        body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.8s ease; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
         
-        /* Thematic Doodle Grid Background */
+        /* Thematic AOT Background: Smoke & Embers */
         .cinema-grid {
-            background-image: radial-gradient(rgba(229, 9, 20, 0.08) 1px, transparent 0), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
-            background-position: 0 0, 20px 20px; background-size: 40px 40px;
+            background-image: radial-gradient(circle at 50% 0%, rgba(153, 27, 27, 0.05) 0%, transparent 50%), 
+                              radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+            background-size: 100% 100%, 40px 40px;
         }
         body.cinema-mode { background-image: none; background-color: #000; }
         
         .dimmable { transition: opacity 0.5s ease, filter 0.5s ease; }
         body.cinema-mode .dimmable { opacity: 0.02 !important; filter: blur(3px); pointer-events: none; }
         
-        .ambilight-container { position: absolute; inset: -15%; z-index: 0; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .ambilight-container.active { opacity: 0.8; }
-        #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(70px) saturate(220%) brightness(0.85); transform: scale(1.1); }
+        .ambilight-container { position: absolute; inset: -15%; z-index: 0; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .ambilight-container.active { opacity: 0.6; }
+        #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(80px) saturate(150%) brightness(0.7); transform: scale(1.1); }
         
-        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: 0 0 100px rgba(0,0,0,0.95); }
+        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }
         video, iframe { width: 100%; height: 100%; object-fit: contain; outline: none; background: transparent; z-index: 2; border: none; }
-        ::cue { background: rgba(0, 0, 0, 0.8); color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+        ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 500; padding: 4px 12px; border-radius: 4px; letter-spacing: 0.5px; }
 
-        .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .overlay-layer.active { opacity: 1; pointer-events: auto; }
-        .bg-overlay { background: rgba(2, 2, 4, 0.85); }
+        .bg-overlay { background: rgba(3, 3, 4, 0.85); }
         
-        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(2,2,4,0.98) 0%, rgba(2,2,4,0.6) 50%, transparent 100%); padding: 50px 36px 28px 36px; opacity: 1; z-index: 30; transition: opacity 0.4s ease, transform 0.4s ease; }
+        /* Rebuilt Controls Layout */
+        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s ease, transform 0.5s ease; width: 100%; display: flex; flex-direction: column; gap: 16px; }
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(15px); pointer-events: none; }
         .player-wrapper.idle { cursor: none; }
         
-        .scrubber-container { position: relative; height: 5px; background: rgba(255,255,255,0.12); border-radius: 999px; cursor: pointer; margin-bottom: 20px; transition: height 0.15s ease; }
+        .scrubber-container { width: 100%; position: relative; height: 5px; background: rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; transition: height 0.15s ease; }
         .scrubber-container:hover { height: 8px; }
-        .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.25); border-radius: 999px; pointer-events: none; transition: width 0.2s linear; }
-        .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #E50914; border-radius: 999px; pointer-events: none; z-index: 2; transition: width 0.1s linear;}
-        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 12px rgba(229,9,20,0.8); transition: transform 0.15s ease; pointer-events: none; }
+        .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.2); border-radius: 999px; pointer-events: none; transition: width 0.2s linear; }
+        .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #991b1b; border-radius: 999px; pointer-events: none; z-index: 2; transition: width 0.1s linear;}
+        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 14px; height: 14px; background: #d4d4d8; border-radius: 50%; box-shadow: 0 0 10px rgba(153, 27, 27, 0.8); transition: transform 0.15s ease; pointer-events: none; }
         .scrubber-container:hover .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }
         
-        .glass-panel { background: rgba(13, 13, 18, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.8); }
-        .glass-sidebar { background: rgba(7, 7, 10, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.05); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s ease; }
+        .glass-panel { background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.9); }
+        .glass-sidebar { background: rgba(3, 3, 4, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.03); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s ease; }
         .sidebar-collapsed { transform: translateX(100%); width: 0 !important; border: none; }
         
-        .overlay-chat-container { position: absolute; bottom: 140px; left: 40px; width: 400px; max-height: 350px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 20; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }
-        .overlay-message { background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 12px 18px; border-radius: 14px; margin-top: 10px; color: #fff; font-size: 0.95rem; font-weight: 500; animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        .overlay-chat-container { position: absolute; bottom: 130px; left: 40px; width: 380px; max-height: 300px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 20; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }
+        .overlay-message { background: rgba(9, 9, 11, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); padding: 10px 16px; border-radius: 10px; margin-top: 10px; color: #e4e4e7; font-size: 0.9rem; font-weight: 500; animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         .overlay-message.fade-out { opacity: 0; transform: translateY(10px) scale(0.98); transition: all 0.6s ease; }
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         
-        .btn-icon { color: #9ca3af; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:hover { color: #fff; transform: scale(1.08); }
-        .btn-primary { background: #E50914; color: white; transition: all 0.2s ease; box-shadow: 0 4px 18px rgba(229, 9, 20, 0.35); }
-        .btn-primary:hover:not(:disabled) { background: #f40612; box-shadow: 0 6px 24px rgba(229, 9, 20, 0.55); transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-icon { color: #a1a1aa; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .btn-icon:hover { color: #f4f4f5; transform: scale(1.1); }
+        .btn-primary { background: #991b1b; color: #f4f4f5; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(153, 27, 27, 0.2); }
+        .btn-primary:hover:not(:disabled) { background: #7f1d1d; box-shadow: 0 6px 25px rgba(153, 27, 27, 0.4); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }
         input[type=range]:focus { outline: none; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #fff; margin-top: -5px; box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
-        input[type=text], input[type=url] { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; transition: border-color 0.2s, background 0.2s; }
-        input:focus { outline: none; border-color: #E50914; background: rgba(255,255,255,0.06); }
-        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #E50914; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #e4e4e7; margin-top: -5px; box-shadow: 0 1px 4px rgba(0,0,0,0.8);}
+        input[type=text], input[type=url] { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #e4e4e7; transition: border-color 0.2s, background 0.2s; }
+        input:focus { outline: none; border-color: #991b1b; background: rgba(255,255,255,0.05); }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #991b1b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -94,50 +96,50 @@
     <audio id="remoteAudio" autoplay></audio>
 
     <!-- LOBBY SCREEN -->
-    <div id="lobbyScreen" class="absolute inset-0 z-50 flex items-center justify-center bg-theater-950 transition-opacity duration-700">
+    <div id="lobbyScreen" class="absolute inset-0 z-50 flex items-center justify-center bg-theater-950/95 transition-opacity duration-700">
         <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-6">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span> Hybrid Core Engine
                 </div>
-                <h1 class="text-6xl font-extrabold tracking-tight text-white flex items-center gap-4">Lumière Studio</h1>
-                <p class="text-gray-400 text-xl leading-relaxed font-light">
-                    The ultimate private viewing suite. Stream local files natively, sync external URLs, or cast YouTube links perfectly in tandem.
+                <h1 class="text-6xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-4">Lumière Studio</h1>
+                <p class="text-zinc-400 text-lg leading-relaxed font-light">
+                    The ultimate private viewing suite. Stream local files natively, sync external URLs, or cast links perfectly in tandem.
                 </p>
                 <div class="flex gap-4 pt-4">
-                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                        <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        End-to-End Encrypted
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 bg-white/5 px-3 py-1.5 rounded border border-white/5 uppercase tracking-wider">
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        E2E Encrypted
                     </div>
-                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 bg-white/5 px-3 py-1.5 rounded border border-white/5 uppercase tracking-wider">
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
                         Lossless Local Sync
                     </div>
                 </div>
             </div>
             
-            <div class="glass-panel rounded-3xl p-10">
+            <div class="glass-panel rounded-2xl p-10">
                 <div class="space-y-8">
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Your Alias</label>
-                        <input type="text" id="nameInput" class="w-full px-5 py-4 rounded-xl text-lg focus:ring-2 focus:ring-accent-500/50" placeholder="e.g. Director" value="">
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Your Alias</label>
+                        <input type="text" id="nameInput" class="w-full px-5 py-3.5 rounded-lg text-base focus:ring-1 focus:ring-accent-500/50" placeholder="e.g. Director" value="">
                     </div>
                     <div>
-                        <button id="hostBtn" class="w-full btn-primary font-bold rounded-xl px-4 py-4 flex items-center justify-center gap-3 text-lg group">
-                            <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <button id="hostBtn" class="w-full btn-primary font-bold rounded-lg px-4 py-3.5 flex items-center justify-center gap-3 text-base group">
+                            <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                             Generate Session
                         </button>
                     </div>
                     
                     <div class="relative flex items-center py-2">
-                        <div class="flex-grow border-t border-white/10"></div>
-                        <span class="flex-shrink-0 mx-4 text-gray-500 text-xs font-bold uppercase tracking-widest">Or Join Session</span>
-                        <div class="flex-grow border-t border-white/10"></div>
+                        <div class="flex-grow border-t border-white/5"></div>
+                        <span class="flex-shrink-0 mx-4 text-zinc-600 text-xs font-bold uppercase tracking-widest">Or Join Session</span>
+                        <div class="flex-grow border-t border-white/5"></div>
                     </div>
                     
                     <div class="flex gap-4">
-                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-xl focus:ring-2 focus:ring-white/30" placeholder="CODE" maxlength="6">
-                        <button id="joinBtn" class="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl px-8 py-4 transition-colors text-lg border border-white/10 disabled:opacity-50">Join</button>
+                        <input type="text" id="joinCodeInput" class="w-full px-5 py-3.5 rounded-lg text-center uppercase tracking-[0.2em] font-mono text-lg focus:ring-1 focus:ring-white/20" placeholder="CODE" maxlength="6">
+                        <button id="joinBtn" class="bg-white/5 hover:bg-white/10 text-zinc-300 font-bold rounded-lg px-8 py-3.5 transition-colors text-base border border-white/5 disabled:opacity-50">Join</button>
                     </div>
                 </div>
             </div>
@@ -151,54 +153,53 @@
             <div id="ambilight" class="ambilight-container dimmable"><video id="ambilightVideo" muted playsinline></video></div>
             
             <!-- Top Status Bar -->
-            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">
+            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/20 to-transparent flex justify-between items-start pointer-events-none dimmable">
                 <div class="flex flex-col gap-2 pointer-events-auto">
-                    <div class="flex items-center gap-3 glass-panel px-3 py-2 rounded-xl">
-                        <div class="bg-accent-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">Session Code</div>
-                        <span id="roomCodeDisplay" class="font-mono text-xl font-bold tracking-widest text-white drop-shadow-md px-2">----</span>
-                        <button id="copyCodeBtn" class="btn-icon p-2 hover:bg-white/10 rounded-lg" title="Copy Code"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                    <div class="flex items-center gap-3 glass-panel px-3 py-1.5 rounded-lg">
+                        <div class="bg-accent-600 text-zinc-100 text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider">Session</div>
+                        <span id="roomCodeDisplay" class="font-mono text-lg font-semibold tracking-widest text-zinc-200 px-1">----</span>
+                        <button id="copyCodeBtn" class="btn-icon p-1 hover:text-white" title="Copy Code"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
                     </div>
-                    <div id="syncIndicator" class="flex items-center gap-2 text-xs font-medium text-gray-300 mt-2 glass-panel px-4 py-2 rounded-xl w-max">
-                        <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
+                    <div id="syncIndicator" class="flex items-center gap-2 text-[11px] font-medium text-zinc-400 mt-1 px-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
                         <span id="syncText">Waiting for partner...</span>
                     </div>
                 </div>
-                <button id="toggleSidebarBtn" class="btn-icon p-4 glass-panel rounded-full hover:bg-white/10 pointer-events-auto z-50">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                <button id="toggleSidebarBtn" class="btn-icon p-3 glass-panel rounded-lg pointer-events-auto z-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </div>
 
             <!-- Wait State Overlay -->
             <div id="noMediaOverlay" class="overlay-layer active bg-overlay">
-                <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">
-                    <svg class="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-5 border border-white/5">
+                    <svg class="w-8 h-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                 </div>
-                <p class="text-gray-200 text-2xl font-light tracking-wide" id="noMediaTitle">Theater is Ready</p>
-                <p class="text-gray-500 text-sm mt-3" id="noMediaSub">Waiting for Host to mount media.</p>
+                <p class="text-zinc-200 text-xl font-medium tracking-wide" id="noMediaTitle">Theater Ready</p>
+                <p class="text-zinc-500 text-xs mt-2 uppercase tracking-widest" id="noMediaSub">Awaiting Media Mount</p>
             </div>
 
             <!-- Buffering Overlay -->
             <div id="bufferingOverlay" class="overlay-layer bg-overlay backdrop-blur-md">
-                <div class="w-16 h-16 border-4 border-white/10 border-t-accent-500 rounded-full animate-spin mb-6"></div>
-                <span class="text-white font-bold tracking-widest uppercase text-base mb-3" id="bufferStatusText">Loading Stream...</span>
+                <div class="w-12 h-12 border-2 border-white/10 border-t-accent-500 rounded-full animate-spin mb-4"></div>
+                <span class="text-zinc-300 font-bold tracking-widest uppercase text-xs mb-2" id="bufferStatusText">Loading Stream...</span>
             </div>
 
             <!-- Floating Chat Layer -->
             <div id="overlayChat" class="overlay-chat-container"></div>
 
-            <!-- Player Wrapper (Video + YouTube iFrame) -->
+            <!-- Player Wrapper -->
             <div id="playerWrapper" class="player-wrapper group">
                 <video id="mainVideo" playsinline></video>
-                
-                <!-- YouTube API Div -->
                 <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none">
                     <div id="ytPlayerDiv" class="w-full h-full"></div>
                 </div>
                 
-                <div id="videoControls" class="controls-overlay flex flex-col gap-4">
-                    <div id="nowPlayingText" class="text-white/80 text-sm font-medium tracking-wide mb-2 hidden flex justify-between items-end">
-                        <span class="drop-shadow-md bg-black/50 px-3 py-1.5 rounded border border-white/5 backdrop-blur-md">Loading...</span>
-                        <span id="roleIndicator" class="text-[10px] uppercase font-bold tracking-widest text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-lg border border-accent-500/20 shadow-lg">Host Authority</span>
+                <div id="videoControls" class="controls-overlay">
+                    
+                    <div id="nowPlayingText" class="text-zinc-300 text-xs font-medium tracking-wider hidden flex justify-between items-center px-1">
+                        <span class="drop-shadow-md">Loading...</span>
+                        <span id="roleIndicator" class="text-[9px] uppercase font-bold tracking-widest text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded border border-accent-500/20">Director</span>
                     </div>
                     
                     <div id="scrubber" class="scrubber-container">
@@ -207,31 +208,41 @@
                         <div id="scrubberThumb" class="scrubber-thumb left-0"></div>
                     </div>
                     
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-8">
-                            <button id="playPauseBtn" class="btn-icon text-white hover:text-accent-500 drop-shadow-lg">
-                                <svg id="iconPlay" class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                <svg id="iconPause" class="w-12 h-12 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <div class="flex items-center justify-between w-full">
+                        <div class="flex items-center gap-6">
+                            <button id="playPauseBtn" class="btn-icon text-zinc-100 hover:text-accent-500">
+                                <svg id="iconPlay" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                             </button>
                             
-                            <div class="flex items-center gap-3 group/vol">
-                                <button id="muteBtn" class="btn-icon">
-                                    <svg id="iconVol" class="w-7 h-7 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
-                                    <svg id="iconVolMuted" class="w-7 h-7 hidden text-accent-500 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                            <!-- Skip Controls -->
+                            <div class="flex items-center gap-3">
+                                <button id="skipBackBtn" class="btn-icon text-zinc-400 hover:text-zinc-100" title="-10s">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg>
                                 </button>
-                                <input type="range" id="volSlider" class="w-0 opacity-0 group-hover/vol:w-28 group-hover/vol:opacity-100 transition-all duration-300 origin-left" min="0" max="1" step="0.05" value="1">
+                                <button id="skipFwdBtn" class="btn-icon text-zinc-400 hover:text-zinc-100" title="+10s">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"></path></svg>
+                                </button>
                             </div>
-                            <span id="timeDisplay" class="text-white/90 font-mono text-sm tracking-wide bg-black/50 px-3 py-1.5 rounded-lg border border-white/10 shadow-inner">00:00 / 00:00</span>
+                            
+                            <div class="flex items-center gap-2.5 group/vol ml-2">
+                                <button id="muteBtn" class="btn-icon text-zinc-300">
+                                    <svg id="iconVol" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                                    <svg id="iconVolMuted" class="w-5 h-5 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                                </button>
+                                <input type="range" id="volSlider" class="w-0 opacity-0 group-hover/vol:w-24 group-hover/vol:opacity-100 transition-all duration-300 origin-left" min="0" max="1" step="0.05" value="1">
+                            </div>
+                            <span id="timeDisplay" class="text-zinc-300 font-mono text-xs tracking-wider ml-2">00:00 / 00:00</span>
                         </div>
                         
-                        <div class="flex items-center gap-6">
-                            <div id="driftIndicator" class="hidden flex items-center gap-2 text-[10px] text-yellow-400 font-bold px-4 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-xl uppercase tracking-wider">
-                                <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> Syncing
+                        <div class="flex items-center gap-5">
+                            <div id="driftIndicator" class="hidden flex items-center gap-1.5 text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded uppercase tracking-wider">
+                                <div class="w-1 h-1 rounded-full bg-yellow-500 animate-ping"></div> Syncing
                             </div>
-                            <button id="pipBtn" class="btn-icon text-white drop-shadow-md" title="Picture-in-Picture"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
-                            <button id="cinemaModeBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Cinema Dimming"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
-                            <button id="ambilightBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Ambilight"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
-                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
+                            <button id="pipBtn" class="btn-icon" title="Picture-in-Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
+                            <button id="cinemaModeBtn" class="btn-icon" title="Toggle Cinema Dimming"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
+                            <button id="ambilightBtn" class="btn-icon" title="Toggle Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
+                            <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                         </div>
                     </div>
                 </div>
@@ -239,79 +250,78 @@
         </div>
 
         <!-- SIDEBAR CONTROLS -->
-        <div id="sidebar" class="glass-sidebar w-[400px] flex flex-col h-full flex-shrink-0 relative z-50 dimmable">
+        <div id="sidebar" class="glass-sidebar w-[380px] flex flex-col h-full flex-shrink-0 relative z-50 dimmable">
             <!-- Voice Comms -->
-            <div class="p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent">
+            <div class="p-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Spatial Voice
+                    <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Spatial Voice
                     </h3>
-                    <button id="micBtn" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shadow-sm">
+                    <button id="micBtn" class="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 transition-all border border-white/5">
                         <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                         <svg id="iconMicMuted" class="w-4 h-4 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                     </button>
                 </div>
-                <div class="flex items-center gap-4 bg-black/40 p-3 rounded-xl border border-white/5 shadow-inner">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                <div class="flex items-center gap-3 bg-black/40 p-3 rounded-lg border border-white/5">
+                    <svg class="w-4 h-4 text-zinc-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                     <input type="range" id="voiceVolSlider" class="flex-1" min="0" max="1" step="0.05" value="0.8">
                 </div>
             </div>
 
             <!-- Host Stream Deck -->
-            <div class="p-6 border-b border-white/10 bg-black/40 overflow-y-auto" id="hostControlsPanel">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Media Deck</h3>
+            <div class="p-6 border-b border-white/5 bg-black/20 overflow-y-auto" id="hostControlsPanel">
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Media Deck</h3>
                 <div class="space-y-4">
                     
-                    <!-- Option 1: True Sync Local File -->
-                    <div class="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3 group hover:border-accent-500/50 transition-colors">
-                        <div class="text-[10px] text-gray-300 font-bold uppercase mb-2 tracking-wider flex justify-between items-center">
-                            <span>Dual-Local Engine</span>
-                            <span class="text-green-500 bg-green-500/10 px-2 py-0.5 rounded font-mono">Lossless Sync</span>
+                    <!-- True Sync Local File -->
+                    <div class="p-4 bg-black/40 border border-white/5 rounded-xl space-y-3 group hover:border-accent-500/30 transition-colors">
+                        <div class="text-[10px] text-zinc-400 font-bold uppercase mb-1 tracking-wider flex justify-between items-center">
+                            <span>Dual-Local</span>
+                            <span class="text-green-500/80 bg-green-500/10 px-2 py-0.5 rounded font-mono text-[9px]">Lossless Sync</span>
                         </div>
-                        <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-3 cursor-pointer transition shadow-[0_4px_20px_rgba(229,9,20,0.2)] text-sm">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                            <span class="font-bold">Sync Local File</span>
+                        <label class="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-200 rounded-lg px-4 py-2.5 cursor-pointer transition text-xs font-semibold">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <span>Sync Local File</span>
                             <input type="file" id="fileSyncInput" class="hidden" accept="video/mp4,video/webm,video/ogg">
                         </label>
-                        <p class="text-[9px] text-gray-500 text-center uppercase tracking-wider">Guest must select identical file to sync.</p>
                     </div>
 
-                    <!-- Option 2: Stream Local File -->
-                    <div class="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3 group transition-colors">
-                        <div class="text-[10px] text-gray-300 font-bold uppercase tracking-wider flex justify-between items-center">
+                    <!-- Stream Local File -->
+                    <div class="p-4 bg-black/40 border border-white/5 rounded-xl space-y-3 group transition-colors">
+                        <div class="text-[10px] text-zinc-400 font-bold uppercase mb-1 tracking-wider flex justify-between items-center">
                             <span>WebRTC Broadcaster</span>
-                            <span class="text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded font-mono">Live Capture</span>
+                            <span class="text-blue-500/80 bg-blue-500/10 px-2 py-0.5 rounded font-mono text-[9px]">Live Capture</span>
                         </div>
-                        <label class="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-lg px-4 py-2.5 cursor-pointer transition text-sm">
-                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span class="font-bold">Stream to Partner</span>
+                        <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-2.5 cursor-pointer transition shadow-[0_2px_15px_rgba(153,27,27,0.3)] text-xs font-semibold">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span>Stream to Partner</span>
                             <input type="file" id="fileStreamInput" class="hidden" accept="video/mp4,video/webm">
                         </label>
                     </div>
 
-                    <!-- Option 3: URLs & WebRTC Share -->
+                    <!-- URLs & WebRTC Share -->
                     <div class="flex gap-2">
-                        <input type="url" id="urlInput" class="flex-1 px-4 py-3 text-xs rounded-lg border border-white/10 bg-black/80 focus:border-accent-500 shadow-inner" placeholder="E.g. Attack.on.Titan.S04.mp4 or YouTube URL">
-                        <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-xs font-bold transition border border-white/10">Load</button>
+                        <input type="url" id="urlInput" class="flex-1 px-3 py-2.5 text-xs rounded-lg border border-white/5 bg-black/40 focus:border-accent-500" placeholder="URL or YouTube Link">
+                        <button id="loadUrlBtn" class="bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg text-xs font-bold transition border border-white/5 text-zinc-300">Load</button>
                     </div>
                     
-                    <button id="shareScreenBtn" class="flex items-center justify-center gap-2 w-full bg-black/40 hover:bg-white/10 border border-white/10 text-white rounded-lg px-4 py-3 transition text-sm">
+                    <button id="shareScreenBtn" class="flex items-center justify-center gap-2 w-full bg-black/40 hover:bg-white/10 border border-white/5 text-zinc-300 rounded-lg px-4 py-2.5 transition text-xs font-semibold">
                         <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        <span class="font-bold">Share Browser Tab</span>
+                        <span>Share Browser Tab</span>
                     </button>
                 </div>
             </div>
 
             <!-- Chat -->
-            <div class="flex-1 flex flex-col min-h-0 bg-theater-900/60">
-                <div id="chatMessages" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-                    <div class="text-center text-[9px] text-gray-500 font-bold tracking-widest py-3 border-b border-white/5 uppercase">Encrypted Channel Established</div>
+            <div class="flex-1 flex flex-col min-h-0 bg-theater-950/40">
+                <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+                    <div class="text-center text-[9px] text-zinc-600 font-bold tracking-widest py-2 border-b border-white/5 uppercase">DataChannel Live</div>
                 </div>
                 
-                <div class="p-4 bg-theater-800/90 border-t border-white/5 backdrop-blur-xl">
+                <div class="p-4 bg-theater-900/80 border-t border-white/5 backdrop-blur-xl">
                     <form id="chatForm" class="relative">
-                        <input type="text" id="chatInput" class="w-full bg-black/80 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:border-accent-500 transition-colors placeholder:text-gray-600 shadow-inner" placeholder="Send a message..." autocomplete="off">
-                        <button type="submit" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-accent-500 hover:text-white transition-colors rounded-lg bg-accent-500/10 hover:bg-accent-500 border border-transparent hover:border-accent-400">
+                        <input type="text" id="chatInput" class="w-full bg-black/50 border border-white/5 rounded-lg pl-4 pr-10 py-3 text-xs focus:border-accent-500 transition-colors placeholder:text-zinc-600" placeholder="Message..." autocomplete="off">
+                        <button type="submit" class="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 text-accent-500 hover:text-white transition-colors rounded hover:bg-accent-500/20">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                         </button>
                     </form>
@@ -320,14 +330,9 @@
         </div>
     </div>
     
-    <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
-        /**
-         * LUMIÈRE PRO - MASTER HYBRID ENGINE
-         * Native HTML5 Video + Iframe Wrapping + WebRTC Streams
-         */
-        
         // Setup YouTube IFrame API Dynamically
         let ytPlayer = null; let ytReady = false;
         window.onYouTubeIframeAPIReady = () => { ytReady = true; };
@@ -338,8 +343,7 @@
             isHost: false, roomId: '', myName: 'Viewer',
             peer: null, conn: null, mediaConn: null, voiceConn: null,
             localVoiceStream: null, activeMediaStream: null, hlsPlayer: null,
-            
-            playMode: 'idle', // 'idle', 'local_sync', 'local_stream', 'url', 'youtube', 'screenshare'
+            playMode: 'idle',
             syncState: { time: 0, duration: 0, paused: true },
             isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true, cinemaMode: false,
             ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null
@@ -354,6 +358,7 @@
             playerWrapper: document.getElementById('playerWrapper'), noMediaOverlay: document.getElementById('noMediaOverlay'), bufferingOverlay: document.getElementById('bufferingOverlay'),
             nowPlayingText: document.getElementById('nowPlayingText'), roleIndicator: document.getElementById('roleIndicator'),
             playBtn: document.getElementById('playPauseBtn'), iconPlay: document.getElementById('iconPlay'), iconPause: document.getElementById('iconPause'),
+            skipBackBtn: document.getElementById('skipBackBtn'), skipFwdBtn: document.getElementById('skipFwdBtn'),
             scrubber: document.getElementById('scrubber'), scrubberBuffer: document.getElementById('scrubberBuffer'),
             scrubberProgress: document.getElementById('scrubberProgress'), scrubberThumb: document.getElementById('scrubberThumb'),
             timeDisplay: document.getElementById('timeDisplay'), volSlider: document.getElementById('volSlider'),
@@ -377,20 +382,20 @@
             },
             showToast: (msg, type = 'info', duration = 4000) => {
                 const t = document.createElement('div');
-                t.className = `px-5 py-3.5 rounded-xl shadow-2xl text-sm font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-white border-white/10')}`;
-                t.innerHTML = type === 'error' ? `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${msg}` : msg;
+                t.className = `px-5 py-3 rounded-lg shadow-xl text-[11px] font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] uppercase tracking-widest ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-zinc-300 border-white/5')}`;
+                t.innerHTML = type === 'error' ? `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${msg}` : msg;
                 document.getElementById('toastContainer').appendChild(t);
-                setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 400); }, duration);
+                setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-10px)'; setTimeout(() => t.remove(), 400); }, duration);
             },
-            copyToClipboard: (text) => { navigator.clipboard.writeText(text).then(() => Utils.showToast("Session Code Copied!")); },
+            copyToClipboard: (text) => { navigator.clipboard.writeText(text).then(() => Utils.showToast("Code Copied")); },
             logChat: (sender, text, isSystem = false) => {
                 const div = document.createElement('div');
                 if (isSystem) {
-                    div.className = "text-center text-[10px] text-accent-500 font-bold py-1 uppercase tracking-wider"; div.textContent = text;
+                    div.className = "text-center text-[9px] text-accent-500 font-bold py-1 uppercase tracking-wider"; div.textContent = text;
                 } else {
                     const isMe = sender === State.myName;
                     div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-                    div.innerHTML = `<span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1 px-1">${sender}</span><div class="px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${isMe ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 text-white rounded-tl-sm border border-white/5'}">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+                    div.innerHTML = `<span class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1">${sender}</span><div class="px-4 py-2.5 rounded-xl max-w-[85%] text-xs leading-relaxed shadow-sm ${isMe ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/5 text-zinc-200 border border-white/5 rounded-tl-sm'}">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
                 }
                 UI.chatMessages.appendChild(div); UI.chatMessages.scrollTop = UI.chatMessages.scrollHeight;
                 if (!State.sidebarOpen && !isSystem) {
@@ -437,7 +442,6 @@
                 
                 State.mediaConn = State.peer.call(State.conn.peer, State.activeMediaStream, { metadata: { type: 'media_stream', name: fileName } });
                 
-                // Uncap WebRTC compression dynamically
                 State.mediaConn.on('stream', () => {}); 
                 const pc = State.mediaConn.peerConnection;
                 if (pc) {
@@ -458,43 +462,42 @@
             },
             
             setupHost: async () => {
-                State.myName = UI.nameInput.value.trim() || 'Host'; 
+                State.myName = UI.nameInput.value.trim() || 'Director'; 
                 localStorage.setItem('lumiereAlias', State.myName);
                 State.isHost = true; State.roomId = Utils.generateCode();
-                UI.hostBtn.disabled = true; UI.hostBtn.innerHTML = `<div class="spinner mr-2"></div> Routing...`;
+                UI.hostBtn.disabled = true; UI.hostBtn.innerHTML = `<div class="spinner mr-2"></div>`;
                 
                 try {
                     State.peer = new Peer(`lumiere-${State.roomId}`, Network.peerConfig);
                     State.peer.on('open', () => {
                         UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
-                        Utils.showToast("Global Room Created. Waiting for partner.", "success");
-                        UI.roleIndicator.textContent = "HOST - MASTER";
+                        Utils.showToast("Room Created. Waiting for Viewer.", "success");
+                        UI.roleIndicator.textContent = "Director";
                         SyncEngine.startHostHeartbeat(); AudioEngine.initMic();
                     });
                     
                     State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(conn); });
                     State.peer.on('call', Network.handleIncomingCall);
-                    
                     State.peer.on('error', (e) => {
-                        Utils.showToast(e.type === 'unavailable-id' ? "ID Collision. Try again." : `Network Error: ${e.type}`, "error");
-                        UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Create Session";
+                        Utils.showToast(e.type === 'unavailable-id' ? "ID Collision." : `Network Error`, "error");
+                        UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Generate Session";
                     });
                 } catch (err) { Utils.showToast("Failed to initiate.", "error"); }
             },
             
             setupGuest: async () => {
                 const code = UI.joinInput.value.trim().toUpperCase();
-                if (code.length < 4) return Utils.showToast("Invalid code format.", "error");
+                if (code.length < 4) return Utils.showToast("Invalid code.", "error");
                 
                 State.myName = UI.nameInput.value.trim() || 'Viewer'; 
                 localStorage.setItem('lumiereAlias', State.myName);
                 State.isHost = false; State.roomId = code;
-                UI.joinBtn.disabled = true; UI.joinBtn.textContent = "Locating Host...";
+                UI.joinBtn.disabled = true; UI.joinBtn.textContent = "Locating...";
                 
                 try {
                     State.peer = new Peer(Network.peerConfig);
                     State.peer.on('open', () => {
-                        UI.joinBtn.textContent = "Connecting to P2P...";
+                        UI.joinBtn.textContent = "Connecting...";
                         State.conn = State.peer.connect(`lumiere-${code}`, { reliable: true });
                         Network.setupDataChannel(State.conn);
                         
@@ -506,7 +509,7 @@
                     
                     State.peer.on('call', Network.handleIncomingCall);
                     State.peer.on('error', (e) => {
-                        Utils.showToast("Host unreachable. Room closed or code invalid.", "error");
+                        Utils.showToast("Host unreachable.", "error");
                         UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
                     });
                 } catch (err) { Utils.showToast("Failed to connect.", "error"); }
@@ -516,11 +519,11 @@
                 conn.on('open', () => {
                     if (!State.isHost) {
                         UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
-                        UI.hostControlsPanel.style.display = 'none'; // Guest shouldn't dictate global stream URL
-                        UI.roleIndicator.textContent = "GUEST - SLAVE";
-                        UI.roleIndicator.classList.replace('text-accent-500', 'text-blue-400');
-                        UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-blue-400/10');
-                        UI.roleIndicator.classList.replace('border-accent-500/20', 'border-blue-400/20');
+                        UI.hostControlsPanel.style.display = 'none'; 
+                        UI.roleIndicator.textContent = "Viewer";
+                        UI.roleIndicator.classList.replace('text-accent-500', 'text-zinc-400');
+                        UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-white/10');
+                        UI.roleIndicator.classList.replace('border-accent-500/20', 'border-white/10');
                     }
                     Network.updateStatus(true);
                     conn.send({ type: 'INFO', name: State.myName });
@@ -544,21 +547,13 @@
                     call.answer(State.localVoiceStream); State.voiceConn = call;
                     call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
                 } else if (call.metadata?.type === 'media_stream' || call.metadata?.type === 'screenshare') {
-                    call.answer(); 
-                    Utils.logChat('System', `Connected to High-Bitrate Host Stream...`, true);
+                    call.answer(); State.mediaConn = call;
+                    Utils.logChat('System', `Connected to Host Stream...`, true);
                     
                     call.on('stream', (stream) => {
-                        // Do NOT call MediaEngine.clearSource() here! It will destroy the active connection.
-                        if (State.hlsPlayer) { State.hlsPlayer.destroy(); State.hlsPlayer = null; }
-                        if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
-                        
-                        UI.ytPlayerContainer.classList.add('hidden'); 
-                        UI.video.classList.remove('hidden');
-                        UI.video.src = "";
-                        UI.video.srcObject = stream;
-                        
-                        State.mediaConn = call;
+                        MediaEngine.clearSource();
                         State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';
+                        UI.video.srcObject = stream;
                         
                         const videoTrack = stream.getVideoTracks()[0];
                         if (videoTrack) {
@@ -567,16 +562,7 @@
                         }
                         
                         UI.video.play().catch(()=>{});
-                        
-                        UI.noMediaOverlay.classList.add('hidden');
-                        UI.nowPlayingText.querySelector('span:first-child').textContent = call.metadata?.name || "Host Broadcast";
-                        UI.nowPlayingText.classList.remove('hidden');
-                        
-                        if (State.ambilightEnabled) {
-                            UI.ambilightContainer.classList.add('active');
-                            UI.ambilightVideo.srcObject = stream;
-                            UI.ambilightVideo.play().catch(()=>{});
-                        }
+                        MediaEngine.updateUI(call.metadata?.name || "Host Broadcast");
                     });
                     
                     call.on('close', () => { 
@@ -590,8 +576,8 @@
             updateStatus: (connected) => {
                 if (connected) {
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
-                    UI.syncText.textContent = "Direct Encrypted Link Active";
-                    Utils.showToast("Partner joined the theater.", "success");
+                    UI.syncText.textContent = "Encrypted Link Active";
+                    Utils.showToast("Viewer joined.", "success");
                     Utils.logChat('System', 'Partner connected.', true);
                 } else {
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]";
@@ -629,38 +615,36 @@
                 }
             },
             
-            // Mode 1: Lossless Sync (Both select file)
             syncLocalFile: (file) => {
-                if (file.name.endsWith('.mkv')) return Utils.showToast("Hardware limit: Browsers cannot decode MKV. Use MP4 or WebM.", "error", 6000);
+                if (file.name.endsWith('.mkv')) return Utils.showToast("Browsers cannot decode MKV natively. Use MP4.", "error", 6000);
                 MediaEngine.clearSource(); State.playMode = 'local_sync';
                 
                 const blobUrl = URL.createObjectURL(file);
                 UI.video.src = blobUrl;
-                MediaEngine.updateUI(`Syncing: ${file.name}`);
+                MediaEngine.updateUI(`${file.name}`);
                 
                 if (State.isHost) {
-                    Utils.logChat('System', `You loaded ${file.name}. Your partner must load the identical file from their controls to sync.`, true);
+                    Utils.logChat('System', `Awaiting guest to mount identical file...`, true);
                     if (State.conn?.open) State.conn.send({ type: 'REQ_SYNC_FILE', name: file.name });
                 } else {
-                    Utils.logChat('System', `You mounted ${file.name}. Sync is active.`, true);
+                    Utils.logChat('System', `File mounted. Sync active.`, true);
                     if (State.conn?.open) State.conn.send({ type: 'GUEST_MOUNTED' });
                 }
             },
             
-            // Mode 2: Host Stream (Live Screen capture over WebRTC)
             streamLocalFile: (file) => {
-                if (file.name.endsWith('.mkv')) return Utils.showToast("Cannot stream MKV directly. Use MP4/WebM.", "error", 6000);
-                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for partner to connect before broadcasting.", "error");
+                if (file.name.endsWith('.mkv')) return Utils.showToast("Cannot broadcast MKV directly. Use MP4.", "error", 6000);
+                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for viewer.", "error");
                 
                 MediaEngine.clearSource(); State.playMode = 'local_stream';
                 State.currentMediaTitle = file.name;
                 
                 const blobUrl = URL.createObjectURL(file);
                 UI.video.src = blobUrl;
-                UI.video.muted = false; // Must be unmuted to catch audio context implicitly
+                UI.video.muted = false; 
                 
                 MediaEngine.updateUI(`Broadcasting: ${file.name}`);
-                Utils.showToast("Initializing 60FPS Lossless Broadcast...", "info");
+                Utils.showToast("Initializing broadcast pipeline...", "info");
                 
                 UI.video.onplaying = () => {
                     if (State.activeMediaStream) return; 
@@ -669,25 +653,23 @@
                     try {
                         if (UI.video.captureStream) stream = UI.video.captureStream(60);
                         else if (UI.video.mozCaptureStream) stream = UI.video.mozCaptureStream(60);
-                    } catch (err) { return Utils.showToast("Browser rejected stream capture.", "error"); }
+                    } catch (err) {}
                     
                     if (stream && stream.getVideoTracks().length > 0) {
                         State.activeMediaStream = stream;
                         Network.broadcastStream(file.name);
                     } else {
-                        Utils.showToast("Failed to lock media tracks.", "error");
+                        Utils.showToast("Capture failed.", "error");
                     }
                 };
                 
                 UI.video.play().catch(()=>{});
             },
             
-            // Mode 3: URLs (MP4, HLS, YouTube)
-            loadURL: (url, title = "Lumière Remote Feed", broadcast = true) => {
+            loadURL: (url, title = "Remote Feed", broadcast = true) => {
                 MediaEngine.clearSource();
                 if (broadcast && State.isHost && State.conn?.open) State.conn.send({ type: 'CMD_LOAD_URL', url });
 
-                // Detect YouTube
                 const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                 if (ytMatch) {
                     State.playMode = 'youtube';
@@ -695,16 +677,16 @@
                     UI.ytPlayerContainer.classList.remove('hidden');
                     
                     const initYT = () => {
-                        if (!ytReady) return setTimeout(initYT, 100); 
-                        if (ytPlayer) ytPlayer.loadVideoById(ytMatch[1]);
-                        else {
+                        if (!ytReady) return setTimeout(initYT, 200); 
+                        if (ytPlayer) {
+                            ytPlayer.loadVideoById(ytMatch[1]);
+                        } else {
                             ytPlayer = new YT.Player('ytPlayerDiv', {
                                 videoId: ytMatch[1],
                                 playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
                                 events: {
                                     'onReady': (e) => { e.target.playVideo(); },
                                     'onStateChange': (e) => {
-                                        // Map YT States: 1=playing, 2=paused, 3=buffering
                                         if (State.isHost && State.conn?.open && !State.isSeekingUI) {
                                             if (e.data === 1) State.conn.send({ type: 'STATE_UPDATE', state: { time: ytPlayer.getCurrentTime(), duration: ytPlayer.getDuration(), paused: false } });
                                             else if (e.data === 2) State.conn.send({ type: 'STATE_UPDATE', state: { time: ytPlayer.getCurrentTime(), duration: ytPlayer.getDuration(), paused: true } });
@@ -719,7 +701,6 @@
                     return;
                 }
 
-                // Standard Web URLs
                 State.playMode = 'url';
                 const onReady = () => { MediaEngine.updateUI(title); Utils.logChat('System', 'Media Feed Mounted.', true); };
                 
@@ -731,15 +712,14 @@
                         State.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, onReady);
                     } else if (UI.video.canPlayType('application/vnd.apple.mpegurl')) {
                         UI.video.src = url; onReady();
-                    } else { Utils.showToast("HLS unsupported on device.", "error"); }
+                    } else { Utils.showToast("HLS unsupported.", "error"); }
                 } else {
                     UI.video.src = url; onReady();
                 }
             },
             
-            // Mode 4: Screenshare
             shareScreen: async () => {
-                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for partner to connect.", "error");
+                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for viewer.", "error");
                 try {
                     State.activeMediaStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60 }, audio: true });
                     MediaEngine.clearSource(); State.playMode = 'screenshare';
@@ -750,7 +730,7 @@
                     
                     Network.broadcastStream("Screen Broadcast");
                     State.activeMediaStream.getVideoTracks()[0].onended = () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); };
-                } catch(e) { Utils.showToast("Screenshare aborted.", "error"); }
+                } catch(e) {}
             }
         };
 
@@ -783,12 +763,11 @@
                     case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;
                     case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, "Host Feed", false); break;
                     case 'REQ_SYNC_FILE': 
-                        Utils.showToast(`Host requests you load: ${data.name}`, "info", 10000); 
-                        Utils.logChat('System', `Please click 'Sync Local File' and select ${data.name} from your computer.`, true);
+                        Utils.logChat('System', `Please load identical file to sync.`, true);
                         UI.hostControlsPanel.style.display = 'block';
                         break;
                     case 'GUEST_MOUNTED': 
-                        Utils.showToast("Partner mounted file successfully. Sync is fully active.", "success");
+                        Utils.showToast("Viewer mounted file. Sync active.", "success");
                         if(State.isHost) {
                             State.conn.send({ type: 'CMD_SEEK', time: UI.video.currentTime });
                             setTimeout(() => {
@@ -798,13 +777,9 @@
                         }
                         break;
                     case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;
-                    
-                    // Host direct commands (Bypasses heartbeat for instant reaction)
                     case 'CMD_PLAY': if(!State.isHost) SyncEngine.triggerPlay(true); break;
                     case 'CMD_PAUSE': if(!State.isHost) SyncEngine.triggerPause(true); break;
                     case 'CMD_SEEK': if(!State.isHost) SyncEngine.triggerSeek(data.time, true); break;
-                    
-                    // Guest intentions
                     case 'REQ_PLAY': if(State.isHost) SyncEngine.triggerPlay(true); break;
                     case 'REQ_PAUSE': if(State.isHost) SyncEngine.triggerPause(true); break;
                     case 'REQ_SEEK': if(State.isHost) SyncEngine.triggerSeek(data.time, true); break;
@@ -815,21 +790,18 @@
                 if (State.isHost || State.isSeekingUI) return; 
                 State.syncState = hostState;
                 
-                // Visual UI Update
                 if (hostState.duration > 0) {
                     const pct = (hostState.time / hostState.duration) * 100;
                     UI.scrubberProgress.style.width = `${pct}%`; UI.scrubberThumb.style.left = `${pct}%`;
                     UI.timeDisplay.textContent = `${Utils.formatTime(hostState.time)} / ${Utils.formatTime(hostState.duration)}`;
                 }
                 
-                // Do not enforce time on WebRTC streams (they naturally freeze/jump via network)
                 if (State.playMode === 'local_stream' || State.playMode === 'screenshare') {
                     if (hostState.paused) { UI.iconPlay.classList.remove('hidden'); UI.iconPause.classList.add('hidden'); } 
                     else { UI.iconPause.classList.remove('hidden'); UI.iconPlay.classList.add('hidden'); }
                     return;
                 }
 
-                // YouTube Enforce
                 if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {
                     const ytState = ytPlayer.getPlayerState();
                     if (hostState.paused && ytState === 1) ytPlayer.pauseVideo();
@@ -844,7 +816,6 @@
                     return;
                 }
                 
-                // HTML5 Video Enforce (url, local_sync)
                 if (hostState.paused && !UI.video.paused) UI.video.pause();
                 if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) { 
                     UI.video.play().catch(()=>{}); UI.bufferingOverlay.classList.remove('active');
@@ -949,7 +920,7 @@
                     if(State.cinemaMode) {
                         document.body.classList.add('cinema-mode');
                         if (State.sidebarOpen) UI.toggleSidebarBtn.click();
-                        Utils.showToast("Cinema Mode Engaged", "info", 2000);
+                        Utils.showToast("Cinema Mode Engaged", "success");
                     } else { document.body.classList.remove('cinema-mode'); }
                 });
 
@@ -997,12 +968,11 @@
                 UI.video.addEventListener('waiting', () => {
                     if (State.playMode !== 'local_stream' && State.playMode !== 'screenshare') {
                         UI.bufferingOverlay.classList.add('active');
-                        UI.bufferStatusText.textContent = "Buffering Stream...";
+                        UI.bufferStatusText.textContent = "Buffering...";
                     }
                 });
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });
                 
-                // UI Video Loop (Only triggers for native video, YT is handled by heartbeat)
                 UI.video.addEventListener('timeupdate', () => {
                     if (State.playMode === 'local_stream' || State.playMode === 'screenshare') { UI.timeDisplay.textContent = "LIVE BROADCAST"; return; }
                     
@@ -1057,6 +1027,29 @@
                     }
                 });
 
+                // Dedicated Skip Buttons
+                UI.skipBackBtn.addEventListener('click', () => {
+                    if (State.isHost) {
+                        const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
+                        SyncEngine.triggerSeek(Math.max(0, curr - 10), true);
+                    } else if (State.conn?.open) {
+                        const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
+                        SyncEngine.triggerSeek(Math.max(0, curr - 10));
+                    }
+                });
+                
+                UI.skipFwdBtn.addEventListener('click', () => {
+                    if (State.isHost) {
+                        const dur = State.playMode === 'youtube' ? ytPlayer.getDuration() : UI.video.duration;
+                        const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
+                        SyncEngine.triggerSeek(Math.min((dur || 0), curr + 10), true);
+                    } else if (State.conn?.open) {
+                        const dur = State.syncState.duration;
+                        const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
+                        SyncEngine.triggerSeek(Math.min((dur || 0), curr + 10));
+                    }
+                });
+
                 let lastVol = 1;
                 UI.volSlider.addEventListener('input', (e) => { 
                     const vol = e.target.value;
@@ -1084,46 +1077,17 @@
                     else { UI.iconVolMuted.classList.add('hidden'); UI.iconVol.classList.remove('hidden'); }
                 };
 
-                // Advanced Keyboard Matrix
                 document.addEventListener('keydown', (e) => {
                     if (document.activeElement.tagName === 'INPUT') return;
                     
                     switch(e.code) {
-                        case 'Space': 
-                            e.preventDefault(); 
-                            togglePlayUI(); 
-                            break;
-                        case 'KeyF': 
-                            e.preventDefault(); 
-                            UI.fullscreenBtn.click(); 
-                            break;
-                        case 'KeyM': 
-                            e.preventDefault(); 
-                            UI.muteBtn.click(); 
-                            break;
-                        case 'KeyC':
-                            e.preventDefault();
-                            UI.cinemaModeBtn.click();
-                            break;
-                        case 'KeyP':
-                            e.preventDefault();
-                            UI.pipBtn.click();
-                            break;
-                        case 'ArrowRight': 
-                            e.preventDefault();
-                            if (State.isHost) {
-                                const dur = State.playMode === 'youtube' ? ytPlayer.getDuration() : UI.video.duration;
-                                const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
-                                SyncEngine.triggerSeek(Math.min((dur || 0), curr + 5), true);
-                            }
-                            break;
-                        case 'ArrowLeft': 
-                            e.preventDefault();
-                            if (State.isHost) {
-                                const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
-                                SyncEngine.triggerSeek(Math.max(0, curr - 5), true);
-                            }
-                            break;
+                        case 'Space': e.preventDefault(); togglePlayUI(); break;
+                        case 'KeyF': e.preventDefault(); UI.fullscreenBtn.click(); break;
+                        case 'KeyM': e.preventDefault(); UI.muteBtn.click(); break;
+                        case 'KeyC': e.preventDefault(); UI.cinemaModeBtn.click(); break;
+                        case 'KeyP': e.preventDefault(); UI.pipBtn.click(); break;
+                        case 'ArrowRight': e.preventDefault(); UI.skipFwdBtn.click(); break;
+                        case 'ArrowLeft': e.preventDefault(); UI.skipBackBtn.click(); break;
                         case 'ArrowUp':
                             e.preventDefault();
                             UI.volSlider.value = Math.min(1, parseFloat(UI.volSlider.value) + 0.1);
@@ -1149,10 +1113,8 @@
                         UI.ambilightVideo.src = UI.video.src; UI.ambilightVideo.srcObject = UI.video.srcObject;
                         UI.ambilightVideo.currentTime = UI.video.currentTime;
                         if (!UI.video.paused) UI.ambilightVideo.play().catch(()=>{});
-                        UI.ambilightBtn.classList.replace('text-gray-500', 'text-white');
                     } else {
                         UI.ambilightContainer.classList.remove('active');
-                        UI.ambilightBtn.classList.replace('text-white', 'text-gray-500');
                         UI.ambilightVideo.pause();
                     }
                 });
