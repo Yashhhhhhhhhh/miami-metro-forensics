@@ -158,7 +158,7 @@
                     Lumière Pro
                 </h1>
                 <p class="text-gray-400 text-xl leading-relaxed font-light">
-                    Private direct-pipe theater synchronization. Stream your local high-bitrate files losslessly with zero third-party swarms or tracking.
+                    Private direct-pipe theater synchronization. Stream your local high-bitrate files natively with zero third-party swarms or tracking.
                 </p>
                 <div class="flex gap-4 pt-4">
                     <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
@@ -322,11 +322,11 @@
                 <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Host Stream Deck</h3>
                 <div class="space-y-4 relative z-10">
                     
-                    <!-- Option 1: P2P Lossless File Stream -->
+                    <!-- Option 1: P2P Hardware File Stream -->
                     <div class="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3 relative overflow-hidden group hover:border-accent-500/50 transition-colors">
                         <div class="text-[10px] text-gray-300 font-bold uppercase mb-2 tracking-wider flex justify-between items-center">
                             <span>P2P Direct Pipe</span>
-                            <span class="text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded font-mono">Lossless HD</span>
+                            <span class="text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded font-mono">WebRTC HD</span>
                         </div>
                         <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-3 cursor-pointer transition shadow-[0_4px_20px_rgba(229,9,20,0.2)] text-sm">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
@@ -372,9 +372,9 @@
     <script>
         /**
          * LUMIÈRE PRO - DIRECT P2P ARCHITECTURE
-         * - PeerJS Data & Media Channels
-         * - Native captureStream() for lossless local file streaming
-         * - Authoritative Frame Sync
+         * - PeerJS Data & Media Channels (Zero Torrents/Swarm Dependencies)
+         * - Native captureStream() for local file hardware acceleration
+         * - VOD Master/Slave Timeline decoupling
          */
 
         const State = {
@@ -382,10 +382,7 @@
             peer: null, conn: null, mediaConn: null, voiceConn: null,
             localVoiceStream: null, activeMediaStream: null, activeMediaSource: null, currentMediaTitle: '',
             
-            // Engines
             hlsPlayer: null,
-            
-            // Playback State
             playMode: 'idle', // 'idle', 'local_stream', 'url', 'screenshare'
             syncState: { time: 0, duration: 0, paused: true, updateId: 0 },
             isSeekingUI: false,
@@ -393,7 +390,7 @@
             sidebarOpen: true,
             controlsTimeout: null,
             
-            // Guest specific
+            // Guest Sync Locking
             lastHostHeartbeat: 0,
             ignoreNextSeekEvent: false,
             syncLockTimeout: null
@@ -596,7 +593,7 @@
                         State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';
                         UI.video.srcObject = stream;
                         UI.video.play().catch(()=>{});
-                        MediaEngine.updateUI(call.metadata?.name || (call.metadata?.type === 'screenshare' ? "Viewing Host's Screen" : "Lossless Local Stream"));
+                        MediaEngine.updateUI(call.metadata?.name || (call.metadata?.type === 'screenshare' ? "Viewing Host's Screen" : "Local HD Stream"));
                     });
                     call.on('close', () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); });
                 }
@@ -648,7 +645,7 @@
                 const blobUrl = URL.createObjectURL(file);
                 UI.video.src = blobUrl;
                 MediaEngine.updateUI(`Direct HD: ${file.name}`);
-                Utils.showToast("Streaming local media losslessly...");
+                Utils.showToast("Initializing hardware-accelerated pipeline...");
                 
                 UI.video.onloadeddata = () => {
                     UI.video.play().catch(()=>{});
@@ -657,13 +654,16 @@
                     if (UI.video.captureStream) stream = UI.video.captureStream();
                     else if (UI.video.mozCaptureStream) stream = UI.video.mozCaptureStream();
                     
-                    if (stream) {
-                        State.activeMediaStream = stream;
-                        if (State.conn?.open) {
-                            State.mediaConn = State.peer.call(State.conn.peer, stream, { 
-                                metadata: { type: 'media_stream', name: file.name } 
-                            });
-                        }
+                    if (!stream) {
+                        Utils.showToast("Your browser does not support local media pipelines. Use Chrome or Edge.", "error", 6000);
+                        return;
+                    }
+
+                    State.activeMediaStream = stream;
+                    if (State.conn?.open) {
+                        State.mediaConn = State.peer.call(State.conn.peer, stream, { 
+                            metadata: { type: 'media_stream', name: file.name } 
+                        });
                     }
                 };
             },
@@ -729,7 +729,6 @@
                     case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, false); break;
                     case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;
                     
-                    // Guest -> Host Intentions
                     case 'REQ_PLAY': if(State.isHost) UI.video.play().catch(()=>{}); break;
                     case 'REQ_PAUSE': if(State.isHost) UI.video.pause(); break;
                     case 'REQ_SEEK': if(State.isHost) UI.video.currentTime = data.time; break;
@@ -741,7 +740,7 @@
                 State.lastHostHeartbeat = Date.now();
                 State.syncState = hostState;
                 
-                // Update Guest Scrubber / Time from Host
+                // Update Guest Scrubber / Time from Host (Works for both URL and Local Stream)
                 if (hostState.duration > 0) {
                     const pct = (hostState.time / hostState.duration) * 100;
                     UI.scrubberProgress.style.width = `${pct}%`;
@@ -749,33 +748,44 @@
                     UI.timeDisplay.textContent = `${Utils.formatTime(hostState.time)} / ${Utils.formatTime(hostState.duration)}`;
                 }
                 
-                // URL Playback synchronization (Local streams are live-rendered by WebRTC)
-                if (State.playMode === 'url') {
-                    if (hostState.paused && !UI.video.paused) UI.video.pause();
-                    if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) {
-                        UI.video.play().catch(()=>{});
-                        UI.bufferingOverlay.classList.remove('active');
-                    }
-                    
-                    if (State.ignoreNextSeekEvent) return;
-                    const drift = Math.abs(UI.video.currentTime - hostState.time);
-                    if (drift > 1.0 && !hostState.paused) {
-                        UI.driftIndicator.classList.remove('hidden');
-                        UI.video.currentTime = hostState.time;
-                        setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
-                    } else if (hostState.paused && drift > 0.1) {
-                        UI.video.currentTime = hostState.time;
-                    }
+                // CRITICAL FIX: If it's a Live WebRTC Stream, DO NOT touch the local video's playback state or time.
+                // The WebRTC connection natively handles freezing frames on pause and jumping on seek.
+                if (State.playMode === 'local_stream' || State.playMode === 'screenshare') return;
+                
+                // --- Below is ONLY for URL/HLS Syncing ---
+                if (hostState.paused && !UI.video.paused) { 
+                    UI.video.pause(); 
+                }
+                if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) { 
+                    UI.video.play().catch(()=>{}); 
+                    UI.bufferingOverlay.classList.remove('active');
+                }
+                
+                if (State.ignoreNextSeekEvent) return; 
+                
+                const drift = Math.abs(UI.video.currentTime - hostState.time);
+                if (drift > 1.0 && !hostState.paused) {
+                    UI.driftIndicator.classList.remove('hidden');
+                    UI.video.currentTime = hostState.time;
+                    setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
+                } else if (hostState.paused && drift > 0.1) {
+                    UI.video.currentTime = hostState.time;
                 }
             },
             
             triggerPlay: () => {
                 if (State.isHost) UI.video.play().catch(()=>{});
-                else if (State.conn?.open) State.conn.send({ type: 'REQ_PLAY' });
+                else if (State.conn?.open) {
+                    if (State.playMode === 'url') UI.video.play().catch(()=>{});
+                    State.conn.send({ type: 'REQ_PLAY' });
+                }
             },
             triggerPause: () => {
                 if (State.isHost) UI.video.pause();
-                else if (State.conn?.open) State.conn.send({ type: 'REQ_PAUSE' });
+                else if (State.conn?.open) {
+                    if (State.playMode === 'url') UI.video.pause();
+                    State.conn.send({ type: 'REQ_PAUSE' });
+                }
             },
             triggerSeek: (time) => {
                 if (State.isHost) {
@@ -784,6 +794,10 @@
                     State.ignoreNextSeekEvent = true;
                     if (State.syncLockTimeout) clearTimeout(State.syncLockTimeout);
                     State.syncLockTimeout = setTimeout(() => { State.ignoreNextSeekEvent = false; }, 3000);
+                    
+                    if (State.playMode === 'url') {
+                        UI.video.currentTime = time; // Optimistic local update only for URLs
+                    }
                     State.conn.send({ type: 'REQ_SEEK', time });
                 }
             }
@@ -828,18 +842,15 @@
                 setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700);
             },
             bindUI: () => {
-                // Auth & Lobby
                 UI.hostBtn.addEventListener('click', Network.setupHost);
                 UI.joinBtn.addEventListener('click', Network.setupGuest);
                 UI.copyCodeBtn.addEventListener('click', () => Utils.copyToClipboard(State.roomId));
 
-                // Layout
                 UI.toggleSidebarBtn.addEventListener('click', () => {
                     State.sidebarOpen = !State.sidebarOpen;
                     State.sidebarOpen ? UI.sidebar.classList.remove('sidebar-collapsed') : UI.sidebar.classList.add('sidebar-collapsed');
                 });
 
-                // Chat
                 UI.chatForm.addEventListener('submit', (e) => {
                     e.preventDefault(); const txt = UI.chatInput.value.trim(); if (!txt) return;
                     Utils.logChat(State.myName, txt); 
@@ -847,11 +858,9 @@
                     UI.chatInput.value = '';
                 });
 
-                // Voice
                 UI.micBtn.addEventListener('click', AudioEngine.toggleMic);
                 UI.voiceVolSlider.addEventListener('input', (e) => { UI.remoteAudio.volume = e.target.value; });
 
-                // Host Media Controls
                 UI.fileStreamInput.addEventListener('change', (e) => {
                     const file = e.target.files[0]; if (file) MediaEngine.streamLocalFile(file);
                 });
@@ -860,7 +869,6 @@
                 });
                 UI.shareScreenBtn.addEventListener('click', MediaEngine.shareScreen);
 
-                // Video Core Hook Events
                 UI.video.addEventListener('play', () => {
                     UI.iconPlay.classList.add('hidden'); UI.iconPause.classList.remove('hidden');
                     if (State.ambilightEnabled && UI.video.readyState >= 2) UI.ambilightVideo.play().catch(()=>{});
@@ -879,10 +887,10 @@
                 });
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });
                 
-                // Advanced Scrubber Update
                 UI.video.addEventListener('timeupdate', () => {
                     if (State.playMode === 'screenshare') { UI.timeDisplay.textContent = "LIVE BROADCAST"; return; }
                     
+                    // Host natively updates UI through their own video tag. Guest updates via heartbeat.
                     if (State.isHost) {
                         const curr = UI.video.currentTime, total = UI.video.duration;
                         UI.timeDisplay.textContent = `${Utils.formatTime(curr)} / ${Utils.formatTime(total)}`;
@@ -904,7 +912,6 @@
                     }
                 });
 
-                // Interaction Logic
                 const togglePlayUI = () => {
                     if (State.playMode === 'idle' || State.playMode === 'screenshare') return;
                     UI.video.paused ? SyncEngine.triggerPlay() : SyncEngine.triggerPause();
@@ -914,7 +921,6 @@
                     if (!e.target.closest('#videoControls') && !e.target.closest('#topOverlay')) togglePlayUI();
                 });
 
-                // Scrubbing Math & Drag Handling
                 const calculateScrub = (e) => {
                     const totalDur = State.isHost ? UI.video.duration : State.syncState.duration;
                     if (!totalDur || State.playMode === 'screenshare') return;
@@ -938,7 +944,6 @@
                     }
                 });
 
-                // Volume logic
                 let lastVol = 1;
                 UI.volSlider.addEventListener('input', (e) => { 
                     UI.video.volume = e.target.value; 
@@ -955,20 +960,17 @@
                     else { UI.iconVolMuted.classList.add('hidden'); UI.iconVol.classList.remove('hidden'); }
                 };
 
-                // Hotkeys
                 document.addEventListener('keydown', (e) => {
                     if (document.activeElement.tagName === 'INPUT') return;
                     if (e.code === 'Space') { e.preventDefault(); togglePlayUI(); }
                     if (e.code === 'KeyF') { e.preventDefault(); UI.fullscreenBtn.click(); }
                 });
 
-                // Fullscreen
                 UI.fullscreenBtn.addEventListener('click', () => {
                     if (!document.fullscreenElement) UI.playerWrapper.requestFullscreen().catch(()=>{});
                     else document.exitFullscreen();
                 });
 
-                // Ambilight
                 UI.ambilightBtn.addEventListener('click', () => {
                     State.ambilightEnabled = !State.ambilightEnabled;
                     if (State.ambilightEnabled && (UI.video.src || UI.video.srcObject)) {
@@ -984,7 +986,6 @@
                     }
                 });
 
-                // Cinematic Fade
                 const resetFade = () => {
                     UI.playerWrapper.classList.remove('idle'); clearTimeout(State.controlsTimeout);
                     State.controlsTimeout = setTimeout(() => { if (!UI.video.paused) UI.playerWrapper.classList.add('idle'); }, 3000);
