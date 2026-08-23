@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumière Pro | Secure P2P Cinema</title>
+    <title>Lumière Pro | Secure VOD Cinema</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +28,8 @@
         }
     </script>
     
-    <!-- Core Secure Libraries (Unblockable & Encrypted) -->
+    <!-- Professional Backend Libraries -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>
     
@@ -39,92 +40,47 @@
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         
         /* Ambilight System */
-        .ambilight-container {
-            position: absolute; inset: -15%; z-index: 0;
-            overflow: hidden; pointer-events: none; opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-        }
+        .ambilight-container { position: absolute; inset: -15%; z-index: 0; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.5s ease-in-out; }
         .ambilight-container.active { opacity: 0.85; }
-        #ambilightVideo {
-            width: 100%; height: 100%; object-fit: cover;
-            filter: blur(80px) saturate(200%) brightness(0.9);
-            transform: scale(1.1);
-        }
+        #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(80px) saturate(200%) brightness(0.9); transform: scale(1.1); }
         
         /* Video Player Wrapper */
-        .player-wrapper {
-            position: relative; z-index: 10; display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 100%; background: #000; box-shadow: 0 0 100px rgba(0,0,0,0.95); overflow: hidden;
-        }
+        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; box-shadow: 0 0 100px rgba(0,0,0,0.95); overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: contain; outline: none; background: transparent; z-index: 2; }
         
         /* Overlays */
-        .overlay-layer {
-            position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; opacity: 0; pointer-events: none; 
-            transition: opacity 0.4s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        }
+        .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .overlay-layer.active { opacity: 1; pointer-events: auto; }
         .bg-overlay { background: rgba(0,0,0,0.7); }
         
         /* Cinematic Controls */
-        .controls-overlay {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
-            padding: 60px 40px 30px 40px; opacity: 1; z-index: 30;
-            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(20px); pointer-events: none; }
         .player-wrapper.idle { cursor: none; }
         
         /* Advanced Scrubber */
-        .scrubber-container {
-            position: relative; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; cursor: pointer; margin-bottom: 25px; transition: height 0.2s;
-        }
+        .scrubber-container { position: relative; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; cursor: pointer; margin-bottom: 25px; transition: height 0.2s; }
         .scrubber-container:hover { height: 10px; }
         .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.3); border-radius: 3px; pointer-events: none; transition: width 0.3s linear; }
         .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #E50914; border-radius: 3px; pointer-events: none; z-index: 2;}
-        .scrubber-thumb {
-            position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3;
-            width: 18px; height: 18px; background: #fff; border-radius: 50%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.8); transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;
-        }
+        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.8); transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
         .scrubber-container:hover .scrubber-thumb { transform: translate(-50%, -50%) scale(1.1); }
         
-        /* Range inputs */
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }
         input[type=range]:focus { outline: none; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #fff; margin-top: -5px; transition: transform 0.1s; box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
         input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
         
-        /* Glass UI */
-        .glass-panel {
-            background: rgba(8, 8, 8, 0.9); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-        }
-        .glass-sidebar {
-            background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-            border-left: 1px solid rgba(255,255,255,0.05); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s;
-        }
+        .glass-panel { background: rgba(8, 8, 8, 0.9); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
+        .glass-sidebar { background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.05); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s; }
         .sidebar-collapsed { transform: translateX(100%); width: 0 !important; border: none; }
         
-        /* Overlay Chat */
-        .overlay-chat-container {
-            position: absolute; bottom: 140px; left: 40px; width: 400px; max-height: 350px;
-            display: flex; flex-direction: column; justify-content: flex-end;
-            pointer-events: none; z-index: 20; overflow: hidden;
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%);
-        }
-        .overlay-message {
-            background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1);
-            padding: 12px 18px; border-radius: 14px; margin-top: 10px; color: #fff; font-size: 0.95rem; font-weight: 500;
-            animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
+        .overlay-chat-container { position: absolute; bottom: 140px; left: 40px; width: 400px; max-height: 350px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 20; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }
+        .overlay-message { background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 12px 18px; border-radius: 14px; margin-top: 10px; color: #fff; font-size: 0.95rem; font-weight: 500; animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         .overlay-message.fade-out { opacity: 0; transform: translateY(10px) scale(0.98); transition: all 0.6s ease; }
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         
-        /* Utilities */
         .btn-icon { color: #b3b3b3; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .btn-icon:hover { color: #fff; transform: scale(1.1); text-shadow: 0 0 15px rgba(255,255,255,0.4); }
         .btn-primary { background: #E50914; color: white; transition: all 0.3s; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
@@ -137,8 +93,6 @@
     </style>
 </head>
 <body class="w-screen h-screen flex flex-col selection:bg-accent-500 selection:text-white text-sm">
-    
-    <!-- Background Audio for Voice Comms -->
     <audio id="remoteAudio" autoplay></audio>
 
     <!-- LOBBY SCREEN -->
@@ -151,23 +105,23 @@
         <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-6">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
-                    <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span> Professional HD Transcoder Engine
+                    <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span> Backend Engine v3.0
                 </div>
                 <h1 class="text-6xl font-extrabold tracking-tight text-white flex items-center gap-4">
                     <svg class="w-14 h-14 text-accent-500 drop-shadow-[0_0_15px_rgba(229,9,20,0.6)]" fill="currentColor" viewBox="0 0 24 24"><path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H4V5h16v14z"/><path d="M8 15h8l-4-7z"/></svg>
                     Lumière Pro
                 </h1>
                 <p class="text-gray-400 text-xl leading-relaxed font-light">
-                    Private direct-pipe theater synchronization. Hardware-accelerated native streaming for large media files.
+                    Flawless VOD synchronization powered by WebSockets.
                 </p>
                 <div class="flex gap-4 pt-4">
                     <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
                         <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        Direct Encrypted P2P
+                        WebSocket Hub
                     </div>
                     <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
                         <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                        Zero Latency Auth
+                        HLS Ready
                     </div>
                 </div>
             </div>
@@ -181,13 +135,13 @@
                     <div>
                         <button id="hostBtn" class="w-full btn-primary font-bold rounded-xl px-4 py-4 flex items-center justify-center gap-3 text-lg group">
                             <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                            Generate Session
+                            Create Theater
                         </button>
                     </div>
                     
                     <div class="relative flex items-center py-2">
                         <div class="flex-grow border-t border-white/10"></div>
-                        <span class="flex-shrink-0 mx-4 text-gray-500 text-xs font-bold uppercase tracking-widest">Or Join Session</span>
+                        <span class="flex-shrink-0 mx-4 text-gray-500 text-xs font-bold uppercase tracking-widest">Or Join Theater</span>
                         <div class="flex-grow border-t border-white/10"></div>
                     </div>
                     
@@ -202,25 +156,19 @@
 
     <!-- MAIN THEATER -->
     <div id="theaterScreen" class="hidden flex-1 flex w-full h-full relative">
-        
-        <!-- Video Canvas -->
         <div id="mainView" class="relative flex-1 flex flex-col bg-black transition-all duration-300">
-            <!-- Cinematic Background Blur -->
-            <div id="ambilight" class="ambilight-container">
-                <video id="ambilightVideo" muted playsinline></video>
-            </div>
+            <div id="ambilight" class="ambilight-container"><video id="ambilightVideo" muted playsinline></video></div>
             
-            <!-- Top Status Bar -->
             <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/60 to-transparent flex justify-between items-start pointer-events-none">
                 <div class="flex flex-col gap-2 pointer-events-auto">
                     <div class="flex items-center gap-3 glass-panel px-2 py-2 rounded-xl">
                         <div class="bg-accent-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">Session Code</div>
                         <span id="roomCodeDisplay" class="font-mono text-xl font-bold tracking-widest text-white drop-shadow-md px-2">----</span>
-                        <button id="copyCodeBtn" class="btn-icon p-2 hover:bg-white/10 rounded-lg" title="Copy Code"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                        <button id="copyCodeBtn" class="btn-icon p-2 hover:bg-white/10 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
                     </div>
                     <div id="syncIndicator" class="flex items-center gap-2 text-sm font-medium text-gray-300 mt-2 glass-panel px-4 py-2 rounded-xl w-max">
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
-                        <span id="syncText">Waiting for partner...</span>
+                        <span id="syncText">Connecting to Node Server...</span>
                     </div>
                 </div>
                 <button id="toggleSidebarBtn" class="btn-icon p-4 glass-panel rounded-full hover:bg-white/10 pointer-events-auto z-50">
@@ -228,22 +176,19 @@
                 </button>
             </div>
 
-            <!-- Wait State Overlay -->
             <div id="noMediaOverlay" class="overlay-layer active bg-overlay">
                 <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">
                     <svg class="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
                 </div>
                 <p class="text-gray-200 text-2xl font-light tracking-wide" id="noMediaTitle">Theater is Ready</p>
-                <p class="text-gray-500 text-sm mt-3" id="noMediaSub">Waiting for host to broadcast media.</p>
+                <p class="text-gray-500 text-sm mt-3" id="noMediaSub">Waiting for media to be loaded.</p>
             </div>
 
-            <!-- Buffering Overlay -->
             <div id="bufferingOverlay" class="overlay-layer bg-overlay backdrop-blur-md">
                 <div class="w-16 h-16 border-4 border-white/10 border-t-accent-500 rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(229,9,20,0.5)]"></div>
-                <span class="text-white font-bold tracking-widest uppercase text-base mb-3" id="bufferStatusText">Establishing Stream...</span>
+                <span class="text-white font-bold tracking-widest uppercase text-base mb-3" id="bufferStatusText">Loading Stream...</span>
             </div>
 
-            <!-- Floating Chat Layer -->
             <div id="overlayChat" class="overlay-chat-container"></div>
 
             <div id="playerWrapper" class="player-wrapper group">
@@ -255,14 +200,12 @@
                         <span id="roleIndicator" class="text-[10px] uppercase font-bold tracking-widest text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-lg border border-accent-500/20 shadow-lg">Host Authority</span>
                     </div>
                     
-                    <!-- Progress Bar -->
                     <div id="scrubber" class="scrubber-container">
                         <div id="scrubberBuffer" class="scrubber-buffer w-0"></div>
                         <div id="scrubberProgress" class="scrubber-progress w-0"></div>
                         <div id="scrubberThumb" class="scrubber-thumb left-0"></div>
                     </div>
                     
-                    <!-- Bottom Controls Toolbar -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-8">
                             <button id="playPauseBtn" class="btn-icon text-white hover:text-accent-500 drop-shadow-lg">
@@ -282,14 +225,10 @@
                         
                         <div class="flex items-center gap-6">
                             <div id="driftIndicator" class="hidden flex items-center gap-2 text-[10px] text-yellow-400 font-bold px-4 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-xl uppercase tracking-wider">
-                                <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> Syncing Frame
+                                <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> Syncing
                             </div>
-                            <button id="ambilightBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Cinematic Ambilight">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                            </button>
-                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-                            </button>
+                            <button id="ambilightBtn" class="btn-icon text-white drop-shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
+                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                         </div>
                     </div>
                 </div>
@@ -298,12 +237,11 @@
 
         <!-- SIDEBAR CONTROLS -->
         <div id="sidebar" class="glass-sidebar w-[400px] flex flex-col h-full flex-shrink-0 relative z-50">
-            
-            <!-- Voice Comms -->
+            <!-- Voice Comms (PeerJS) -->
             <div class="p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Voice Channel
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Private WebRTC Voice
                     </h3>
                     <button id="micBtn" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shadow-sm">
                         <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
@@ -316,42 +254,38 @@
                 </div>
             </div>
 
-            <!-- Host Media Deck -->
+            <!-- Host Stream Deck -->
             <div class="p-6 border-b border-white/10 bg-black/40 relative overflow-hidden" id="hostControlsPanel">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-accent-600/5 blur-[50px] pointer-events-none"></div>
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Host Stream Deck</h3>
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Node Server Upload & Stream</h3>
                 <div class="space-y-4 relative z-10">
                     
-                    <!-- Option 1: P2P Hardware File Stream -->
+                    <!-- File Transcode Ingest -->
                     <div class="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3 relative overflow-hidden group hover:border-accent-500/50 transition-colors">
                         <div class="text-[10px] text-gray-300 font-bold uppercase mb-2 tracking-wider flex justify-between items-center">
-                            <span>P2P Direct Pipe</span>
-                            <span class="text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded font-mono">WebRTC HD</span>
+                            <span>HLS Transcoder Setup</span>
+                            <span class="text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded font-mono">Pending Route</span>
                         </div>
                         <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-3 cursor-pointer transition shadow-[0_4px_20px_rgba(229,9,20,0.2)] text-sm">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                            <span class="font-bold">Stream Local Media File</span>
-                            <input type="file" id="fileStreamInput" class="hidden" accept="video/mp4,video/webm,video/ogg,video/x-matroska,.mkv">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span class="font-bold">Upload MKV to Backend</span>
+                            <input type="file" id="fileStreamInput" class="hidden" accept="video/*">
                         </label>
-                        <p class="text-[9px] text-gray-500 text-center uppercase tracking-wider">Direct hardware-accelerated stream to guest.</p>
+                        <p class="text-[9px] text-gray-500 text-center uppercase tracking-wider">Soon: Auto-converts unsupported H.265 files to perfect web streams.</p>
                     </div>
 
-                    <!-- Option 2: URLs & WebRTC Share -->
+                    <!-- Direct URL -->
                     <div class="flex gap-2">
-                        <input type="url" id="urlInput" class="flex-1 px-4 py-3 text-xs rounded-lg border border-white/10 bg-black/80 focus:border-accent-500 shadow-inner" placeholder="Direct .mp4 or .m3u8 URL">
+                        <input type="url" id="urlInput" class="flex-1 px-4 py-3 text-xs rounded-lg border border-white/10 bg-black/80 focus:border-accent-500 shadow-inner" placeholder="e.g. Attack.on.Titan.S04.1080p.mkv (direct URL)">
                         <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-xs font-bold transition border border-white/10">Load</button>
                     </div>
-                    <button id="shareScreenBtn" class="flex items-center justify-center gap-2 w-full bg-black/40 hover:bg-white/10 border border-white/10 text-white rounded-lg px-4 py-3 transition text-sm">
-                        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        <span class="font-bold">WebRTC Screen Capture</span>
-                    </button>
                 </div>
             </div>
 
-            <!-- Chat Architecture -->
+            <!-- Chat -->
             <div class="flex-1 flex flex-col min-h-0 bg-theater-900/60">
                 <div id="chatMessages" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-                    <div class="text-center text-[9px] text-gray-500 font-bold tracking-widest py-3 border-b border-white/5 uppercase">Secure Channel Established</div>
+                    <div class="text-center text-[9px] text-gray-500 font-bold tracking-widest py-3 border-b border-white/5 uppercase">Socket.io Channel Live</div>
                 </div>
                 
                 <div class="p-4 bg-theater-800/90 border-t border-white/5 backdrop-blur-xl">
@@ -366,64 +300,44 @@
         </div>
     </div>
     
-    <!-- Global Toast Container -->
     <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <script>
         /**
-         * LUMIÈRE PRO - DIRECT P2P ARCHITECTURE
-         * - PeerJS Data & Media Channels (Zero Torrents/Swarm Dependencies)
-         * - Native captureStream(30) for MKV Hardware Acceleration bypass
-         * - VOD Master/Slave Timeline decoupling
+         * LUMIÈRE PRO - SOCKET.IO FRONTEND
+         * Real-time backend sync layer. WebRTC retained only for private voice.
          */
 
         const State = {
             isHost: false, roomId: '', myName: 'Viewer',
-            peer: null, conn: null, mediaConn: null, voiceConn: null,
-            localVoiceStream: null, activeMediaStream: null, activeMediaSource: null, currentMediaTitle: '',
-            
-            hlsPlayer: null,
-            playMode: 'idle', // 'idle', 'local_stream', 'url', 'screenshare'
-            syncState: { time: 0, duration: 0, paused: true, updateId: 0 },
-            isSeekingUI: false,
-            ambilightEnabled: true,
-            sidebarOpen: true,
-            controlsTimeout: null,
-            
-            // Guest Sync Locking
-            lastHostHeartbeat: 0,
-            ignoreNextSeekEvent: false,
-            syncLockTimeout: null
+            socket: null, peer: null, voiceConn: null, localVoiceStream: null,
+            hlsPlayer: null, activeMediaSource: null,
+            playMode: 'idle',
+            syncState: { time: 0, duration: 0, paused: true },
+            isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true,
+            ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null
         };
 
         const UI = {
             lobby: document.getElementById('lobbyScreen'), theater: document.getElementById('theaterScreen'),
             nameInput: document.getElementById('nameInput'), hostBtn: document.getElementById('hostBtn'),
             joinInput: document.getElementById('joinCodeInput'), joinBtn: document.getElementById('joinBtn'),
-            
             video: document.getElementById('mainVideo'), ambilightVideo: document.getElementById('ambilightVideo'),
             ambilightContainer: document.getElementById('ambilight'), playerWrapper: document.getElementById('playerWrapper'),
             noMediaOverlay: document.getElementById('noMediaOverlay'), bufferingOverlay: document.getElementById('bufferingOverlay'),
-            bufferStatusText: document.getElementById('bufferStatusText'),
             nowPlayingText: document.getElementById('nowPlayingText'), roleIndicator: document.getElementById('roleIndicator'),
-            
             playBtn: document.getElementById('playPauseBtn'), iconPlay: document.getElementById('iconPlay'), iconPause: document.getElementById('iconPause'),
             scrubber: document.getElementById('scrubber'), scrubberBuffer: document.getElementById('scrubberBuffer'),
             scrubberProgress: document.getElementById('scrubberProgress'), scrubberThumb: document.getElementById('scrubberThumb'),
             timeDisplay: document.getElementById('timeDisplay'), volSlider: document.getElementById('volSlider'),
             muteBtn: document.getElementById('muteBtn'), iconVol: document.getElementById('iconVol'), iconVolMuted: document.getElementById('iconVolMuted'),
             fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'),
-            
             sidebar: document.getElementById('sidebar'), toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
             hostControlsPanel: document.getElementById('hostControlsPanel'), chatMessages: document.getElementById('chatMessages'),
             overlayChat: document.getElementById('overlayChat'), chatForm: document.getElementById('chatForm'), chatInput: document.getElementById('chatInput'),
-            
-            fileStreamInput: document.getElementById('fileStreamInput'), shareScreenBtn: document.getElementById('shareScreenBtn'),
-            urlInput: document.getElementById('urlInput'), loadUrlBtn: document.getElementById('loadUrlBtn'),
-            
+            fileStreamInput: document.getElementById('fileStreamInput'), urlInput: document.getElementById('urlInput'), loadUrlBtn: document.getElementById('loadUrlBtn'),
             micBtn: document.getElementById('micBtn'), iconMic: document.getElementById('iconMic'), iconMicMuted: document.getElementById('iconMicMuted'),
             voiceVolSlider: document.getElementById('voiceVolSlider'), remoteAudio: document.getElementById('remoteAudio'), voiceActiveDot: document.getElementById('voiceActiveDot'),
-            
             syncDot: document.getElementById('syncDot'), syncText: document.getElementById('syncText'),
             driftIndicator: document.getElementById('driftIndicator'), roomCodeDisplay: document.getElementById('roomCodeDisplay'),
             copyCodeBtn: document.getElementById('copyCodeBtn')
@@ -443,18 +357,7 @@
                 document.getElementById('toastContainer').appendChild(t);
                 setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 400); }, duration);
             },
-            copyToClipboard: (text) => {
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(text).then(() => Utils.showToast("Session Code Copied!")).catch(()=> fallbackCopy(text));
-                } else { fallbackCopy(text); }
-                
-                function fallbackCopy(txt) {
-                    const el = document.createElement('textarea'); el.value = txt; el.setAttribute('readonly', ''); el.style.position = 'absolute'; el.style.left = '-9999px';
-                    document.body.appendChild(el); el.select();
-                    try { document.execCommand('copy'); Utils.showToast("Session Code Copied!"); } catch (err) { Utils.showToast("Failed to copy", "error"); }
-                    document.body.removeChild(el);
-                }
-            },
+            copyToClipboard: (text) => { navigator.clipboard.writeText(text).then(() => Utils.showToast("Session Code Copied!")); },
             logChat: (sender, text, isSystem = false) => {
                 const div = document.createElement('div');
                 if (isSystem) {
@@ -464,9 +367,7 @@
                     div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
                     div.innerHTML = `<span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1 px-1">${sender}</span><div class="px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${isMe ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 text-white rounded-tl-sm border border-white/5'}">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
                 }
-                UI.chatMessages.appendChild(div);
-                UI.chatMessages.scrollTop = UI.chatMessages.scrollHeight;
-                
+                UI.chatMessages.appendChild(div); UI.chatMessages.scrollTop = UI.chatMessages.scrollHeight;
                 if (!State.sidebarOpen && !isSystem) {
                     const overlayMsg = document.createElement('div'); overlayMsg.className = 'overlay-message';
                     overlayMsg.innerHTML = `<strong class="text-accent-500 mr-2">${sender}:</strong>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
@@ -476,164 +377,77 @@
             }
         };
 
-        const peerConfig = { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }] }, debug: 1 };
-        
         const Network = {
-            verifyDependencies: () => {
-                if (typeof Peer === 'undefined') { Utils.showToast("Critical Error: PeerJS failed to load.", "error"); return false; }
-                return true;
-            },
-            setupHost: async () => {
-                if (!Network.verifyDependencies()) return;
+            initSocket: () => {
+                // Connects to your local server running on port 3000
+                State.socket = io('http://localhost:3000');
                 
+                State.socket.on('connect', () => {
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
+                    UI.syncText.textContent = "Server Linked Flawlessly";
+                });
+                
+                State.socket.on('system_message', (msg) => Utils.logChat('System', msg, true));
+                State.socket.on('receive_chat', (data) => Utils.logChat(data.alias, data.message));
+                
+                State.socket.on('sync_state', (state) => {
+                    if (State.isHost) return;
+                    State.syncState = state;
+                    SyncEngine.enforceHostState();
+                });
+
+                // Host specific: Receive intent from guest
+                State.socket.on('guest_request', (request) => {
+                    if (!State.isHost) return;
+                    if (request.action === 'play') UI.video.play().catch(()=>{});
+                    if (request.action === 'pause') UI.video.pause();
+                    if (request.action === 'seek') UI.video.currentTime = request.data;
+                });
+            },
+            
+            setupHost: async () => {
                 State.myName = UI.nameInput.value.trim() || 'Host'; 
                 State.isHost = true; 
                 State.roomId = Utils.generateCode();
-                UI.hostBtn.disabled = true; UI.hostBtn.innerHTML = `<div class="spinner mr-2"></div> Initializing Session...`;
                 
-                await AudioEngine.initMic();
+                Network.initSocket();
+                State.socket.emit('join_room', { roomId: State.roomId, alias: State.myName, isHost: true });
                 
-                try {
-                    State.peer = new Peer(`lumiere-${State.roomId}`, peerConfig);
-                    
-                    State.peer.on('open', () => {
-                        UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
-                        Utils.showToast("Private Theater Online. Share code with partner.");
-                        UI.roleIndicator.textContent = "HOST - MASTER";
-                        SyncEngine.startHostHeartbeat();
-                    });
-                    
-                    State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(conn); });
-                    State.peer.on('call', Network.handleIncomingCall);
-                    
-                    State.peer.on('error', (e) => {
-                        console.error("PeerJS Error:", e);
-                        if (e.type === 'unavailable-id') Utils.showToast("ID Collision. Generating new room...", "error");
-                        else Utils.showToast(`Network Notice: ${e.type}`, "error");
-                        UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Generate Session";
-                    });
-                } catch (err) {
-                    Utils.showToast("Failed to create Peer instance.", "error");
-                    UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Generate Session";
-                }
+                UI.roomCodeDisplay.textContent = State.roomId; 
+                App.transitionToTheater();
+                UI.roleIndicator.textContent = "HOST - MASTER";
+                
+                SyncEngine.startHostHeartbeat();
+                AudioEngine.initMic();
             },
             
             setupGuest: async () => {
-                if (!Network.verifyDependencies()) return;
                 const code = UI.joinInput.value.trim().toUpperCase();
                 if (code.length < 4) return Utils.showToast("Invalid code format.", "error");
                 
                 State.myName = UI.nameInput.value.trim() || 'Viewer'; 
                 State.isHost = false; 
                 State.roomId = code;
-                UI.joinBtn.disabled = true; UI.joinBtn.textContent = "Locating Host...";
                 
-                await AudioEngine.initMic();
+                Network.initSocket();
+                State.socket.emit('join_room', { roomId: State.roomId, alias: State.myName, isHost: false });
                 
-                try {
-                    State.peer = new Peer(peerConfig);
-                    
-                    State.peer.on('open', () => {
-                        UI.joinBtn.textContent = "Connecting...";
-                        State.conn = State.peer.connect(`lumiere-${code}`, { reliable: true });
-                        Network.setupDataChannel(State.conn);
-                    });
-                    
-                    State.peer.on('call', Network.handleIncomingCall);
-                    State.peer.on('error', (e) => {
-                        Utils.showToast("Host unreachable or invalid code.", "error");
-                        UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
-                    });
-                } catch (err) {
-                    Utils.showToast("Failed to initiate connection.", "error");
-                    UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
-                }
-            },
-            
-            setupDataChannel: (conn) => {
-                conn.on('open', () => {
-                    if (!State.isHost) {
-                        UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
-                        UI.hostControlsPanel.style.display = 'none';
-                        UI.roleIndicator.textContent = "GUEST - SLAVE";
-                        UI.roleIndicator.classList.replace('text-accent-500', 'text-blue-400');
-                        UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-blue-400/10');
-                        UI.roleIndicator.classList.replace('border-accent-500/20', 'border-blue-400/20');
-                    }
-                    Network.updateStatus(true);
-                    conn.send({ type: 'INFO', name: State.myName });
-                    if (!State.isHost && State.localVoiceStream) AudioEngine.callHost();
-                    
-                    // Late-Joiner Media Transmission
-                    if (State.isHost) {
-                        if (State.playMode === 'local_stream' && State.activeMediaStream) {
-                            State.mediaConn = State.peer.call(conn.peer, State.activeMediaStream, { metadata: { type: 'media_stream', name: State.currentMediaTitle } });
-                        } else if (State.playMode === 'url' && State.activeMediaSource) {
-                            conn.send({ type: 'CMD_LOAD_URL', url: State.activeMediaSource });
-                        } else if (State.playMode === 'screenshare' && State.activeMediaStream) {
-                            State.mediaConn = State.peer.call(conn.peer, State.activeMediaStream, { metadata: { type: 'screenshare' } });
-                        }
-                    }
-                });
+                UI.roomCodeDisplay.textContent = State.roomId; 
+                App.transitionToTheater();
+                UI.hostControlsPanel.style.display = 'none';
+                UI.roleIndicator.textContent = "GUEST - SLAVE";
+                UI.roleIndicator.classList.replace('text-accent-500', 'text-blue-400');
+                UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-blue-400/10');
+                UI.roleIndicator.classList.replace('border-accent-500/20', 'border-blue-400/20');
                 
-                conn.on('data', SyncEngine.handleData);
-                conn.on('close', () => { Network.updateStatus(false); if(State.isHost) SyncEngine.stopHostHeartbeat(); });
-                conn.on('error', () => { Network.updateStatus(false); });
-            },
-            
-            handleIncomingCall: (call) => {
-                if (call.metadata?.type === 'voice') {
-                    call.answer(State.localVoiceStream); State.voiceConn = call;
-                    call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
-                } else if (call.metadata?.type === 'media_stream' || call.metadata?.type === 'screenshare') {
-                    call.answer(); State.mediaConn = call;
-                    Utils.logChat('System', `Connected to Direct HD Stream...`, true);
-                    
-                    call.on('stream', (stream) => {
-                        MediaEngine.clearSource();
-                        State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';
-                        UI.video.srcObject = stream;
-                        
-                        UI.video.onloadedmetadata = () => {
-                            UI.video.play().catch(()=>{});
-                            UI.bufferingOverlay.classList.remove('active');
-                        };
-                        
-                        MediaEngine.updateUI(call.metadata?.name || (call.metadata?.type === 'screenshare' ? "Viewing Host's Screen" : "Local HD Stream"));
-                        
-                        // CRITICAL FIX: Do not attach auto-kill 'onended' to local_stream (MKVs throw false onended flags)
-                        if (State.playMode === 'screenshare') {
-                            const track = stream.getVideoTracks()[0];
-                            if (track) track.onended = () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); };
-                        }
-                    });
-                }
-            },
-            
-            updateStatus: (connected) => {
-                if (connected) {
-                    UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
-                    UI.syncText.textContent = "Direct Encrypted Link Active";
-                    Utils.logChat('System', 'Partner connected.', true);
-                } else {
-                    UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]";
-                    UI.syncText.textContent = "Partner Offline";
-                    Utils.logChat('System', 'Connection lost.', true);
-                }
+                AudioEngine.initMic();
             }
         };
 
         const MediaEngine = {
             clearSource: () => {
                 if (State.hlsPlayer) { State.hlsPlayer.destroy(); State.hlsPlayer = null; }
-                if (State.activeMediaStream) { State.activeMediaStream.getTracks().forEach(t => t.stop()); State.activeMediaStream = null; }
-                if (State.mediaConn) { State.mediaConn.close(); State.mediaConn = null; }
-                State.activeMediaSource = null;
-                State.currentMediaTitle = '';
-                
-                UI.video.srcObject = null; UI.video.src = ""; UI.video.removeAttribute('src');
-                UI.ambilightVideo.srcObject = null; UI.ambilightVideo.src = "";
-                
+                UI.video.src = ""; UI.video.removeAttribute('src'); UI.ambilightVideo.src = "";
                 UI.noMediaOverlay.classList.add('active'); UI.ambilightContainer.classList.remove('active');
                 UI.nowPlayingText.classList.add('hidden');
                 State.playMode = 'idle';
@@ -644,50 +458,14 @@
                 UI.nowPlayingText.classList.remove('hidden');
                 if (State.ambilightEnabled) {
                     UI.ambilightContainer.classList.add('active');
-                    if(UI.video.srcObject) UI.ambilightVideo.srcObject = UI.video.srcObject;
-                    else UI.ambilightVideo.src = UI.video.src;
+                    UI.ambilightVideo.src = UI.video.src;
                 }
             },
-            streamLocalFile: (file) => {
-                MediaEngine.clearSource();
-                State.playMode = 'local_stream';
-                State.currentMediaTitle = file.name;
-                
-                const blobUrl = URL.createObjectURL(file);
-                UI.video.src = blobUrl;
-                MediaEngine.updateUI(`Direct HD: ${file.name}`);
-                Utils.showToast("Initializing hardware-accelerated pipeline...");
-                
-                UI.video.onloadeddata = () => {
-                    UI.video.play().then(() => {
-                        // Wait slightly for MKV tracks to decode completely
-                        setTimeout(() => {
-                            let stream = null;
-                            try {
-                                // CRITICAL FIX: Passing 30 explicitly forces the browser to live-transcode unsupported MKV frames,
-                                // bypassing the "Broadcast Ended" crash.
-                                if (UI.video.captureStream) stream = UI.video.captureStream(30);
-                                else if (UI.video.mozCaptureStream) stream = UI.video.mozCaptureStream(30);
-                            } catch (err) { console.error("Capture Error:", err); }
-                            
-                            if (!stream) return Utils.showToast("Your browser does not support local media pipelines. Use Chrome or Edge.", "error", 6000);
-
-                            State.activeMediaStream = stream;
-                            if (State.conn?.open) {
-                                State.mediaConn = State.peer.call(State.conn.peer, stream, { 
-                                    metadata: { type: 'media_stream', name: file.name } 
-                                });
-                            }
-                        }, 500);
-                    }).catch(e => Utils.showToast("Local playback failed.", "error"));
-                };
-            },
-            loadURL: (url, broadcast = true) => {
+            loadURL: (url) => {
                 MediaEngine.clearSource(); State.playMode = 'url';
                 State.activeMediaSource = url;
-                if (broadcast && State.isHost && State.conn?.open) State.conn.send({ type: 'CMD_LOAD_URL', url });
                 
-                const onReady = () => { MediaEngine.updateUI("Network Stream"); Utils.logChat('System', 'External URL Mounted.', true); };
+                const onReady = () => { MediaEngine.updateUI("Lumière Cinema Feed"); Utils.logChat('System', 'Media Mounted.', true); };
                 
                 if (url.includes('.m3u8')) {
                     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
@@ -702,60 +480,29 @@
                 } else {
                     UI.video.src = url; onReady();
                 }
-            },
-            shareScreen: async () => {
-                try {
-                    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) throw new Error("Screen share unsupported.");
-                    State.activeMediaStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60 }, audio: true });
-                    MediaEngine.clearSource(); State.playMode = 'screenshare';
-                    
-                    UI.video.srcObject = State.activeMediaStream;
-                    UI.video.play().catch(e=>{});
-                    MediaEngine.updateUI("Broadcasting Screen");
-                    
-                    if (State.conn?.open) State.mediaConn = State.peer.call(State.conn.peer, State.activeMediaStream, { metadata: { type: 'screenshare' } });
-                    
-                    State.activeMediaStream.getVideoTracks()[0].onended = () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); };
-                } catch(e) { console.warn(e); Utils.showToast("Screenshare aborted or blocked.", "error"); }
             }
         };
 
         const SyncEngine = {
-            hostInterval: null,
             startHostHeartbeat: () => {
-                if (SyncEngine.hostInterval) clearInterval(SyncEngine.hostInterval);
-                SyncEngine.hostInterval = setInterval(() => {
-                    if (State.playMode === 'idle' || State.playMode === 'screenshare') return;
+                if (State.hostInterval) clearInterval(State.hostInterval);
+                State.hostInterval = setInterval(() => {
+                    if (State.playMode === 'idle') return;
                     State.syncState.time = UI.video.currentTime || 0;
                     State.syncState.duration = UI.video.duration || 0;
                     State.syncState.paused = UI.video.paused;
-                    State.syncState.updateId++;
-                    if (State.conn?.open) {
-                        State.conn.send({ type: 'STATE_UPDATE', state: State.syncState });
+                    
+                    // Transmit to Backend
+                    if (State.socket) {
+                        State.socket.emit('host_update_state', { roomId: State.roomId, state: State.syncState });
                     }
                 }, 500);
             },
-            stopHostHeartbeat: () => { if (SyncEngine.hostInterval) clearInterval(SyncEngine.hostInterval); },
             
-            handleData: (data) => {
-                switch (data.type) {
-                    case 'INFO': Utils.logChat('System', `${data.name} authenticated.`, true); break;
-                    case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;
-                    case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, false); break;
-                    case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;
-                    
-                    case 'REQ_PLAY': if(State.isHost) UI.video.play().catch(()=>{}); break;
-                    case 'REQ_PAUSE': if(State.isHost) UI.video.pause(); break;
-                    case 'REQ_SEEK': if(State.isHost) UI.video.currentTime = data.time; break;
-                }
-            },
-            
-            enforceHostState: (hostState) => {
+            enforceHostState: () => {
                 if (State.isHost || State.isSeekingUI) return; 
-                State.lastHostHeartbeat = Date.now();
-                State.syncState = hostState;
+                const hostState = State.syncState;
                 
-                // Update Guest Scrubber visually from Host (Works for both URL and Local Stream)
                 if (hostState.duration > 0) {
                     const pct = (hostState.time / hostState.duration) * 100;
                     UI.scrubberProgress.style.width = `${pct}%`;
@@ -763,66 +510,44 @@
                     UI.timeDisplay.textContent = `${Utils.formatTime(hostState.time)} / ${Utils.formatTime(hostState.duration)}`;
                 }
                 
-                // CRITICAL FIX: If Guest is watching a Live WebRTC Stream, DO NOT touch the local video's time/state.
-                // The WebRTC connection natively freezes frames when the host pauses, and jumps when the host seeks.
-                if (State.playMode === 'local_stream' || State.playMode === 'screenshare') {
-                    // Visually update the play/pause button for the Guest so they know the Host paused it
-                    if (hostState.paused) {
-                        UI.iconPlay.classList.remove('hidden'); UI.iconPause.classList.add('hidden');
-                        UI.playerWrapper.classList.remove('idle');
-                    } else {
-                        UI.iconPause.classList.remove('hidden'); UI.iconPlay.classList.add('hidden');
+                if (State.playMode === 'url') {
+                    if (hostState.paused && !UI.video.paused) UI.video.pause();
+                    if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) { 
+                        UI.video.play().catch(()=>{}); 
+                        UI.bufferingOverlay.classList.remove('active');
                     }
-                    return;
-                }
-                
-                // --- Below is ONLY for URL/HLS Syncing ---
-                if (hostState.paused && !UI.video.paused) { 
-                    UI.video.pause(); 
-                }
-                if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) { 
-                    UI.video.play().catch(()=>{}); 
-                    UI.bufferingOverlay.classList.remove('active');
-                }
-                
-                if (State.ignoreNextSeekEvent) return; 
-                
-                const drift = Math.abs(UI.video.currentTime - hostState.time);
-                if (drift > 1.0 && !hostState.paused) {
-                    UI.driftIndicator.classList.remove('hidden');
-                    UI.video.currentTime = hostState.time;
-                    setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
-                } else if (hostState.paused && drift > 0.1) {
-                    UI.video.currentTime = hostState.time;
+                    
+                    if (State.ignoreNextSeekEvent) return; 
+                    const drift = Math.abs(UI.video.currentTime - hostState.time);
+                    if (drift > 1.0 && !hostState.paused) {
+                        UI.driftIndicator.classList.remove('hidden');
+                        UI.video.currentTime = hostState.time;
+                        setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
+                    } else if (hostState.paused && drift > 0.1) {
+                        UI.video.currentTime = hostState.time;
+                    }
+                } else {
+                    // Auto-load media if the guest doesn't have it playing yet
+                    // In Step 3, we will automatically fetch the active HLS URL from the backend here.
                 }
             },
             
             triggerPlay: () => {
                 if (State.isHost) UI.video.play().catch(()=>{});
-                else if (State.conn?.open) {
-                    if (State.playMode === 'url') UI.video.play().catch(()=>{});
-                    State.conn.send({ type: 'REQ_PLAY' });
-                }
+                else State.socket.emit('guest_action', { roomId: State.roomId, action: 'play' });
             },
             triggerPause: () => {
                 if (State.isHost) UI.video.pause();
-                else if (State.conn?.open) {
-                    if (State.playMode === 'url') UI.video.pause();
-                    State.conn.send({ type: 'REQ_PAUSE' });
-                }
+                else State.socket.emit('guest_action', { roomId: State.roomId, action: 'pause' });
             },
             triggerSeek: (time) => {
-                if (State.isHost) {
-                    UI.video.currentTime = time;
-                } else if (State.conn?.open) {
+                if (State.isHost) UI.video.currentTime = time;
+                else {
                     State.ignoreNextSeekEvent = true;
                     if (State.syncLockTimeout) clearTimeout(State.syncLockTimeout);
                     State.syncLockTimeout = setTimeout(() => { State.ignoreNextSeekEvent = false; }, 3000);
-                    
-                    if (State.playMode === 'url') {
-                        UI.video.currentTime = time; 
-                    }
-                    State.conn.send({ type: 'REQ_SEEK', time });
+                    if (State.playMode === 'url') UI.video.currentTime = time; 
+                    State.socket.emit('guest_action', { roomId: State.roomId, action: 'seek', data: time });
                 }
             }
         };
@@ -831,10 +556,10 @@
             isMuted: true,
             initMic: async () => {
                 try {
-                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-                    State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+                    // We will set up PeerJS exclusively for voice here next!
+                    State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     State.localVoiceStream.getAudioTracks()[0].enabled = false; AudioEngine.updateIcon();
-                } catch (err) { console.warn("Mic access notice:", err); }
+                } catch (err) { console.warn("Mic note:", err); }
             },
             toggleMic: () => {
                 if (!State.localVoiceStream) return Utils.showToast("Microphone not available.", "error");
@@ -852,11 +577,6 @@
                     UI.micBtn.classList.replace('bg-red-500/10', 'bg-white/10'); UI.micBtn.classList.replace('border-red-500/30', 'border-white/10');
                     UI.voiceActiveDot.classList.remove('hidden');
                 }
-            },
-            callHost: () => {
-                if(!State.localVoiceStream || !State.peer || !State.conn) return;
-                const call = State.peer.call(State.conn.peer, State.localVoiceStream, { metadata: { type: 'voice' } });
-                call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
             }
         };
 
@@ -869,29 +589,25 @@
                 UI.hostBtn.addEventListener('click', Network.setupHost);
                 UI.joinBtn.addEventListener('click', Network.setupGuest);
                 UI.copyCodeBtn.addEventListener('click', () => Utils.copyToClipboard(State.roomId));
-
                 UI.toggleSidebarBtn.addEventListener('click', () => {
                     State.sidebarOpen = !State.sidebarOpen;
                     State.sidebarOpen ? UI.sidebar.classList.remove('sidebar-collapsed') : UI.sidebar.classList.add('sidebar-collapsed');
                 });
-
                 UI.chatForm.addEventListener('submit', (e) => {
                     e.preventDefault(); const txt = UI.chatInput.value.trim(); if (!txt) return;
                     Utils.logChat(State.myName, txt); 
-                    if(State.conn?.open) State.conn.send({ type: 'CHAT', text: txt }); 
+                    if(State.socket) State.socket.emit('send_chat', { roomId: State.roomId, alias: State.myName, message: txt });
                     UI.chatInput.value = '';
                 });
-
+                
                 UI.micBtn.addEventListener('click', AudioEngine.toggleMic);
-                UI.voiceVolSlider.addEventListener('input', (e) => { UI.remoteAudio.volume = e.target.value; });
-
-                UI.fileStreamInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0]; if (file) MediaEngine.streamLocalFile(file);
+                UI.fileStreamInput.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    Utils.showToast("Backend FFmpeg Route Pending (Step 3). Test with a URL first!", "error", 5000);
                 });
                 UI.loadUrlBtn.addEventListener('click', () => {
                     const url = UI.urlInput.value.trim(); if (url) MediaEngine.loadURL(url); UI.urlInput.value = '';
                 });
-                UI.shareScreenBtn.addEventListener('click', MediaEngine.shareScreen);
 
                 UI.video.addEventListener('play', () => {
                     UI.iconPlay.classList.add('hidden'); UI.iconPause.classList.remove('hidden');
@@ -904,42 +620,31 @@
                     UI.playerWrapper.classList.remove('idle');
                 });
                 UI.video.addEventListener('waiting', () => {
-                    if (State.playMode !== 'screenshare') {
-                        UI.bufferingOverlay.classList.add('active');
-                        UI.bufferStatusText.textContent = "Buffering Stream...";
-                    }
+                    UI.bufferingOverlay.classList.add('active');
+                    UI.bufferStatusText.textContent = "Loading Chunk...";
                 });
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });
                 
                 UI.video.addEventListener('timeupdate', () => {
-                    if (State.playMode === 'screenshare') { UI.timeDisplay.textContent = "LIVE BROADCAST"; return; }
-                    
-                    // Host natively updates UI through their own video tag. Guest updates via heartbeat.
                     if (State.isHost) {
                         const curr = UI.video.currentTime, total = UI.video.duration;
                         UI.timeDisplay.textContent = `${Utils.formatTime(curr)} / ${Utils.formatTime(total)}`;
-                        
                         if (total > 0 && !State.isSeekingUI) {
                             const pct = (curr / total) * 100;
-                            UI.scrubberProgress.style.width = `${pct}%`; 
-                            UI.scrubberThumb.style.left = `${pct}%`;
-                            
+                            UI.scrubberProgress.style.width = `${pct}%`; UI.scrubberThumb.style.left = `${pct}%`;
                             if (UI.video.buffered.length > 0) {
                                 const bufEnd = UI.video.buffered.end(UI.video.buffered.length - 1);
                                 UI.scrubberBuffer.style.width = `${(bufEnd / total) * 100}%`;
                             }
                         }
                     }
-                    
                     if (State.ambilightEnabled && Math.abs(UI.ambilightVideo.currentTime - UI.video.currentTime) > 0.3) {
                         UI.ambilightVideo.currentTime = UI.video.currentTime;
                     }
                 });
 
                 const togglePlayUI = () => {
-                    if (State.playMode === 'idle' || State.playMode === 'screenshare') return;
-                    
-                    // Check true state for accurate toggle
+                    if (State.playMode === 'idle') return;
                     const isPaused = State.isHost ? UI.video.paused : State.syncState.paused;
                     isPaused ? SyncEngine.triggerPlay() : SyncEngine.triggerPause();
                 };
@@ -951,19 +656,15 @@
 
                 const calculateScrub = (e) => {
                     const totalDur = State.isHost ? UI.video.duration : State.syncState.duration;
-                    if (!totalDur || State.playMode === 'screenshare') return;
+                    if (!totalDur) return;
                     const rect = UI.scrubber.getBoundingClientRect();
                     const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                     UI.scrubberProgress.style.width = `${pos * 100}%`; UI.scrubberThumb.style.left = `${pos * 100}%`;
                     return pos * totalDur;
                 };
                 
-                UI.scrubber.addEventListener('mousedown', (e) => { 
-                    State.isSeekingUI = true; calculateScrub(e); 
-                });
-                document.addEventListener('mousemove', (e) => { 
-                    if (State.isSeekingUI) calculateScrub(e); 
-                });
+                UI.scrubber.addEventListener('mousedown', (e) => { State.isSeekingUI = true; calculateScrub(e); });
+                document.addEventListener('mousemove', (e) => { if (State.isSeekingUI) calculateScrub(e); });
                 document.addEventListener('mouseup', (e) => {
                     if (State.isSeekingUI) {
                         State.isSeekingUI = false;
@@ -972,39 +673,11 @@
                     }
                 });
 
-                let lastVol = 1;
-                UI.volSlider.addEventListener('input', (e) => { 
-                    UI.video.volume = e.target.value; 
-                    if (UI.video.volume > 0) lastVol = UI.video.volume;
-                    updateVolIcon(e.target.value); 
-                });
-                UI.muteBtn.addEventListener('click', () => {
-                    if (UI.video.volume > 0) { UI.video.volume = 0; UI.volSlider.value = 0; } 
-                    else { UI.video.volume = lastVol; UI.volSlider.value = lastVol; }
-                    updateVolIcon(UI.video.volume);
-                });
-                const updateVolIcon = (vol) => {
-                    if (vol <= 0) { UI.iconVol.classList.add('hidden'); UI.iconVolMuted.classList.remove('hidden'); }
-                    else { UI.iconVolMuted.classList.add('hidden'); UI.iconVol.classList.remove('hidden'); }
-                };
-
-                document.addEventListener('keydown', (e) => {
-                    if (document.activeElement.tagName === 'INPUT') return;
-                    if (e.code === 'Space') { e.preventDefault(); togglePlayUI(); }
-                    if (e.code === 'KeyF') { e.preventDefault(); UI.fullscreenBtn.click(); }
-                });
-
-                UI.fullscreenBtn.addEventListener('click', () => {
-                    if (!document.fullscreenElement) UI.playerWrapper.requestFullscreen().catch(()=>{});
-                    else document.exitFullscreen();
-                });
-
                 UI.ambilightBtn.addEventListener('click', () => {
                     State.ambilightEnabled = !State.ambilightEnabled;
-                    if (State.ambilightEnabled && (UI.video.src || UI.video.srcObject)) {
+                    if (State.ambilightEnabled && UI.video.src) {
                         UI.ambilightContainer.classList.add('active');
-                        UI.ambilightVideo.src = UI.video.src; UI.ambilightVideo.srcObject = UI.video.srcObject;
-                        UI.ambilightVideo.currentTime = UI.video.currentTime;
+                        UI.ambilightVideo.src = UI.video.src; UI.ambilightVideo.currentTime = UI.video.currentTime;
                         if (!UI.video.paused) UI.ambilightVideo.play().catch(()=>{});
                         UI.ambilightBtn.classList.replace('text-gray-500', 'text-white');
                     } else {
@@ -1012,6 +685,11 @@
                         UI.ambilightBtn.classList.replace('text-white', 'text-gray-500');
                         UI.ambilightVideo.pause();
                     }
+                });
+                
+                UI.fullscreenBtn.addEventListener('click', () => {
+                    if (!document.fullscreenElement) UI.playerWrapper.requestFullscreen().catch(()=>{});
+                    else document.exitFullscreen();
                 });
 
                 const resetFade = () => {
