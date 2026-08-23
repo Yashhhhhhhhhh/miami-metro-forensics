@@ -46,9 +46,10 @@
         .ambilight-container.active { opacity: 0.6; }
         #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(80px) saturate(150%) brightness(0.7); transform: scale(1.1); }
         
-        /* Direct Viewport Anchor */
         .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }
+        .video-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         
+        /* Strict Aspect Ratio Scaling Rules */
         video, iframe { width: 100%; height: 100%; outline: none; background: transparent; z-index: 2; border: none; }
         video.mode-contain { object-fit: contain; }
         video.mode-cover { object-fit: cover; }
@@ -202,11 +203,13 @@
             <!-- Floating Chat Layer -->
             <div id="overlayChat" class="overlay-chat-container"></div>
 
-            <!-- Player Wrapper -->
+            <!-- Player Wrapper (16:9 Proportional Container Lock) -->
             <div id="playerWrapper" class="player-wrapper group">
-                <video id="mainVideo" class="mode-contain" playsinline></video>
-                <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none">
-                    <div id="ytPlayerDiv" class="w-full h-full"></div>
+                <div class="video-container">
+                    <video id="mainVideo" class="mode-contain" playsinline></video>
+                    <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none">
+                        <div id="ytPlayerDiv" class="w-full h-full"></div>
+                    </div>
                 </div>
                 
                 <div id="videoControls" class="controls-overlay flex flex-col gap-4">
@@ -462,6 +465,33 @@
             }
         };
 
+        const SubtitleEngine = {
+            handleDrop: (e) => {
+                e.preventDefault(); const file = e.dataTransfer.files[0];
+                if (!file || (!file.name.endsWith('.srt') && !file.name.endsWith('.vtt'))) return;
+                
+                Utils.showToast("Parsing subtitles...", "info", 2000);
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    let content = evt.target.result;
+                    if (file.name.endsWith('.srt')) {
+                        let vtt = 'WEBVTT\n\n';
+                        let blocks = content.replace(/\r\n|\r|\n/g, '\n').split('\n\n');
+                        for (let block of blocks) {
+                            let lines = block.split('\n');
+                            if (lines.length >= 2) { lines[1] = lines[1].replace(/,/g, '.'); vtt += lines.slice(1).join('\n') + '\n\n'; }
+                        }
+                        content = vtt;
+                    }
+                    const blob = new Blob([content], { type: 'text/vtt' }); const url = URL.createObjectURL(blob);
+                    Array.from(UI.video.getElementsByTagName('track')).forEach(t => t.remove());
+                    const track = document.createElement('track'); track.kind = 'subtitles'; track.label = 'English'; track.srclang = 'en'; track.src = url; track.default = true;
+                    UI.video.appendChild(track); Utils.showToast("Subtitles Applied.", "success");
+                };
+                reader.readAsText(file);
+            }
+        };
+
         const Network = {
             peerConfig: { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }, debug: 0 },
             
@@ -625,7 +655,7 @@
                     Utils.logChat('System', 'Partner connected.', true);
                 } else {
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]";
-                    UI.syncText.textContent = "Partner Offline";
+                    UI.syncText.textContent = "Connection lost.";
                     Utils.logChat('System', 'Connection lost.', true);
                 }
             }
@@ -661,7 +691,7 @@
             },
             
             syncLocalFile: (file) => {
-                if (file.name.endsWith('.mkv')) return Utils.showToast("Use MP4 or WebM format.", "error", 6000);
+                if (file.name.endsWith('.mkv')) return Utils.showToast("Browsers cannot decode MKV natively. Use MP4.", "error", 6000);
                 MediaEngine.clearSource(); State.playMode = 'local_sync';
                 
                 const blobUrl = URL.createObjectURL(file);
@@ -677,7 +707,7 @@
             },
             
             streamLocalFile: (file) => {
-                if (file.name.endsWith('.mkv')) return Utils.showToast("Use MP4 or WebM format.", "error", 6000);
+                if (file.name.endsWith('.mkv')) return Utils.showToast("Cannot broadcast MKV directly. Use MP4.", "error", 6000);
                 if (!State.conn || !State.conn.open) return Utils.showToast("Wait for viewer.", "error");
                 
                 MediaEngine.clearSource(); State.playMode = 'local_stream'; State.currentMediaTitle = file.name;
