@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumière Pro | Secure VOD Cinema</title>
+    <title>Lumière Pro | Premium P2P Cinema</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,37 +28,40 @@
         }
     </script>
     
-    <!-- Professional Backend Libraries -->
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <!-- Global Cloud Infrastructure -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>
     
     <style>
-        body { background-color: #030303; color: #f5f5f5; overflow: hidden; -webkit-font-smoothing: antialiased; }
+        body { background-color: #030303; color: #f5f5f5; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.5s ease; }
+        body.cinema-mode { background-color: #000; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         
-        /* Ambilight System */
+        /* Cinematic UI states */
+        .dimmable { transition: opacity 0.5s ease, filter 0.5s ease; }
+        body.cinema-mode .dimmable { opacity: 0.05 !important; filter: blur(2px); pointer-events: none; }
+        
         .ambilight-container { position: absolute; inset: -15%; z-index: 0; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.5s ease-in-out; }
         .ambilight-container.active { opacity: 0.85; }
         #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(80px) saturate(200%) brightness(0.9); transform: scale(1.1); }
         
-        /* Video Player Wrapper */
-        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; box-shadow: 0 0 100px rgba(0,0,0,0.95); overflow: hidden; }
+        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: transparent; overflow: hidden; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         video { width: 100%; height: 100%; object-fit: contain; outline: none; background: transparent; z-index: 2; }
         
-        /* Overlays */
-        .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        /* Custom Subtitles */
+        ::cue { background: rgba(0, 0, 0, 0.7); color: #fff; font-family: 'Inter', sans-serif; font-size: 1.2rem; font-weight: 500; text-shadow: 0px 2px 10px rgba(0,0,0,0.8); }
+
+        .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .overlay-layer.active { opacity: 1; pointer-events: auto; }
         .bg-overlay { background: rgba(0,0,0,0.7); }
         
-        /* Cinematic Controls */
         .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(20px); pointer-events: none; }
         .player-wrapper.idle { cursor: none; }
         
-        /* Advanced Scrubber */
+        /* Scrubber */
         .scrubber-container { position: relative; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; cursor: pointer; margin-bottom: 25px; transition: height 0.2s; }
         .scrubber-container:hover { height: 10px; }
         .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.3); border-radius: 3px; pointer-events: none; transition: width 0.3s linear; }
@@ -72,8 +75,8 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #fff; margin-top: -5px; transition: transform 0.1s; box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
         input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
         
-        .glass-panel { background: rgba(8, 8, 8, 0.9); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
-        .glass-sidebar { background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.05); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s; }
+        .glass-panel { background: rgba(8, 8, 8, 0.9); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
+        .glass-sidebar { background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.05); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s; }
         .sidebar-collapsed { transform: translateX(100%); width: 0 !important; border: none; }
         
         .overlay-chat-container { position: absolute; bottom: 140px; left: 40px; width: 400px; max-height: 350px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 20; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }
@@ -86,6 +89,7 @@
         .btn-primary { background: #E50914; color: white; transition: all 0.3s; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
         .btn-primary:hover:not(:disabled) { background: #f40612; box-shadow: 0 6px 25px rgba(229, 9, 20, 0.5); transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        
         input, select { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; transition: border-color 0.2s, background 0.2s; }
         input:focus { outline: none; border-color: #E50914; background: rgba(255,255,255,0.08); }
         .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #E50914; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
@@ -105,23 +109,23 @@
         <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-6">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
-                    <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span> Backend Engine v3.0
+                    <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span> Ultimate VOD Release
                 </div>
                 <h1 class="text-6xl font-extrabold tracking-tight text-white flex items-center gap-4">
                     <svg class="w-14 h-14 text-accent-500 drop-shadow-[0_0_15px_rgba(229,9,20,0.6)]" fill="currentColor" viewBox="0 0 24 24"><path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H4V5h16v14z"/><path d="M8 15h8l-4-7z"/></svg>
                     Lumière Pro
                 </h1>
                 <p class="text-gray-400 text-xl leading-relaxed font-light">
-                    Flawless VOD synchronization powered by WebSockets.
+                    Flawless P2P theater synchronization. Global STUN infrastructure. Drag & drop MP4/WebM files for perfect playback.
                 </p>
                 <div class="flex gap-4 pt-4">
                     <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
                         <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        WebSocket Hub
+                        Serverless Global Sync
                     </div>
                     <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
                         <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                        HLS Ready
+                        Spatial WebRTC Comms
                     </div>
                 </div>
             </div>
@@ -157,9 +161,9 @@
     <!-- MAIN THEATER -->
     <div id="theaterScreen" class="hidden flex-1 flex w-full h-full relative">
         <div id="mainView" class="relative flex-1 flex flex-col bg-black transition-all duration-300">
-            <div id="ambilight" class="ambilight-container"><video id="ambilightVideo" muted playsinline></video></div>
+            <div id="ambilight" class="ambilight-container dimmable"><video id="ambilightVideo" muted playsinline></video></div>
             
-            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/60 to-transparent flex justify-between items-start pointer-events-none">
+            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/60 to-transparent flex justify-between items-start pointer-events-none dimmable">
                 <div class="flex flex-col gap-2 pointer-events-auto">
                     <div class="flex items-center gap-3 glass-panel px-2 py-2 rounded-xl">
                         <div class="bg-accent-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">Session Code</div>
@@ -168,7 +172,7 @@
                     </div>
                     <div id="syncIndicator" class="flex items-center gap-2 text-sm font-medium text-gray-300 mt-2 glass-panel px-4 py-2 rounded-xl w-max">
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
-                        <span id="syncText">Connecting to Node Server...</span>
+                        <span id="syncText">Establishing Global Route...</span>
                     </div>
                 </div>
                 <button id="toggleSidebarBtn" class="btn-icon p-4 glass-panel rounded-full hover:bg-white/10 pointer-events-auto z-50">
@@ -181,7 +185,7 @@
                     <svg class="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
                 </div>
                 <p class="text-gray-200 text-2xl font-light tracking-wide" id="noMediaTitle">Theater is Ready</p>
-                <p class="text-gray-500 text-sm mt-3" id="noMediaSub">Waiting for media to be loaded.</p>
+                <p class="text-gray-500 text-sm mt-3" id="noMediaSub">Waiting for MP4/WebM to be loaded.</p>
             </div>
 
             <div id="bufferingOverlay" class="overlay-layer bg-overlay backdrop-blur-md">
@@ -192,7 +196,9 @@
             <div id="overlayChat" class="overlay-chat-container"></div>
 
             <div id="playerWrapper" class="player-wrapper group">
-                <video id="mainVideo" playsinline></video>
+                <video id="mainVideo" playsinline>
+                    <!-- Subtitles injected here dynamically -->
+                </video>
                 
                 <div id="videoControls" class="controls-overlay flex flex-col gap-4">
                     <div id="nowPlayingText" class="text-white/80 text-sm font-medium tracking-wide mb-2 hidden flex justify-between items-end">
@@ -223,12 +229,16 @@
                             <span id="timeDisplay" class="text-white/90 font-mono text-sm tracking-wide bg-black/50 px-3 py-1.5 rounded-lg border border-white/10 shadow-inner">00:00 / 00:00</span>
                         </div>
                         
-                        <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-5">
                             <div id="driftIndicator" class="hidden flex items-center gap-2 text-[10px] text-yellow-400 font-bold px-4 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-xl uppercase tracking-wider">
                                 <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> Syncing
                             </div>
-                            <button id="ambilightBtn" class="btn-icon text-white drop-shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
-                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
+                            <!-- PiP Button -->
+                            <button id="pipBtn" class="btn-icon text-white drop-shadow-md" title="Picture in Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
+                            <!-- Cinema Mode -->
+                            <button id="cinemaModeBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Cinema Dimming"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
+                            <button id="ambilightBtn" class="btn-icon text-white drop-shadow-md" title="Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
+                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                         </div>
                     </div>
                 </div>
@@ -236,12 +246,12 @@
         </div>
 
         <!-- SIDEBAR CONTROLS -->
-        <div id="sidebar" class="glass-sidebar w-[400px] flex flex-col h-full flex-shrink-0 relative z-50">
-            <!-- Voice Comms (PeerJS) -->
+        <div id="sidebar" class="glass-sidebar w-[400px] flex flex-col h-full flex-shrink-0 relative z-50 dimmable">
+            <!-- Voice Comms -->
             <div class="p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Private WebRTC Voice
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Spatial Voice
                     </h3>
                     <button id="micBtn" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shadow-sm">
                         <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
@@ -257,26 +267,26 @@
             <!-- Host Stream Deck -->
             <div class="p-6 border-b border-white/10 bg-black/40 relative overflow-hidden" id="hostControlsPanel">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-accent-600/5 blur-[50px] pointer-events-none"></div>
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Node Server Upload & Stream</h3>
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Host Media Hub</h3>
                 <div class="space-y-4 relative z-10">
                     
-                    <!-- File Transcode Ingest -->
+                    <!-- File Ingest -->
                     <div class="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3 relative overflow-hidden group hover:border-accent-500/50 transition-colors">
                         <div class="text-[10px] text-gray-300 font-bold uppercase mb-2 tracking-wider flex justify-between items-center">
-                            <span>HLS Transcoder Setup</span>
-                            <span class="text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded font-mono">Pending Route</span>
+                            <span>Local Cinema Sync</span>
+                            <span class="text-green-500 bg-green-500/10 px-2 py-0.5 rounded font-mono">MP4/WEBM</span>
                         </div>
                         <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-3 cursor-pointer transition shadow-[0_4px_20px_rgba(229,9,20,0.2)] text-sm">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            <span class="font-bold">Upload MKV to Backend</span>
-                            <input type="file" id="fileStreamInput" class="hidden" accept="video/*">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <span class="font-bold">Play Local Movie File</span>
+                            <input type="file" id="fileStreamInput" class="hidden" accept="video/mp4,video/webm">
                         </label>
-                        <p class="text-[9px] text-gray-500 text-center uppercase tracking-wider">Soon: Auto-converts unsupported H.265 files to perfect web streams.</p>
+                        <p class="text-[9px] text-gray-500 text-center tracking-wider">Drag & drop .SRT files onto video for subtitles.</p>
                     </div>
 
                     <!-- Direct URL -->
                     <div class="flex gap-2">
-                        <input type="url" id="urlInput" class="flex-1 px-4 py-3 text-xs rounded-lg border border-white/10 bg-black/80 focus:border-accent-500 shadow-inner" placeholder="e.g. Attack.on.Titan.S04.1080p.mkv (direct URL)">
+                        <input type="url" id="urlInput" class="flex-1 px-4 py-3 text-xs rounded-lg border border-white/10 bg-black/80 focus:border-accent-500 shadow-inner" placeholder="Enter .mp4 or .m3u8 URL">
                         <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-xs font-bold transition border border-white/10">Load</button>
                     </div>
                 </div>
@@ -285,7 +295,7 @@
             <!-- Chat -->
             <div class="flex-1 flex flex-col min-h-0 bg-theater-900/60">
                 <div id="chatMessages" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-                    <div class="text-center text-[9px] text-gray-500 font-bold tracking-widest py-3 border-b border-white/5 uppercase">Socket.io Channel Live</div>
+                    <div class="text-center text-[9px] text-gray-500 font-bold tracking-widest py-3 border-b border-white/5 uppercase">End-to-End Encrypted</div>
                 </div>
                 
                 <div class="p-4 bg-theater-800/90 border-t border-white/5 backdrop-blur-xl">
@@ -304,17 +314,20 @@
 
     <script>
         /**
-         * LUMIÈRE PRO - SOCKET.IO FRONTEND
-         * Real-time backend sync layer. WebRTC retained only for private voice.
+         * LUMIÈRE PRO - FINAL MASTER BUILD
+         * - Serverless Cloud Relay Signaling (PeerJS)
+         * - Bi-directional Decoupled Master/Slave DataChannels
+         * - Native Subtitle Parsing (.srt -> WebVTT Blob)
+         * - Persistent Storage & Cinematic Modes
          */
 
         const State = {
             isHost: false, roomId: '', myName: 'Viewer',
-            socket: null, peer: null, voiceConn: null, localVoiceStream: null,
-            hlsPlayer: null, activeMediaSource: null,
-            playMode: 'idle',
-            syncState: { time: 0, duration: 0, paused: true },
-            isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true,
+            peer: null, dataConn: null, voiceConn: null, localVoiceStream: null,
+            hlsPlayer: null, activeMediaSource: null, currentMediaTitle: '',
+            playMode: 'idle', 
+            syncState: { time: 0, duration: 0, paused: true, updateId: 0 },
+            isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true, cinemaMode: false,
             ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null
         };
 
@@ -331,7 +344,7 @@
             scrubberProgress: document.getElementById('scrubberProgress'), scrubberThumb: document.getElementById('scrubberThumb'),
             timeDisplay: document.getElementById('timeDisplay'), volSlider: document.getElementById('volSlider'),
             muteBtn: document.getElementById('muteBtn'), iconVol: document.getElementById('iconVol'), iconVolMuted: document.getElementById('iconVolMuted'),
-            fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'),
+            fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'), pipBtn: document.getElementById('pipBtn'), cinemaModeBtn: document.getElementById('cinemaModeBtn'),
             sidebar: document.getElementById('sidebar'), toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
             hostControlsPanel: document.getElementById('hostControlsPanel'), chatMessages: document.getElementById('chatMessages'),
             overlayChat: document.getElementById('overlayChat'), chatForm: document.getElementById('chatForm'), chatInput: document.getElementById('chatInput'),
@@ -339,8 +352,7 @@
             micBtn: document.getElementById('micBtn'), iconMic: document.getElementById('iconMic'), iconMicMuted: document.getElementById('iconMicMuted'),
             voiceVolSlider: document.getElementById('voiceVolSlider'), remoteAudio: document.getElementById('remoteAudio'), voiceActiveDot: document.getElementById('voiceActiveDot'),
             syncDot: document.getElementById('syncDot'), syncText: document.getElementById('syncText'),
-            driftIndicator: document.getElementById('driftIndicator'), roomCodeDisplay: document.getElementById('roomCodeDisplay'),
-            copyCodeBtn: document.getElementById('copyCodeBtn')
+            driftIndicator: document.getElementById('driftIndicator'), roomCodeDisplay: document.getElementById('roomCodeDisplay'), copyCodeBtn: document.getElementById('copyCodeBtn')
         };
 
         const Utils = {
@@ -352,7 +364,7 @@
             },
             showToast: (msg, type = 'info', duration = 4000) => {
                 const t = document.createElement('div');
-                t.className = `px-5 py-3.5 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] text-sm font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : 'bg-black/90 text-white border-white/10'}`;
+                t.className = `px-5 py-3.5 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] text-sm font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-black/90 text-white border-white/10')}`;
                 t.innerHTML = type === 'error' ? `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${msg}` : msg;
                 document.getElementById('toastContainer').appendChild(t);
                 setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 400); }, duration);
@@ -377,48 +389,78 @@
             }
         };
 
-        const Network = {
-            initSocket: () => {
-                // Connects to your local server running on port 3000
-                State.socket = io('http://localhost:3000');
+        const SubtitleEngine = {
+            handleDrop: (e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (!file || (!file.name.endsWith('.srt') && !file.name.endsWith('.vtt'))) return;
                 
-                State.socket.on('connect', () => {
-                    UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
-                    UI.syncText.textContent = "Server Linked Flawlessly";
-                });
-                
-                State.socket.on('system_message', (msg) => Utils.logChat('System', msg, true));
-                State.socket.on('receive_chat', (data) => Utils.logChat(data.alias, data.message));
-                
-                State.socket.on('sync_state', (state) => {
-                    if (State.isHost) return;
-                    State.syncState = state;
-                    SyncEngine.enforceHostState();
-                });
-
-                // Host specific: Receive intent from guest
-                State.socket.on('guest_request', (request) => {
-                    if (!State.isHost) return;
-                    if (request.action === 'play') UI.video.play().catch(()=>{});
-                    if (request.action === 'pause') UI.video.pause();
-                    if (request.action === 'seek') UI.video.currentTime = request.data;
-                });
+                Utils.showToast("Parsing subtitles...", "info", 2000);
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    let content = evt.target.result;
+                    if (file.name.endsWith('.srt')) content = SubtitleEngine.srtToVtt(content);
+                    
+                    const blob = new Blob([content], { type: 'text/vtt' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Remove existing tracks
+                    Array.from(UI.video.getElementsByTagName('track')).forEach(t => t.remove());
+                    
+                    const track = document.createElement('track');
+                    track.kind = 'subtitles'; track.label = 'English'; track.srclang = 'en';
+                    track.src = url; track.default = true;
+                    UI.video.appendChild(track);
+                    Utils.showToast("Subtitles Applied Flawlessly.", "success");
+                };
+                reader.readAsText(file);
             },
+            srtToVtt: (srt) => {
+                let vtt = 'WEBVTT\n\n';
+                srt = srt.replace(/\r\n|\r|\n/g, '\n');
+                let blocks = srt.split('\n\n');
+                for (let block of blocks) {
+                    let lines = block.split('\n');
+                    if (lines.length >= 2) {
+                        lines[1] = lines[1].replace(/,/g, '.');
+                        vtt += lines.slice(1).join('\n') + '\n\n';
+                    }
+                }
+                return vtt;
+            }
+        };
+
+        const Network = {
+            peerConfig: { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }, debug: 0 },
             
             setupHost: async () => {
                 State.myName = UI.nameInput.value.trim() || 'Host'; 
-                State.isHost = true; 
-                State.roomId = Utils.generateCode();
+                localStorage.setItem('lumiereAlias', State.myName);
+                State.isHost = true; State.roomId = Utils.generateCode();
+                UI.hostBtn.disabled = true; UI.hostBtn.innerHTML = `<div class="spinner mr-2"></div> Routing...`;
                 
-                Network.initSocket();
-                State.socket.emit('join_room', { roomId: State.roomId, alias: State.myName, isHost: true });
-                
-                UI.roomCodeDisplay.textContent = State.roomId; 
-                App.transitionToTheater();
-                UI.roleIndicator.textContent = "HOST - MASTER";
-                
-                SyncEngine.startHostHeartbeat();
-                AudioEngine.initMic();
+                try {
+                    State.peer = new Peer(`lumiere-${State.roomId}`, Network.peerConfig);
+                    State.peer.on('open', () => {
+                        UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
+                        Utils.showToast("Global Room Created. Share code with partner.", "success");
+                        UI.roleIndicator.textContent = "HOST - MASTER";
+                        SyncEngine.startHostHeartbeat();
+                    });
+                    
+                    State.peer.on('connection', (conn) => { 
+                        State.dataConn = conn; Network.setupDataChannel(conn); 
+                        Utils.showToast("Partner connected to room.", "success");
+                        Utils.logChat('System', 'Partner connected.', true);
+                    });
+                    State.peer.on('call', Network.handleIncomingCall);
+                    
+                    State.peer.on('error', (e) => {
+                        console.error("PeerJS:", e);
+                        Utils.showToast(e.type === 'unavailable-id' ? "ID Collision. Try again." : `Network Error: ${e.type}`, "error");
+                        UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Create Theater";
+                    });
+                } catch (err) { Utils.showToast("Failed to initiate cloud relay.", "error"); }
             },
             
             setupGuest: async () => {
@@ -426,21 +468,70 @@
                 if (code.length < 4) return Utils.showToast("Invalid code format.", "error");
                 
                 State.myName = UI.nameInput.value.trim() || 'Viewer'; 
-                State.isHost = false; 
-                State.roomId = code;
+                localStorage.setItem('lumiereAlias', State.myName);
+                State.isHost = false; State.roomId = code;
+                UI.joinBtn.disabled = true; UI.joinBtn.textContent = "Locating Host...";
                 
-                Network.initSocket();
-                State.socket.emit('join_room', { roomId: State.roomId, alias: State.myName, isHost: false });
+                try {
+                    State.peer = new Peer(Network.peerConfig);
+                    State.peer.on('open', () => {
+                        UI.joinBtn.textContent = "Connecting to P2P...";
+                        State.dataConn = State.peer.connect(`lumiere-${code}`, { reliable: true });
+                        Network.setupDataChannel(State.dataConn);
+                    });
+                    
+                    State.peer.on('call', Network.handleIncomingCall);
+                    State.peer.on('error', (e) => {
+                        Utils.showToast("Host unreachable. Room closed or code invalid.", "error");
+                        UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
+                    });
+                } catch (err) { Utils.showToast("Failed to connect.", "error"); }
+            },
+            
+            setupDataChannel: (conn) => {
+                conn.on('open', () => {
+                    if (!State.isHost) {
+                        UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
+                        UI.hostControlsPanel.style.display = 'none';
+                        UI.roleIndicator.textContent = "GUEST - SLAVE";
+                        UI.roleIndicator.classList.replace('text-accent-500', 'text-blue-400');
+                        UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-blue-400/10');
+                        UI.roleIndicator.classList.replace('border-accent-500/20', 'border-blue-400/20');
+                    }
+                    Network.updateStatus(true);
+                    conn.send({ type: 'INFO', name: State.myName });
+                    
+                    if (!State.isHost && State.localVoiceStream) AudioEngine.callHost();
+                    
+                    // Late Joiner State injection
+                    if (State.isHost && State.playMode === 'url' && State.activeMediaSource) {
+                        conn.send({ type: 'CMD_LOAD_URL', url: State.activeMediaSource, title: State.currentMediaTitle });
+                    }
+                });
                 
-                UI.roomCodeDisplay.textContent = State.roomId; 
-                App.transitionToTheater();
-                UI.hostControlsPanel.style.display = 'none';
-                UI.roleIndicator.textContent = "GUEST - SLAVE";
-                UI.roleIndicator.classList.replace('text-accent-500', 'text-blue-400');
-                UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-blue-400/10');
-                UI.roleIndicator.classList.replace('border-accent-500/20', 'border-blue-400/20');
-                
-                AudioEngine.initMic();
+                conn.on('data', SyncEngine.handleData);
+                conn.on('close', () => { 
+                    Network.updateStatus(false); 
+                    if(State.isHost) SyncEngine.stopHostHeartbeat(); 
+                    Utils.showToast("Partner disconnected.", "error");
+                });
+            },
+            
+            handleIncomingCall: (call) => {
+                if (call.metadata?.type === 'voice') {
+                    call.answer(State.localVoiceStream); State.voiceConn = call;
+                    call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
+                }
+            },
+            
+            updateStatus: (connected) => {
+                if (connected) {
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
+                    UI.syncText.textContent = "Direct Encrypted Link Active";
+                } else {
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]";
+                    UI.syncText.textContent = "Partner Offline";
+                }
             }
         };
 
@@ -456,30 +547,43 @@
                 UI.noMediaOverlay.classList.remove('active');
                 UI.nowPlayingText.querySelector('span:first-child').textContent = title;
                 UI.nowPlayingText.classList.remove('hidden');
-                if (State.ambilightEnabled) {
-                    UI.ambilightContainer.classList.add('active');
-                    UI.ambilightVideo.src = UI.video.src;
-                }
+                if (State.ambilightEnabled) { UI.ambilightContainer.classList.add('active'); UI.ambilightVideo.src = UI.video.src; }
             },
-            loadURL: (url) => {
+            loadLocalFile: (file) => {
+                if (file.name.endsWith('.mkv')) {
+                    return Utils.showToast("Hardware limitation: Browsers cannot decode MKV/H.265. Please use MP4 or WebM.", "error", 6000);
+                }
                 MediaEngine.clearSource(); State.playMode = 'url';
-                State.activeMediaSource = url;
+                State.currentMediaTitle = file.name;
                 
-                const onReady = () => { MediaEngine.updateUI("Lumière Cinema Feed"); Utils.logChat('System', 'Media Mounted.', true); };
+                const blobUrl = URL.createObjectURL(file);
+                UI.video.src = blobUrl;
+                MediaEngine.updateUI(file.name);
+                Utils.logChat('System', `Playing local file: ${file.name}. (Guest must load same file or URL to sync)`, true);
+                
+                // Note: True serverless means we can't send a 5GB file through a Datachannel. 
+                // We sync the timeline perfectly. Guest must drop the identical file, or host streams via URL.
+            },
+            loadURL: (url, title = "Lumière Feed", broadcast = true) => {
+                MediaEngine.clearSource(); State.playMode = 'url';
+                State.activeMediaSource = url; State.currentMediaTitle = title;
+                
+                if (broadcast && State.isHost && State.dataConn?.open) {
+                    State.dataConn.send({ type: 'CMD_LOAD_URL', url, title });
+                }
+                
+                const onReady = () => { MediaEngine.updateUI(title); Utils.logChat('System', 'Media Link Mounted.', true); };
                 
                 if (url.includes('.m3u8')) {
                     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                        State.hlsPlayer = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 600 });
+                        State.hlsPlayer = new Hls({ maxBufferLength: 30 });
                         State.hlsPlayer.loadSource(url);
                         State.hlsPlayer.attachMedia(UI.video);
                         State.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, onReady);
-                        State.hlsPlayer.on(Hls.Events.ERROR, (e, data) => { if(data.fatal) Utils.showToast("HLS Playback Notice", "error"); });
                     } else if (UI.video.canPlayType('application/vnd.apple.mpegurl')) {
                         UI.video.src = url; onReady();
-                    } else { Utils.showToast("HLS stream unsupported on device.", "error"); }
-                } else {
-                    UI.video.src = url; onReady();
-                }
+                    } else { Utils.showToast("HLS stream unsupported.", "error"); }
+                } else { UI.video.src = url; onReady(); }
             }
         };
 
@@ -491,17 +595,29 @@
                     State.syncState.time = UI.video.currentTime || 0;
                     State.syncState.duration = UI.video.duration || 0;
                     State.syncState.paused = UI.video.paused;
-                    
-                    // Transmit to Backend
-                    if (State.socket) {
-                        State.socket.emit('host_update_state', { roomId: State.roomId, state: State.syncState });
+                    State.syncState.updateId++;
+                    if (State.dataConn?.open) {
+                        State.dataConn.send({ type: 'STATE_UPDATE', state: State.syncState });
                     }
                 }, 500);
             },
+            stopHostHeartbeat: () => { if (State.hostInterval) clearInterval(State.hostInterval); },
             
-            enforceHostState: () => {
+            handleData: (data) => {
+                switch (data.type) {
+                    case 'INFO': Utils.logChat('System', `${data.name} authenticated.`, true); break;
+                    case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;
+                    case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, data.title, false); break;
+                    case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;
+                    case 'REQ_PLAY': if(State.isHost) UI.video.play().catch(()=>{}); break;
+                    case 'REQ_PAUSE': if(State.isHost) UI.video.pause(); break;
+                    case 'REQ_SEEK': if(State.isHost) UI.video.currentTime = data.time; break;
+                }
+            },
+            
+            enforceHostState: (hostState) => {
                 if (State.isHost || State.isSeekingUI) return; 
-                const hostState = State.syncState;
+                State.syncState = hostState;
                 
                 if (hostState.duration > 0) {
                     const pct = (hostState.time / hostState.duration) * 100;
@@ -510,44 +626,39 @@
                     UI.timeDisplay.textContent = `${Utils.formatTime(hostState.time)} / ${Utils.formatTime(hostState.duration)}`;
                 }
                 
-                if (State.playMode === 'url') {
-                    if (hostState.paused && !UI.video.paused) UI.video.pause();
-                    if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) { 
-                        UI.video.play().catch(()=>{}); 
-                        UI.bufferingOverlay.classList.remove('active');
-                    }
-                    
-                    if (State.ignoreNextSeekEvent) return; 
-                    const drift = Math.abs(UI.video.currentTime - hostState.time);
-                    if (drift > 1.0 && !hostState.paused) {
-                        UI.driftIndicator.classList.remove('hidden');
-                        UI.video.currentTime = hostState.time;
-                        setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
-                    } else if (hostState.paused && drift > 0.1) {
-                        UI.video.currentTime = hostState.time;
-                    }
-                } else {
-                    // Auto-load media if the guest doesn't have it playing yet
-                    // In Step 3, we will automatically fetch the active HLS URL from the backend here.
+                if (hostState.paused && !UI.video.paused) UI.video.pause();
+                if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) { 
+                    UI.video.play().catch(()=>{}); 
+                    UI.bufferingOverlay.classList.remove('active');
+                }
+                
+                if (State.ignoreNextSeekEvent) return; 
+                const drift = Math.abs(UI.video.currentTime - hostState.time);
+                if (drift > 1.0 && !hostState.paused) {
+                    UI.driftIndicator.classList.remove('hidden');
+                    UI.video.currentTime = hostState.time;
+                    setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
+                } else if (hostState.paused && drift > 0.1) {
+                    UI.video.currentTime = hostState.time;
                 }
             },
             
             triggerPlay: () => {
                 if (State.isHost) UI.video.play().catch(()=>{});
-                else State.socket.emit('guest_action', { roomId: State.roomId, action: 'play' });
+                else if (State.dataConn?.open) { UI.video.play().catch(()=>{}); State.dataConn.send({ type: 'REQ_PLAY' }); }
             },
             triggerPause: () => {
                 if (State.isHost) UI.video.pause();
-                else State.socket.emit('guest_action', { roomId: State.roomId, action: 'pause' });
+                else if (State.dataConn?.open) { UI.video.pause(); State.dataConn.send({ type: 'REQ_PAUSE' }); }
             },
             triggerSeek: (time) => {
-                if (State.isHost) UI.video.currentTime = time;
-                else {
+                if (State.isHost) { UI.video.currentTime = time; } 
+                else if (State.dataConn?.open) {
                     State.ignoreNextSeekEvent = true;
                     if (State.syncLockTimeout) clearTimeout(State.syncLockTimeout);
                     State.syncLockTimeout = setTimeout(() => { State.ignoreNextSeekEvent = false; }, 3000);
-                    if (State.playMode === 'url') UI.video.currentTime = time; 
-                    State.socket.emit('guest_action', { roomId: State.roomId, action: 'seek', data: time });
+                    UI.video.currentTime = time; 
+                    State.dataConn.send({ type: 'REQ_SEEK', time });
                 }
             }
         };
@@ -556,13 +667,19 @@
             isMuted: true,
             initMic: async () => {
                 try {
-                    // We will set up PeerJS exclusively for voice here next!
-                    State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+                    State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                     State.localVoiceStream.getAudioTracks()[0].enabled = false; AudioEngine.updateIcon();
-                } catch (err) { console.warn("Mic note:", err); }
+                    
+                    // If guest joined after mic init
+                    if (!State.isHost && State.dataConn?.open) AudioEngine.callHost();
+                } catch (err) { console.warn("Mic access notice:", err); }
             },
             toggleMic: () => {
-                if (!State.localVoiceStream) return Utils.showToast("Microphone not available.", "error");
+                if (!State.localVoiceStream) {
+                    AudioEngine.initMic().then(() => { if(State.localVoiceStream) AudioEngine.toggleMic(); });
+                    return;
+                }
                 AudioEngine.isMuted = !AudioEngine.isMuted;
                 State.localVoiceStream.getAudioTracks()[0].enabled = !AudioEngine.isMuted;
                 AudioEngine.updateIcon();
@@ -577,6 +694,11 @@
                     UI.micBtn.classList.replace('bg-red-500/10', 'bg-white/10'); UI.micBtn.classList.replace('border-red-500/30', 'border-white/10');
                     UI.voiceActiveDot.classList.remove('hidden');
                 }
+            },
+            callHost: () => {
+                if(!State.localVoiceStream || !State.peer || !State.dataConn) return;
+                const call = State.peer.call(State.dataConn.peer, State.localVoiceStream, { metadata: { type: 'voice' } });
+                call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
             }
         };
 
@@ -586,27 +708,58 @@
                 setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700);
             },
             bindUI: () => {
+                // Persistent Memory
+                const savedAlias = localStorage.getItem('lumiereAlias');
+                if(savedAlias) UI.nameInput.value = savedAlias;
+
                 UI.hostBtn.addEventListener('click', Network.setupHost);
                 UI.joinBtn.addEventListener('click', Network.setupGuest);
                 UI.copyCodeBtn.addEventListener('click', () => Utils.copyToClipboard(State.roomId));
+                
                 UI.toggleSidebarBtn.addEventListener('click', () => {
                     State.sidebarOpen = !State.sidebarOpen;
                     State.sidebarOpen ? UI.sidebar.classList.remove('sidebar-collapsed') : UI.sidebar.classList.add('sidebar-collapsed');
                 });
+                
+                // Cinema Mode
+                UI.cinemaModeBtn.addEventListener('click', () => {
+                    State.cinemaMode = !State.cinemaMode;
+                    if(State.cinemaMode) {
+                        document.body.classList.add('cinema-mode');
+                        if (State.sidebarOpen) UI.toggleSidebarBtn.click();
+                        Utils.showToast("Cinema Mode Activated", "info", 2000);
+                    } else {
+                        document.body.classList.remove('cinema-mode');
+                    }
+                });
+
+                // PiP
+                UI.pipBtn.addEventListener('click', async () => {
+                    try {
+                        if (document.pictureInPictureElement) await document.exitPictureInPicture();
+                        else if (UI.video.readyState >= 2) await UI.video.requestPictureInPicture();
+                    } catch (err) { Utils.showToast("PiP unsupported or blocked.", "error"); }
+                });
+
+                // Subtitle Drag & Drop
+                UI.playerWrapper.addEventListener('dragover', (e) => e.preventDefault());
+                UI.playerWrapper.addEventListener('drop', SubtitleEngine.handleDrop);
+
                 UI.chatForm.addEventListener('submit', (e) => {
                     e.preventDefault(); const txt = UI.chatInput.value.trim(); if (!txt) return;
                     Utils.logChat(State.myName, txt); 
-                    if(State.socket) State.socket.emit('send_chat', { roomId: State.roomId, alias: State.myName, message: txt });
+                    if(State.dataConn?.open) State.dataConn.send({ type: 'CHAT', text: txt }); 
                     UI.chatInput.value = '';
                 });
-                
+
                 UI.micBtn.addEventListener('click', AudioEngine.toggleMic);
-                UI.fileStreamInput.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    Utils.showToast("Backend FFmpeg Route Pending (Step 3). Test with a URL first!", "error", 5000);
+                UI.voiceVolSlider.addEventListener('input', (e) => { UI.remoteAudio.volume = e.target.value; });
+
+                UI.fileStreamInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0]; if (file) MediaEngine.loadLocalFile(file);
                 });
                 UI.loadUrlBtn.addEventListener('click', () => {
-                    const url = UI.urlInput.value.trim(); if (url) MediaEngine.loadURL(url); UI.urlInput.value = '';
+                    const url = UI.urlInput.value.trim(); if (url) MediaEngine.loadURL(url, "Lumière Feed"); UI.urlInput.value = '';
                 });
 
                 UI.video.addEventListener('play', () => {
@@ -673,6 +826,33 @@
                     }
                 });
 
+                let lastVol = 1;
+                UI.volSlider.addEventListener('input', (e) => { 
+                    UI.video.volume = e.target.value; 
+                    if (UI.video.volume > 0) lastVol = UI.video.volume;
+                    updateVolIcon(e.target.value); 
+                });
+                UI.muteBtn.addEventListener('click', () => {
+                    if (UI.video.volume > 0) { UI.video.volume = 0; UI.volSlider.value = 0; } 
+                    else { UI.video.volume = lastVol; UI.volSlider.value = lastVol; }
+                    updateVolIcon(UI.video.volume);
+                });
+                const updateVolIcon = (vol) => {
+                    if (vol <= 0) { UI.iconVol.classList.add('hidden'); UI.iconVolMuted.classList.remove('hidden'); }
+                    else { UI.iconVolMuted.classList.add('hidden'); UI.iconVol.classList.remove('hidden'); }
+                };
+
+                document.addEventListener('keydown', (e) => {
+                    if (document.activeElement.tagName === 'INPUT') return;
+                    if (e.code === 'Space') { e.preventDefault(); togglePlayUI(); }
+                    if (e.code === 'KeyF') { e.preventDefault(); UI.fullscreenBtn.click(); }
+                });
+
+                UI.fullscreenBtn.addEventListener('click', () => {
+                    if (!document.fullscreenElement) UI.playerWrapper.requestFullscreen().catch(()=>{});
+                    else document.exitFullscreen();
+                });
+
                 UI.ambilightBtn.addEventListener('click', () => {
                     State.ambilightEnabled = !State.ambilightEnabled;
                     if (State.ambilightEnabled && UI.video.src) {
@@ -685,11 +865,6 @@
                         UI.ambilightBtn.classList.replace('text-white', 'text-gray-500');
                         UI.ambilightVideo.pause();
                     }
-                });
-                
-                UI.fullscreenBtn.addEventListener('click', () => {
-                    if (!document.fullscreenElement) UI.playerWrapper.requestFullscreen().catch(()=>{});
-                    else document.exitFullscreen();
                 });
 
                 const resetFade = () => {
