@@ -151,14 +151,14 @@
         <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-6">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
-                    <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span> P2P Direct HD Engine
+                    <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span> Professional HD Transcoder Engine
                 </div>
                 <h1 class="text-6xl font-extrabold tracking-tight text-white flex items-center gap-4">
                     <svg class="w-14 h-14 text-accent-500 drop-shadow-[0_0_15px_rgba(229,9,20,0.6)]" fill="currentColor" viewBox="0 0 24 24"><path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H4V5h16v14z"/><path d="M8 15h8l-4-7z"/></svg>
                     Lumière Pro
                 </h1>
                 <p class="text-gray-400 text-xl leading-relaxed font-light">
-                    Private direct-pipe theater synchronization. Stream your local high-bitrate files natively with zero third-party swarms or tracking.
+                    Private direct-pipe theater synchronization. Hardware-accelerated native streaming for large media files.
                 </p>
                 <div class="flex gap-4 pt-4">
                     <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
@@ -373,7 +373,7 @@
         /**
          * LUMIÈRE PRO - DIRECT P2P ARCHITECTURE
          * - PeerJS Data & Media Channels (Zero Torrents/Swarm Dependencies)
-         * - Native captureStream() for local file hardware acceleration
+         * - Native captureStream(30) for MKV Hardware Acceleration bypass
          * - VOD Master/Slave Timeline decoupling
          */
 
@@ -588,14 +588,25 @@
                 } else if (call.metadata?.type === 'media_stream' || call.metadata?.type === 'screenshare') {
                     call.answer(); State.mediaConn = call;
                     Utils.logChat('System', `Connected to Direct HD Stream...`, true);
+                    
                     call.on('stream', (stream) => {
                         MediaEngine.clearSource();
                         State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';
                         UI.video.srcObject = stream;
-                        UI.video.play().catch(()=>{});
+                        
+                        UI.video.onloadedmetadata = () => {
+                            UI.video.play().catch(()=>{});
+                            UI.bufferingOverlay.classList.remove('active');
+                        };
+                        
                         MediaEngine.updateUI(call.metadata?.name || (call.metadata?.type === 'screenshare' ? "Viewing Host's Screen" : "Local HD Stream"));
+                        
+                        // CRITICAL FIX: Do not attach auto-kill 'onended' to local_stream (MKVs throw false onended flags)
+                        if (State.playMode === 'screenshare') {
+                            const track = stream.getVideoTracks()[0];
+                            if (track) track.onended = () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); };
+                        }
                     });
-                    call.on('close', () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); });
                 }
             },
             
@@ -648,23 +659,27 @@
                 Utils.showToast("Initializing hardware-accelerated pipeline...");
                 
                 UI.video.onloadeddata = () => {
-                    UI.video.play().catch(()=>{});
-                    
-                    let stream = null;
-                    if (UI.video.captureStream) stream = UI.video.captureStream();
-                    else if (UI.video.mozCaptureStream) stream = UI.video.mozCaptureStream();
-                    
-                    if (!stream) {
-                        Utils.showToast("Your browser does not support local media pipelines. Use Chrome or Edge.", "error", 6000);
-                        return;
-                    }
+                    UI.video.play().then(() => {
+                        // Wait slightly for MKV tracks to decode completely
+                        setTimeout(() => {
+                            let stream = null;
+                            try {
+                                // CRITICAL FIX: Passing 30 explicitly forces the browser to live-transcode unsupported MKV frames,
+                                // bypassing the "Broadcast Ended" crash.
+                                if (UI.video.captureStream) stream = UI.video.captureStream(30);
+                                else if (UI.video.mozCaptureStream) stream = UI.video.mozCaptureStream(30);
+                            } catch (err) { console.error("Capture Error:", err); }
+                            
+                            if (!stream) return Utils.showToast("Your browser does not support local media pipelines. Use Chrome or Edge.", "error", 6000);
 
-                    State.activeMediaStream = stream;
-                    if (State.conn?.open) {
-                        State.mediaConn = State.peer.call(State.conn.peer, stream, { 
-                            metadata: { type: 'media_stream', name: file.name } 
-                        });
-                    }
+                            State.activeMediaStream = stream;
+                            if (State.conn?.open) {
+                                State.mediaConn = State.peer.call(State.conn.peer, stream, { 
+                                    metadata: { type: 'media_stream', name: file.name } 
+                                });
+                            }
+                        }, 500);
+                    }).catch(e => Utils.showToast("Local playback failed.", "error"));
                 };
             },
             loadURL: (url, broadcast = true) => {
@@ -740,7 +755,7 @@
                 State.lastHostHeartbeat = Date.now();
                 State.syncState = hostState;
                 
-                // Update Guest Scrubber / Time from Host (Works for both URL and Local Stream)
+                // Update Guest Scrubber visually from Host (Works for both URL and Local Stream)
                 if (hostState.duration > 0) {
                     const pct = (hostState.time / hostState.duration) * 100;
                     UI.scrubberProgress.style.width = `${pct}%`;
@@ -748,9 +763,18 @@
                     UI.timeDisplay.textContent = `${Utils.formatTime(hostState.time)} / ${Utils.formatTime(hostState.duration)}`;
                 }
                 
-                // CRITICAL FIX: If it's a Live WebRTC Stream, DO NOT touch the local video's playback state or time.
-                // The WebRTC connection natively handles freezing frames on pause and jumping on seek.
-                if (State.playMode === 'local_stream' || State.playMode === 'screenshare') return;
+                // CRITICAL FIX: If Guest is watching a Live WebRTC Stream, DO NOT touch the local video's time/state.
+                // The WebRTC connection natively freezes frames when the host pauses, and jumps when the host seeks.
+                if (State.playMode === 'local_stream' || State.playMode === 'screenshare') {
+                    // Visually update the play/pause button for the Guest so they know the Host paused it
+                    if (hostState.paused) {
+                        UI.iconPlay.classList.remove('hidden'); UI.iconPause.classList.add('hidden');
+                        UI.playerWrapper.classList.remove('idle');
+                    } else {
+                        UI.iconPause.classList.remove('hidden'); UI.iconPlay.classList.add('hidden');
+                    }
+                    return;
+                }
                 
                 // --- Below is ONLY for URL/HLS Syncing ---
                 if (hostState.paused && !UI.video.paused) { 
@@ -796,7 +820,7 @@
                     State.syncLockTimeout = setTimeout(() => { State.ignoreNextSeekEvent = false; }, 3000);
                     
                     if (State.playMode === 'url') {
-                        UI.video.currentTime = time; // Optimistic local update only for URLs
+                        UI.video.currentTime = time; 
                     }
                     State.conn.send({ type: 'REQ_SEEK', time });
                 }
@@ -914,8 +938,12 @@
 
                 const togglePlayUI = () => {
                     if (State.playMode === 'idle' || State.playMode === 'screenshare') return;
-                    UI.video.paused ? SyncEngine.triggerPlay() : SyncEngine.triggerPause();
+                    
+                    // Check true state for accurate toggle
+                    const isPaused = State.isHost ? UI.video.paused : State.syncState.paused;
+                    isPaused ? SyncEngine.triggerPlay() : SyncEngine.triggerPause();
                 };
+                
                 UI.playBtn.addEventListener('click', togglePlayUI);
                 UI.playerWrapper.addEventListener('click', (e) => {
                     if (!e.target.closest('#videoControls') && !e.target.closest('#topOverlay')) togglePlayUI();
