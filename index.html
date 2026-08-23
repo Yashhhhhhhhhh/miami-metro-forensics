@@ -18,7 +18,7 @@
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
                     colors: { 
                         theater: { 950: '#030304', 900: '#09090b', 850: '#121214', 800: '#18181b' }, 
-                        accent: { 500: '#991b1b', 600: '#7f1d1d' } // Deep Titan Crimson
+                        accent: { 500: '#991b1b', 600: '#7f1d1d' }
                     }
                 }
             }
@@ -32,7 +32,6 @@
         body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.8s ease; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
         
-        /* Thematic AOT Background: Smoke & Embers */
         .cinema-grid {
             background-image: radial-gradient(circle at 50% 0%, rgba(153, 27, 27, 0.05) 0%, transparent 50%), 
                               radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
@@ -47,15 +46,17 @@
         .ambilight-container.active { opacity: 0.6; }
         #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(80px) saturate(150%) brightness(0.7); transform: scale(1.1); }
         
+        /* 16:9 Aspect Ratio Container Lock */
         .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }
+        .video-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; max-height: 100%; max-width: 100%; }
         video, iframe { width: 100%; height: 100%; object-fit: contain; outline: none; background: transparent; z-index: 2; border: none; }
+        
         ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 500; padding: 4px 12px; border-radius: 4px; letter-spacing: 0.5px; }
 
         .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .overlay-layer.active { opacity: 1; pointer-events: auto; }
         .bg-overlay { background: rgba(3, 3, 4, 0.85); }
         
-        /* Rebuilt Controls Layout */
         .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s ease, transform 0.5s ease; width: 100%; display: flex; flex-direction: column; gap: 16px; }
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(15px); pointer-events: none; }
         .player-wrapper.idle { cursor: none; }
@@ -81,6 +82,10 @@
         .btn-primary { background: #991b1b; color: #f4f4f5; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(153, 27, 27, 0.2); }
         .btn-primary:hover:not(:disabled) { background: #7f1d1d; box-shadow: 0 6px 25px rgba(153, 27, 27, 0.4); transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .eq-btn { flex: 1; padding: 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #a1a1aa; transition: all 0.2s; }
+        .eq-btn.active { background: #991b1b; border-color: #991b1b; color: #fff; box-shadow: 0 0 15px rgba(153, 27, 27, 0.4); }
+
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }
         input[type=range]:focus { outline: none; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
@@ -100,20 +105,20 @@
         <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-6">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span> Hybrid Core Engine
+                    <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span> 16:9 Geometry & Equalizer Suite
                 </div>
                 <h1 class="text-6xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-4">Lumière Studio</h1>
                 <p class="text-zinc-400 text-lg leading-relaxed font-light">
-                    The ultimate private viewing suite. Stream local files natively, sync external URLs, or cast links perfectly in tandem.
+                    The ultimate private viewing suite. Aspect-locked 16:9 cinematic display with custom audio equalization profiles.
                 </p>
                 <div class="flex gap-4 pt-4">
                     <div class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 bg-white/5 px-3 py-1.5 rounded border border-white/5 uppercase tracking-wider">
-                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        E2E Encrypted
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                        16:9 Aspect Lock
                     </div>
                     <div class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 bg-white/5 px-3 py-1.5 rounded border border-white/5 uppercase tracking-wider">
-                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                        Lossless Local Sync
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                        Dual Audio DSP
                     </div>
                 </div>
             </div>
@@ -153,16 +158,22 @@
             <div id="ambilight" class="ambilight-container dimmable"><video id="ambilightVideo" muted playsinline></video></div>
             
             <!-- Top Status Bar -->
-            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/20 to-transparent flex justify-between items-start pointer-events-none dimmable">
+            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">
                 <div class="flex flex-col gap-2 pointer-events-auto">
                     <div class="flex items-center gap-3 glass-panel px-3 py-1.5 rounded-lg">
                         <div class="bg-accent-600 text-zinc-100 text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider">Session</div>
                         <span id="roomCodeDisplay" class="font-mono text-lg font-semibold tracking-widest text-zinc-200 px-1">----</span>
                         <button id="copyCodeBtn" class="btn-icon p-1 hover:text-white" title="Copy Code"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
                     </div>
-                    <div id="syncIndicator" class="flex items-center gap-2 text-[11px] font-medium text-zinc-400 mt-1 px-2">
-                        <div class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
-                        <span id="syncText">Waiting for partner...</span>
+                    <div class="flex items-center gap-2">
+                        <div id="syncIndicator" class="flex items-center gap-2 text-[11px] font-medium text-zinc-400 glass-panel px-3 py-1 rounded-lg w-max">
+                            <div class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
+                            <span id="syncText">Waiting for partner...</span>
+                        </div>
+                        <div id="telemetryBadge" class="hidden items-center gap-1.5 text-[10px] font-mono text-emerald-400 glass-panel px-2.5 py-1 rounded-lg">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span id="telemetryLatency">0ms</span>
+                        </div>
                     </div>
                 </div>
                 <button id="toggleSidebarBtn" class="btn-icon p-3 glass-panel rounded-lg pointer-events-auto z-50">
@@ -188,16 +199,17 @@
             <!-- Floating Chat Layer -->
             <div id="overlayChat" class="overlay-chat-container"></div>
 
-            <!-- Player Wrapper -->
+            <!-- Player Wrapper (16:9 Proportional Container Lock) -->
             <div id="playerWrapper" class="player-wrapper group">
-                <video id="mainVideo" playsinline></video>
-                <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none">
-                    <div id="ytPlayerDiv" class="w-full h-full"></div>
+                <div class="video-container">
+                    <video id="mainVideo" playsinline></video>
+                    <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none">
+                        <div id="ytPlayerDiv" class="w-full h-full"></div>
+                    </div>
                 </div>
                 
                 <div id="videoControls" class="controls-overlay">
-                    
-                    <div id="nowPlayingText" class="text-zinc-300 text-xs font-medium tracking-wider hidden flex justify-between items-center px-1">
+                    <div id="nowPlayingText" class="text-zinc-300 text-xs font-medium tracking-wider mb-1 hidden flex justify-between items-center px-1">
                         <span class="drop-shadow-md">Loading...</span>
                         <span id="roleIndicator" class="text-[9px] uppercase font-bold tracking-widest text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded border border-accent-500/20">Director</span>
                     </div>
@@ -215,7 +227,6 @@
                                 <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                             </button>
                             
-                            <!-- Skip Controls -->
                             <div class="flex items-center gap-3">
                                 <button id="skipBackBtn" class="btn-icon text-zinc-400 hover:text-zinc-100" title="-10s">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg>
@@ -236,13 +247,13 @@
                         </div>
                         
                         <div class="flex items-center gap-5">
-                            <div id="driftIndicator" class="hidden flex items-center gap-1.5 text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded uppercase tracking-wider">
+                            <div id="driftIndicator" class="hidden flex items-center gap-1.5 text-[9px] text-yellow-500 font-bold px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded uppercase tracking-wider">
                                 <div class="w-1 h-1 rounded-full bg-yellow-500 animate-ping"></div> Syncing
                             </div>
-                            <button id="pipBtn" class="btn-icon" title="Picture-in-Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
+                            <button id="pipBtn" class="btn-icon" title="Picture-in-Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
                             <button id="cinemaModeBtn" class="btn-icon" title="Toggle Cinema Dimming"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
                             <button id="ambilightBtn" class="btn-icon" title="Toggle Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
-                            <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
+                            <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                         </div>
                     </div>
                 </div>
@@ -251,9 +262,9 @@
 
         <!-- SIDEBAR CONTROLS -->
         <div id="sidebar" class="glass-sidebar w-[380px] flex flex-col h-full flex-shrink-0 relative z-50 dimmable">
-            <!-- Voice Comms -->
-            <div class="p-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
-                <div class="flex items-center justify-between mb-4">
+            <!-- Voice Comms & Audio Profile Equalizer -->
+            <div class="p-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent space-y-4">
+                <div class="flex items-center justify-between">
                     <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                         <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Spatial Voice
                     </h3>
@@ -266,6 +277,15 @@
                     <svg class="w-4 h-4 text-zinc-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                     <input type="range" id="voiceVolSlider" class="flex-1" min="0" max="1" step="0.05" value="0.8">
                 </div>
+
+                <!-- Dual Audio Mode Equalizer Selector -->
+                <div class="space-y-2 pt-2">
+                    <div class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Audio Output Profile</div>
+                    <div class="flex gap-2">
+                        <button id="eqSpeakerBtn" class="eq-btn active">Laptop Speakers</button>
+                        <button id="eqEarphoneBtn" class="eq-btn">Earphones / IEMs</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Host Stream Deck -->
@@ -273,7 +293,6 @@
                 <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Media Deck</h3>
                 <div class="space-y-4">
                     
-                    <!-- True Sync Local File -->
                     <div class="p-4 bg-black/40 border border-white/5 rounded-xl space-y-3 group hover:border-accent-500/30 transition-colors">
                         <div class="text-[10px] text-zinc-400 font-bold uppercase mb-1 tracking-wider flex justify-between items-center">
                             <span>Dual-Local</span>
@@ -286,7 +305,6 @@
                         </label>
                     </div>
 
-                    <!-- Stream Local File -->
                     <div class="p-4 bg-black/40 border border-white/5 rounded-xl space-y-3 group transition-colors">
                         <div class="text-[10px] text-zinc-400 font-bold uppercase mb-1 tracking-wider flex justify-between items-center">
                             <span>WebRTC Broadcaster</span>
@@ -299,7 +317,6 @@
                         </label>
                     </div>
 
-                    <!-- URLs & WebRTC Share -->
                     <div class="flex gap-2">
                         <input type="url" id="urlInput" class="flex-1 px-3 py-2.5 text-xs rounded-lg border border-white/5 bg-black/40 focus:border-accent-500" placeholder="URL or YouTube Link">
                         <button id="loadUrlBtn" class="bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg text-xs font-bold transition border border-white/5 text-zinc-300">Load</button>
@@ -330,7 +347,7 @@
         </div>
     </div>
     
-    <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <script>
         // Setup YouTube IFrame API Dynamically
@@ -339,14 +356,17 @@
         const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+        // Web Audio DSP Engine
+        let audioCtx = null, sourceNode = null, eqFilter = null, compNode = null;
+
         const State = {
             isHost: false, roomId: '', myName: 'Viewer',
             peer: null, conn: null, mediaConn: null, voiceConn: null,
             localVoiceStream: null, activeMediaStream: null, hlsPlayer: null,
-            playMode: 'idle',
+            playMode: 'idle', 
             syncState: { time: 0, duration: 0, paused: true },
             isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true, cinemaMode: false,
-            ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null
+            ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null, telemetryInterval: null
         };
 
         const UI = {
@@ -370,7 +390,9 @@
             fileSyncInput: document.getElementById('fileSyncInput'), fileStreamInput: document.getElementById('fileStreamInput'), shareScreenBtn: document.getElementById('shareScreenBtn'), urlInput: document.getElementById('urlInput'), loadUrlBtn: document.getElementById('loadUrlBtn'),
             micBtn: document.getElementById('micBtn'), iconMic: document.getElementById('iconMic'), iconMicMuted: document.getElementById('iconMicMuted'),
             voiceVolSlider: document.getElementById('voiceVolSlider'), remoteAudio: document.getElementById('remoteAudio'), voiceActiveDot: document.getElementById('voiceActiveDot'),
-            syncDot: document.getElementById('syncDot'), syncText: document.getElementById('syncText'), driftIndicator: document.getElementById('driftIndicator'), roomCodeDisplay: document.getElementById('roomCodeDisplay'), copyCodeBtn: document.getElementById('copyCodeBtn')
+            syncDot: document.getElementById('syncDot'), syncText: document.getElementById('syncText'), driftIndicator: document.getElementById('driftIndicator'), roomCodeDisplay: document.getElementById('roomCodeDisplay'), copyCodeBtn: document.getElementById('copyCodeBtn'),
+            telemetryBadge: document.getElementById('telemetryBadge'), telemetryLatency: document.getElementById('telemetryLatency'),
+            eqSpeakerBtn: document.getElementById('eqSpeakerBtn'), eqEarphoneBtn: document.getElementById('eqEarphoneBtn')
         };
 
         const Utils = {
@@ -382,10 +404,10 @@
             },
             showToast: (msg, type = 'info', duration = 4000) => {
                 const t = document.createElement('div');
-                t.className = `px-5 py-3 rounded-lg shadow-xl text-[11px] font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] uppercase tracking-widest ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-zinc-300 border-white/5')}`;
+                t.className = `px-5 py-3 rounded-xl shadow-2xl text-xs font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] uppercase tracking-widest ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-zinc-300 border-white/5')}`;
                 t.innerHTML = type === 'error' ? `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${msg}` : msg;
                 document.getElementById('toastContainer').appendChild(t);
-                setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-10px)'; setTimeout(() => t.remove(), 400); }, duration);
+                setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 400); }, duration);
             },
             copyToClipboard: (text) => { navigator.clipboard.writeText(text).then(() => Utils.showToast("Code Copied")); },
             logChat: (sender, text, isSystem = false) => {
@@ -403,6 +425,60 @@
                     overlayMsg.innerHTML = `<strong class="text-accent-500 mr-2">${sender}:</strong>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
                     UI.overlayChat.appendChild(overlayMsg);
                     setTimeout(() => { overlayMsg.classList.add('fade-out'); setTimeout(() => overlayMsg.remove(), 600); }, 4000);
+                }
+            }
+        };
+
+        const AudioDSP = {
+            init: () => {
+                if (audioCtx) return;
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    sourceNode = audioCtx.createMediaElementSource(UI.video);
+                    
+                    eqFilter = audioCtx.createBiquadFilter();
+                    compNode = audioCtx.createDynamicsCompressor();
+                    
+                    // Default Speaker Profile
+                    AudioDSP.setProfile('speaker');
+
+                    sourceNode.connect(eqFilter);
+                    eqFilter.connect(compNode);
+                    compNode.connect(audioCtx.destination);
+                } catch(e) { console.warn("Web Audio DSP skipped:", e); }
+            },
+            setProfile: (mode) => {
+                if (!eqFilter || !compNode) return;
+                if (mode === 'speaker') {
+                    // Laptop Speakers: High-pass filter to prevent rattling, boosted mid-dialogue
+                    eqFilter.type = 'highpass';
+                    eqFilter.frequency.value = 120;
+                    eqFilter.Q.value = 1.0;
+                    
+                    compNode.threshold.value = -18;
+                    compNode.knee.value = 6;
+                    compNode.ratio.value = 4;
+                    compNode.attack.value = 0.003;
+                    compNode.release.value = 0.25;
+                    
+                    UI.eqSpeakerBtn.classList.add('active');
+                    UI.eqEarphoneBtn.classList.remove('active');
+                    Utils.showToast("Audio Profile: Laptop Speakers Active", "info", 2000);
+                } else {
+                    // Earphones: Flat low-end boost, wide dynamic range
+                    eqFilter.type = 'lowshelf';
+                    eqFilter.frequency.value = 250;
+                    eqFilter.gain.value = 4.0; // Warm bass bump
+                    
+                    compNode.threshold.value = -24;
+                    compNode.knee.value = 12;
+                    compNode.ratio.value = 2;
+                    compNode.attack.value = 0.01;
+                    compNode.release.value = 0.3;
+                    
+                    UI.eqEarphoneBtn.classList.add('active');
+                    UI.eqSpeakerBtn.classList.remove('active');
+                    Utils.showToast("Audio Profile: Earphones / IEMs Active", "info", 2000);
                 }
             }
         };
@@ -441,6 +517,7 @@
                 if (!State.conn || !State.activeMediaStream) return;
                 
                 State.mediaConn = State.peer.call(State.conn.peer, State.activeMediaStream, { metadata: { type: 'media_stream', name: fileName } });
+                Network.monitorTelemetry(State.mediaConn);
                 
                 State.mediaConn.on('stream', () => {}); 
                 const pc = State.mediaConn.peerConnection;
@@ -452,13 +529,33 @@
                                 if (!params.encodings) params.encodings = [{}];
                                 params.encodings[0].maxBitrate = 20000000; 
                                 params.degradationPreference = 'maintain-resolution';
-                                sender.setParameters(params).catch(e => console.warn("Browser blocked bitrate tweak."));
+                                sender.setParameters(params).catch(e => {});
                             }
                         });
                     };
                     applyHacks();
                     pc.addEventListener('connectionstatechange', () => { if (pc.connectionState === 'connected') applyHacks(); });
                 }
+            },
+
+            monitorTelemetry: (callObj) => {
+                UI.telemetryBadge.classList.remove('hidden');
+                UI.telemetryBadge.classList.add('flex');
+                if (State.telemetryInterval) clearInterval(State.telemetryInterval);
+                
+                State.telemetryInterval = setInterval(async () => {
+                    const pc = callObj?.peerConnection;
+                    if (!pc || pc.connectionState !== 'connected') return;
+                    try {
+                        const stats = await pc.getStats();
+                        stats.forEach(report => {
+                            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                                const rtt = Math.round(report.currentRoundTripTime * 1000);
+                                UI.telemetryLatency.textContent = `${rtt}ms`;
+                            }
+                        });
+                    } catch(e) {}
+                }, 2000);
             },
             
             setupHost: async () => {
@@ -479,7 +576,7 @@
                     State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(conn); });
                     State.peer.on('call', Network.handleIncomingCall);
                     State.peer.on('error', (e) => {
-                        Utils.showToast(e.type === 'unavailable-id' ? "ID Collision." : `Network Error`, "error");
+                        Utils.showToast("Network Error", "error");
                         UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Generate Session";
                     });
                 } catch (err) { Utils.showToast("Failed to initiate.", "error"); }
@@ -547,13 +644,21 @@
                     call.answer(State.localVoiceStream); State.voiceConn = call;
                     call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
                 } else if (call.metadata?.type === 'media_stream' || call.metadata?.type === 'screenshare') {
-                    call.answer(); State.mediaConn = call;
+                    call.answer(); 
                     Utils.logChat('System', `Connected to Host Stream...`, true);
+                    Network.monitorTelemetry(call);
                     
                     call.on('stream', (stream) => {
-                        MediaEngine.clearSource();
-                        State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';
+                        if (State.hlsPlayer) { State.hlsPlayer.destroy(); State.hlsPlayer = null; }
+                        if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
+                        
+                        UI.ytPlayerContainer.classList.add('hidden'); 
+                        UI.video.classList.remove('hidden');
+                        UI.video.src = "";
                         UI.video.srcObject = stream;
+                        
+                        State.mediaConn = call;
+                        State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';
                         
                         const videoTrack = stream.getVideoTracks()[0];
                         if (videoTrack) {
@@ -562,7 +667,17 @@
                         }
                         
                         UI.video.play().catch(()=>{});
-                        MediaEngine.updateUI(call.metadata?.name || "Host Broadcast");
+                        AudioDSP.init();
+                        
+                        UI.noMediaOverlay.classList.add('hidden');
+                        UI.nowPlayingText.querySelector('span:first-child').textContent = call.metadata?.name || "Host Broadcast";
+                        UI.nowPlayingText.classList.remove('hidden');
+                        
+                        if (State.ambilightEnabled) {
+                            UI.ambilightContainer.classList.add('active');
+                            UI.ambilightVideo.srcObject = stream;
+                            UI.ambilightVideo.play().catch(()=>{});
+                        }
                     });
                     
                     call.on('close', () => { 
@@ -592,6 +707,8 @@
                 if (State.hlsPlayer) { State.hlsPlayer.destroy(); State.hlsPlayer = null; }
                 if (State.activeMediaStream) { State.activeMediaStream.getTracks().forEach(t => t.stop()); State.activeMediaStream = null; }
                 if (State.mediaConn) { State.mediaConn.close(); State.mediaConn = null; }
+                if (State.telemetryInterval) clearInterval(State.telemetryInterval);
+                UI.telemetryBadge.classList.add('hidden');
                 
                 if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
                 
@@ -622,6 +739,7 @@
                 const blobUrl = URL.createObjectURL(file);
                 UI.video.src = blobUrl;
                 MediaEngine.updateUI(`${file.name}`);
+                AudioDSP.init();
                 
                 if (State.isHost) {
                     Utils.logChat('System', `Awaiting guest to mount identical file...`, true);
@@ -642,9 +760,10 @@
                 const blobUrl = URL.createObjectURL(file);
                 UI.video.src = blobUrl;
                 UI.video.muted = false; 
+                AudioDSP.init();
                 
                 MediaEngine.updateUI(`Broadcasting: ${file.name}`);
-                Utils.showToast("Initializing broadcast pipeline...", "info");
+                Utils.showToast("Initializing 60FPS Broadcast...", "info");
                 
                 UI.video.onplaying = () => {
                     if (State.activeMediaStream) return; 
@@ -666,7 +785,7 @@
                 UI.video.play().catch(()=>{});
             },
             
-            loadURL: (url, title = "Remote Feed", broadcast = true) => {
+            loadURL: (url, title = "Lumière Remote Feed", broadcast = true) => {
                 MediaEngine.clearSource();
                 if (broadcast && State.isHost && State.conn?.open) State.conn.send({ type: 'CMD_LOAD_URL', url });
 
@@ -702,7 +821,7 @@
                 }
 
                 State.playMode = 'url';
-                const onReady = () => { MediaEngine.updateUI(title); Utils.logChat('System', 'Media Feed Mounted.', true); };
+                const onReady = () => { MediaEngine.updateUI(title); AudioDSP.init(); Utils.logChat('System', 'Media Feed Mounted.', true); };
                 
                 if (url.includes('.m3u8')) {
                     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
@@ -726,6 +845,7 @@
                     
                     UI.video.srcObject = State.activeMediaStream;
                     UI.video.play().catch(e=>{});
+                    AudioDSP.init();
                     MediaEngine.updateUI("Broadcasting Screen");
                     
                     Network.broadcastStream("Screen Broadcast");
@@ -763,11 +883,12 @@
                     case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;
                     case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, "Host Feed", false); break;
                     case 'REQ_SYNC_FILE': 
-                        Utils.logChat('System', `Please load identical file to sync.`, true);
+                        Utils.showToast(`Host requests you load: ${data.name}`, "info", 10000); 
+                        Utils.logChat('System', `Please click 'Sync Local File' and select ${data.name} from your computer.`, true);
                         UI.hostControlsPanel.style.display = 'block';
                         break;
                     case 'GUEST_MOUNTED': 
-                        Utils.showToast("Viewer mounted file. Sync active.", "success");
+                        Utils.showToast("Partner mounted file successfully. Sync is fully active.", "success");
                         if(State.isHost) {
                             State.conn.send({ type: 'CMD_SEEK', time: UI.video.currentTime });
                             setTimeout(() => {
@@ -887,11 +1008,11 @@
             updateIcon: () => {
                 if (AudioEngine.isMuted) {
                     UI.iconMic.classList.add('hidden'); UI.iconMicMuted.classList.remove('hidden');
-                    UI.micBtn.classList.replace('bg-white/5', 'bg-red-500/10'); UI.micBtn.classList.replace('border-white/10', 'border-red-500/30');
+                    UI.micBtn.classList.replace('bg-white/5', 'bg-accent-500/10'); UI.micBtn.classList.replace('border-white/10', 'border-accent-500/30');
                     UI.voiceActiveDot.classList.add('hidden');
                 } else {
                     UI.iconMicMuted.classList.add('hidden'); UI.iconMic.classList.remove('hidden');
-                    UI.micBtn.classList.replace('bg-red-500/10', 'bg-white/5'); UI.micBtn.classList.replace('border-red-500/30', 'border-white/10');
+                    UI.micBtn.classList.replace('bg-accent-500/10', 'bg-white/5'); UI.micBtn.classList.replace('border-accent-500/30', 'border-white/10');
                     UI.voiceActiveDot.classList.remove('hidden');
                 }
             }
@@ -931,6 +1052,10 @@
                     } catch (err) { Utils.showToast("PiP unsupported.", "error"); }
                 });
 
+                // Audio EQ Profile Listeners
+                UI.eqSpeakerBtn.addEventListener('click', () => AudioDSP.setProfile('speaker'));
+                UI.eqEarphoneBtn.addEventListener('click', () => AudioDSP.setProfile('earphone'));
+
                 UI.playerWrapper.addEventListener('dragover', (e) => e.preventDefault());
                 UI.playerWrapper.addEventListener('drop', SubtitleEngine.handleDrop);
 
@@ -968,7 +1093,7 @@
                 UI.video.addEventListener('waiting', () => {
                     if (State.playMode !== 'local_stream' && State.playMode !== 'screenshare') {
                         UI.bufferingOverlay.classList.add('active');
-                        UI.bufferStatusText.textContent = "Buffering...";
+                        UI.bufferStatusText.textContent = "Buffering Stream...";
                     }
                 });
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });
@@ -1027,7 +1152,6 @@
                     }
                 });
 
-                // Dedicated Skip Buttons
                 UI.skipBackBtn.addEventListener('click', () => {
                     if (State.isHost) {
                         const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
