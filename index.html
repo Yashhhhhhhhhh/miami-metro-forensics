@@ -1,1573 +1,1073 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#111318" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Playroom" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <title>Playroom Arcade: Overdrive</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  
-  <style>
-    /* CORE VARIABLES & THEMES */
-    :root {
-      --bg: #111318; --ink: #191716; --paper: rgba(255, 250, 239, 0.91); --paper-solid: #fffaf0;
-      --muted: #6e665e; --line: rgba(25, 23, 22, 0.14); --shadow: 0 28px 80px rgba(16, 17, 22, 0.28);
-      --p1: #ff6b8a; --p2: #3bb4ff; --hot: #ff9f1c; --mint: #38d9a9; --violet: #8a5cf6; --danger: #e84b4b;
-      --radius: 18px;
-      --font: "Inter", system-ui, -apple-system, sans-serif;
-      --display: "DM Serif Display", Georgia, serif;
-    }
-    body[data-theme="mint"] { --bg: #08251f; --paper: rgba(238, 255, 247, 0.92); --paper-solid: #eefff7; --p1: #06c78c; --p2: #2f7df6; --hot: #ffd166; --violet: #814ce7; }
-    body[data-theme="berry"] { --bg: #1b1026; --paper: rgba(255, 245, 253, 0.92); --paper-solid: #fff5fd; --p1: #ff4fa3; --p2: #8a5cf6; --hot: #45f0df; --violet: #ffbe0b; }
-    body[data-theme="ink"] { --bg: #101010; --paper: rgba(250, 246, 230, 0.93); --paper-solid: #faf6e6; --p1: #d99b3d; --p2: #5da9e9; --hot: #f3d36b; --violet: #cf5c36; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumière | Synchronized Cinema</title>
     
-    /* RESET & BASE - MOBILE HARDENING */
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-    html, body { overscroll-behavior: none; }
-    html { min-height: 100%; background: var(--bg); }
-    body {
-      min-height: 100dvh; margin: 0; color: var(--ink); font-family: var(--font); overflow-x: hidden;
-      -webkit-user-select: none; user-select: none;
-      background: 
-        radial-gradient(circle at 13% 13%, color-mix(in srgb, var(--p1) 36%, transparent), transparent 28rem),
-        radial-gradient(circle at 83% 18%, color-mix(in srgb, var(--hot) 31%, transparent), transparent 24rem),
-        radial-gradient(circle at 70% 88%, color-mix(in srgb, var(--p2) 32%, transparent), transparent 25rem),
-        linear-gradient(135deg, #151820, var(--bg));
-    }
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    button, input, select { font: inherit; cursor: pointer; outline: none; }
-    input, select { cursor: text; user-select: auto; -webkit-user-select: auto; font-size: 16px !important; } 
-    button { color: inherit; transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s, box-shadow 0.2s; will-change: transform; }
-    button:active { transform: scale(0.95) !important; }
-    
-    /* BACKGROUND FX */
-    #worldCanvas, .paper-noise, .doodle-field { position: fixed; inset: 0; pointer-events: none; }
-    #worldCanvas { z-index: 0; }
-    .paper-noise {
-      z-index: 1; opacity: 0.18;
-      background-image: linear-gradient(90deg, rgba(255,255,255,0.09) 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
-      background-size: 34px 34px; mix-blend-mode: overlay;
-    }
-    .doodle-field { z-index: 2; overflow: hidden; }
-    .doodle {
-      position: absolute; width: 90px; aspect-ratio: 1; border: 4px solid rgba(255, 250, 239, 0.62);
-      filter: drop-shadow(0 16px 24px rgba(0,0,0,0.16)); animation: drift 12s ease-in-out infinite alternate; backdrop-filter: blur(4px);
-    }
-    .d1 { left: 4%; top: 19%; border-radius: 43% 57% 48% 52%; border-color: color-mix(in srgb, var(--p1) 70%, white); width: 110px; }
-    .d2 { right: 6%; top: 12%; width: 64px; border-radius: 999px; animation-delay: -2s; border-color: color-mix(in srgb, var(--hot) 75%, white); }
-    .d3 { left: 8%; bottom: 9%; width: 62px; transform: rotate(21deg); animation-delay: -4s; border-radius: 5px; border-color: color-mix(in srgb, var(--p2) 74%, white); }
-    .d4 { right: 14%; bottom: 12%; width: 120px; border-radius: 999px 999px 30px 30px; animation-delay: -1s; border-color: color-mix(in srgb, var(--mint) 74%, white); }
-    .d5 { left: 48%; top: 6%; width: 38px; border-radius: 20%; animation-delay: -5s; border-width: 6px; rotate: 45deg; }
-    .d6 { right: 45%; bottom: 8%; width: 80px; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; animation-delay: -7s; border-color: color-mix(in srgb, var(--violet) 70%, white); }
-    @keyframes drift { 0% { translate: 0 0; rotate: -7deg; } 50% { translate: 15px -35px; rotate: 12deg; scale: 1.05; } 100% { translate: -10px -15px; rotate: -4deg; } }
-    
-    /* LAYOUT SHELL */
-    .app-shell { position: relative; z-index: 4; width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 0 calc(42px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; min-height: 100dvh; }
-    main { flex: 1; display: flex; flex-direction: column; }
-    
-    /* TOPBAR */
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; transition: opacity 0.3s; }
-    .brand-mark, .icon-button, .plain-button, .danger-button { border: 0; cursor: pointer; }
-    .brand-mark {
-      display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px;
-      background: rgba(255, 250, 239, 0.78); border: 1px solid rgba(255,255,255,0.5); border-radius: 999px; box-shadow: 0 16px 36px rgba(0,0,0,0.14); backdrop-filter: blur(16px); transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .brand-mark:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-    .brand-sigil { display: grid; place-items: center; width: 42px; aspect-ratio: 1; color: #fff; font-weight: 900; background: conic-gradient(from 220deg, var(--p1), var(--hot), var(--p2), var(--p1)); border-radius: 50%; animation: spin-slow 10s linear infinite; }
-    @keyframes spin-slow { to { rotate: 360deg; } }
-    .brand-mark strong, .brand-mark small { display: block; line-height: 1; text-align: left; }
-    .brand-mark strong { font-size: 0.98rem; }
-    .brand-mark small { margin-top: 3px; color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
-    
-    .top-actions { display: flex; gap: 10px; }
-    .icon-button { display: grid; place-items: center; width: 44px; aspect-ratio: 1; color: var(--paper-solid); font-weight: 900; background: rgba(17, 19, 24, 0.42); border: 1px solid rgba(255,255,255,0.22); border-radius: 14px; backdrop-filter: blur(14px); transition: transform 180ms ease, background 180ms ease; }
-    .icon-button:hover, .plain-button:hover { transform: translateY(-2px); background: rgba(17, 19, 24, 0.6); }
-    
-    /* SCREENS */
-    .screen { display: none; flex: 1; flex-direction: column; }
-    .screen.active { display: flex; animation: rise 420ms cubic-bezier(.2,.8,.2,1); }
-    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-    
-    /* HERO ZONE */
-    .hero-zone { display: grid; grid-template-columns: 1.06fr 0.94fr; gap: 22px; align-items: stretch; min-height: 360px; }
-    .hero-copy, .hero-art, .panel { background: var(--paper); border: 1px solid rgba(255,255,255,0.68); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
-    .hero-copy { padding: clamp(26px, 5vw, 58px); overflow: hidden; position: relative; }
-    .kicker, .section-label { margin: 0 0 8px; color: var(--p1); font-size: 0.75rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
-    h1 { max-width: 760px; margin-bottom: 18px; font-family: var(--display); font-size: clamp(3.3rem, 8vw, 7.8rem); line-height: 0.88; letter-spacing: 0; }
-    h2 { margin-bottom: 0; font-size: clamp(1.25rem, 2vw, 2rem); line-height: 1.05; letter-spacing: 0; }
-    h3 { margin-bottom: 8px; font-size: 1.1rem; }
-    .hero-text { max-width: 660px; margin-bottom: 0; color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.7; }
-    
-    .hero-art { position: relative; min-height: 360px; overflow: hidden; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 13rem), linear-gradient(135deg, color-mix(in srgb, var(--p2) 24%, white), color-mix(in srgb, var(--hot) 28%, white)); }
-    .orbit { position: absolute; border: 2px dashed rgba(25, 23, 22, 0.24); border-radius: 50%; animation: spin 18s linear infinite; }
-    .o1 { width: 360px; left: 8%; top: 10%; aspect-ratio: 1; }
-    .o2 { width: 240px; right: 8%; bottom: 2%; animation-duration: 13s; animation-direction: reverse; aspect-ratio: 1;}
-    .o3 { width: 120px; left: 22%; bottom: 18%; animation-duration: 8s; aspect-ratio: 1;}
-    
-    .mascot-card { position: absolute; display: grid; place-items: center; width: min(170px, 35vw); aspect-ratio: 3 / 4; color: #fff; font-size: 5rem; font-weight: 900; border: 5px solid rgba(255,255,255,0.65); border-radius: 22px; box-shadow: 0 28px 48px rgba(0,0,0,0.18); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .mascot-card:hover { transform: scale(1.1) rotate(0deg) !important; z-index: 10; }
-    .mascot-card.one { left: 18%; top: 18%; background: linear-gradient(135deg, var(--p1), var(--hot)); rotate: -12deg; animation: bob 3.4s ease-in-out infinite; }
-    .mascot-card.two { right: 18%; bottom: 13%; background: linear-gradient(135deg, var(--p2), var(--violet)); rotate: 10deg; animation: bob 3.8s ease-in-out infinite reverse; }
-    .scribble-line { position: absolute; left: 13%; right: 13%; bottom: 24%; height: 24px; border-bottom: 6px solid rgba(25,23,22,0.2); border-radius: 50%; rotate: -7deg; }
-    
-    /* INPUTS & SETUP */
-    .setup-panel, .game-section { margin-top: 22px; }
-    .setup-panel { padding: 24px; }
-    .setup-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
-    .connection-panel { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; margin-top: 18px; padding: 14px; background: rgba(255,255,255,0.48); border: 2px dashed color-mix(in srgb, var(--p2) 62%, transparent); border-radius: 16px; transition: background 0.3s, border-color 0.3s; }
-    .connection-panel.live { background: color-mix(in srgb, var(--mint) 15%, transparent); border-color: var(--mint); border-style: solid; }
-    .connection-panel.waiting { animation: pulse-border 2s infinite alternate; }
-    @keyframes pulse-border { from { border-color: color-mix(in srgb, var(--hot) 20%, transparent); } to { border-color: var(--hot); box-shadow: 0 0 15px color-mix(in srgb, var(--hot) 20%, transparent); } }
-    .connection-panel strong { display: block; line-height: 1.35; font-size: 1.1rem; }
-    
-    .room-controls { display: grid; grid-template-columns: auto minmax(118px, 150px) auto; gap: 8px; }
-    .room-controls input { min-height: 42px; text-align: center; text-transform: uppercase; letter-spacing: 0.2em; font-size: 1.2rem !important; }
-    .field-card { display: grid; gap: 9px; color: var(--muted); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
-    input, select { width: 100%; min-height: 48px; color: var(--ink); background: rgba(255,255,255,0.68); border: 1px solid var(--line); border-radius: 12px; outline: 0; padding: 0 14px; font-weight: 800; transition: border-color 0.2s, box-shadow 0.2s; }
-    input:focus, select:focus { border-color: var(--p2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--p2) 18%, transparent); }
-    
-    /* LOBBY ELEMENTS */
-    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
-    .mini-scoreboard { display: flex; align-items: center; gap: 9px; padding: 10px 12px; color: var(--paper-solid); background: rgba(17,19,24,0.48); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; backdrop-filter: blur(12px); }
-    .mini-scoreboard span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; font-weight: 800; }
-    .mini-scoreboard strong { color: var(--hot); font-size: 1.1rem; }
-    
-    .game-grid { display: grid; grid-template-columns: repeat(7, minmax(260px, 1fr)); gap: 15px; overflow-x: auto; padding: 4px 4px 24px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
-    .game-card { position: relative; min-height: 270px; padding: 22px; color: var(--ink); background: var(--paper); border: 1px solid rgba(255,255,255,0.72); border-radius: var(--radius); box-shadow: 0 18px 48px rgba(0,0,0,0.18); cursor: pointer; overflow: hidden; scroll-snap-align: start; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s; will-change: transform; }
-    .game-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 32px 70px rgba(0,0,0,0.25); z-index: 2; }
-    .game-card::before { content: ""; position: absolute; inset: -35% -30% auto auto; width: 190px; aspect-ratio: 1; background: var(--card-color); border-radius: 50%; opacity: 0.15; transition: transform 0.4s ease; }
-    .game-card:hover::before { transform: scale(1.5); opacity: 0.25; }
-    .game-card .card-icon { display: grid; place-items: center; width: 66px; aspect-ratio: 1; margin-bottom: 16px; color: #fff; background: var(--card-color); border-radius: 16px; font-size: 1.85rem; font-weight: 900; box-shadow: 0 14px 28px color-mix(in srgb, var(--card-color) 34%, transparent); }
-    .game-card p { color: var(--muted); line-height: 1.55; }
-    .game-card footer { position: absolute; left: 22px; right: 22px; bottom: 22px; display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
-    .game-card footer span:last-child { color: var(--card-color); background: color-mix(in srgb, var(--card-color) 15%, transparent); padding: 4px 10px; border-radius: 8px; }
-    
-    /* ARENA SHELL */
-    .arena-shell { display: grid; grid-template-columns: 220px 1fr; gap: 18px; flex: 1; min-height: 0; }
-    .score-rail, .arena-main { padding: 18px; }
-    .score-rail { align-self: start; display: grid; gap: 14px; position: sticky; top: 18px; }
-    .score-player { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.52); border: 1px solid var(--line); border-radius: 14px; transition: background 0.3s; }
-    .score-player.active { background: #fff; border-color: var(--p2); box-shadow: 0 0 15px color-mix(in srgb, var(--p2) 30%, transparent); }
-    .score-player span:not(.avatar-chip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 900; }
-    .score-player strong { font-size: 1.4rem; }
-    .avatar-chip { display: grid; place-items: center; width: 44px; aspect-ratio: 1; color: #fff; border-radius: 14px; font-weight: 900; }
-    .avatar-chip.p1 { background: var(--p1); }
-    .avatar-chip.p2 { background: var(--p2); }
-    
-    .round-meter { padding: 14px; background: rgba(17,19,24,0.92); color: var(--paper-solid); border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-    #timerText { display: block; margin-bottom: 10px; font-size: 2.2rem; font-weight: 900; text-align: center; font-family: monospace; letter-spacing: -2px; }
-    .meter-track { height: 10px; overflow: hidden; background: rgba(255,255,255,0.16); border-radius: 999px; }
-    .meter-fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--p1), var(--hot), var(--p2)); border-radius: inherit; transition: width 1s linear, background-color 0.3s; }
-    .meter-fill.danger { background: var(--danger); animation: pulse-danger 0.5s infinite alternate; }
-    @keyframes pulse-danger { from { opacity: 1; } to { opacity: 0.5; } }
-    
-    .arena-main { min-width: 0; display: flex; flex-direction: column; position: relative; }
-    .arena-topline { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; margin-bottom: 18px; }
-    .arena-topline h2 { text-align: center; }
-    
-    .plain-button, .danger-button, .primary-button { min-height: 42px; padding: 0 15px; border-radius: 12px; font-weight: 900; border: none; }
-    .plain-button { background: rgba(255,255,255,0.64); border: 1px solid var(--line); }
-    .primary-button { color: #fff; background: linear-gradient(135deg, var(--p1), var(--p2)); cursor: pointer; box-shadow: 0 16px 30px color-mix(in srgb, var(--p2) 24%, transparent); transition: transform 0.1s, box-shadow 0.2s, filter 0.2s; }
-    .primary-button:hover { filter: brightness(1.1); box-shadow: 0 20px 40px color-mix(in srgb, var(--p2) 34%, transparent); }
-    .danger-button { color: #fff; background: var(--danger); }
-    
-    .game-mount { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 450px;}
-    .game-panel { display: flex; flex-direction: column; flex: 1; gap: 16px; }
-    .instruction { color: var(--muted); line-height: 1.55; text-align: center; font-weight: 600; margin-top: auto; padding-top: 10px; }
-    .turn-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; color: #fff; background: linear-gradient(135deg, var(--p1), var(--p2)); border-radius: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 10px 20px color-mix(in srgb, var(--p1) 20%, transparent); z-index: 10; }
-    
-    /* -------------------------------------
-       SKETCH MASTER: FULLSCREEN PRO STUDIO
-       ------------------------------------- */
-    body.sketch-mode-active { overflow: hidden !important; touch-action: none !important; }
-    .sketch-layout-master {
-      position: fixed; inset: 0; z-index: 9999;
-      display: flex; flex-direction: column;
-      background: #111318; touch-action: none;
-    }
-    .sketch-top-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: calc(12px + env(safe-area-inset-top)) 24px 12px; background: rgba(14,16,20,0.95);
-      border-bottom: 1px solid rgba(255,255,255,0.08); gap: 16px; flex-shrink: 0;
-    }
-    .sketch-brand { font-size: 0.8rem; font-weight: 900; letter-spacing: 0.15em; color: rgba(255,255,255,0.6); }
-    .sketch-prompt { flex: 1; text-align: center; font-size: 0.95rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; }
-    .sketch-actions { display: flex; gap: 10px; }
-    
-    .award-btn { padding: 8px 16px; border-radius: 999px; font-weight: 900; font-size: 0.8rem; color: #fff; border: none; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .award-btn.p1-bg { background: linear-gradient(135deg, var(--p1), #ff7b9a); }
-    .award-btn.p2-bg { background: linear-gradient(135deg, var(--p2), #5bc0ff); }
-    .award-btn.danger-bg { background: linear-gradient(135deg, #444, #222); border: 1px solid rgba(255,255,255,0.2); }
-    
-    .adaptive-canvas-wrap { 
-      flex: 1; position: relative; overflow: hidden; 
-      background: #fffdf5; transition: background 0.3s;
-      cursor: none; touch-action: none;
-    }
-    .adaptive-canvas-wrap.neon-mode { background: #0a0a0f; }
-    
-    .brush-cursor {
-      position: absolute; border-radius: 50%; pointer-events: none;
-      transform: translate(-50%, -50%); z-index: 100;
-      border: 1.5px solid rgba(0,0,0,0.6); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
-      display: none; transition: width 0.05s, height 0.05s; mix-blend-mode: difference;
-    }
-    .neon-mode .brush-cursor { border-color: rgba(255,255,255,0.9); box-shadow: 0 0 10px currentColor; mix-blend-mode: normal; }
-    #drawCanvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
-    
-    .floating-dock {
-      position: absolute; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(28, 30, 36, 0.95); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 999px; box-shadow: 0 24px 50px rgba(0,0,0,0.5);
-      backdrop-filter: blur(24px); padding: 8px 16px; z-index: 100;
-      max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none;
-    }
-    .floating-dock::-webkit-scrollbar { display: none; }
-    
-    .dock-group { display: flex; align-items: center; gap: 8px; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
-    .dock-group:last-child { border: none; padding-right: 0; }
-    
-    .tool-btn {
-      display: grid; place-items: center; width: 40px; height: 40px; background: transparent; 
-      border: 2px solid transparent; border-radius: 12px; transition: all 0.2s;
-      color: rgba(255,255,255,0.7); cursor: pointer; flex-shrink: 0;
-    }
-    .tool-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
-    .tool-btn:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
-    .tool-btn.active { background: var(--p2); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--p2) 40%, transparent); border-color: color-mix(in srgb, var(--p2) 20%, white); }
-    
-    .color-picker-wrap { 
-      position: relative; width: 32px; height: 32px; border-radius: 50%; 
-      overflow: hidden; border: 2px solid rgba(255,255,255,0.4); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      flex-shrink: 0;
-    }
-    .color-picker-wrap input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; border: none; padding:0; }
-    #brushSize { width: 80px; accent-color: var(--p2); cursor: pointer; flex-shrink: 0; }
-    
-    /* Elegant, adaptive watermark */
-    .built-for-monica-watermark {
-      position: absolute; bottom: calc(16px + env(safe-area-inset-bottom)); right: 20px;
-      font-family: monospace, sans-serif; font-size: 10px; font-weight: 800;
-      letter-spacing: 0.4em; color: rgba(25, 23, 22, 0.4);
-      text-transform: uppercase; pointer-events: none; z-index: 10;
-      transition: color 0.3s; mix-blend-mode: overlay;
-    }
-    .neon-mode .built-for-monica-watermark { color: rgba(255,255,255,0.3); mix-blend-mode: plus-lighter; }
-    
-    /* GAMES STYLES */
-    .big-prompt { padding: clamp(20px, 4vw, 42px); text-align: center; background: rgba(0,0,0,0.8); border: 1px solid var(--mint); border-radius: 18px; box-shadow: inset 0 0 30px rgba(56, 217, 169, 0.2); }
-    .vault-label { color: var(--mint); font-family: monospace; font-size: 0.9rem; letter-spacing: 0.2em; display: block; margin-bottom: 10px; opacity: 0.8; }
-    .glitch-text { display: block; font-family: monospace; font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1; color: #fff; text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); animation: glitch-skew 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite; }
-    @keyframes glitch-skew { 0%, 95% { transform: skew(0deg); text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); } 96% { transform: skew(-10deg); text-shadow: -4px 0 var(--mint), 4px 0 var(--danger); } 97% { transform: skew(10deg); text-shadow: 2px 0 var(--danger), -2px 0 var(--p2); } 98% { transform: skew(0deg); } }
-    .answer-row { display: flex; gap: 10px; }
-    .answer-row input { flex: 1; font-family: monospace; font-size: 1.5rem; text-transform: uppercase; }
-    .word-log, .story-log { display: flex; flex-wrap: wrap; gap: 8px; min-height: 82px; align-content: flex-start; padding: 12px; background: rgba(255,255,255,0.48); border: 1px solid var(--line); border-radius: 16px; }
-    .pill { padding: 8px 14px; color: #fff; background: var(--p1); border-radius: 999px; font-size: 0.9rem; font-weight: 900; animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .pill.p2 { background: var(--p2); }
-    @keyframes pop-in { from { transform: scale(0.5); opacity: 0; } }
-    
-    .maze-wrap { position: relative; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); }
-    .maze-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: rgba(10, 12, 16, 0.95); padding: 12px; position: relative; }
-    .maze-fog-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at var(--fx) var(--fy), transparent 10%, rgba(0,0,0,0.95) 40%, #000 100%); transition: background 0.2s ease-out; }
-    .maze-cell { aspect-ratio: 1; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(255,255,255,0.02); color: transparent; transition: all 0.3s ease; position: relative; display: grid; place-items: center; font-size: 1.2rem; touch-action: none; }
-    .maze-cell.here { background: var(--p2); box-shadow: 0 0 20px var(--p2), inset 0 0 10px #fff; color: #fff; font-weight: 900; z-index: 2; transform: scale(1.1); border-radius: 50%; }
-    .maze-cell.exit { background: var(--p1); box-shadow: 0 0 20px var(--p1); animation: pulse-exit 1s infinite alternate; }
-    .maze-cell.gem { color: var(--hot); text-shadow: 0 0 10px var(--hot); }
-    .maze-cell.trap { color: var(--danger); text-shadow: 0 0 10px var(--danger); }
-    @keyframes pulse-exit { from { box-shadow: 0 0 10px var(--p1); } to { box-shadow: 0 0 30px var(--p1), 0 0 10px #fff; } }
-    
-    /* D-PAD for MAZE */
-    .d-pad-wrap { display: grid; grid-template-columns: repeat(3, minmax(60px, 1fr)); gap: 8px; justify-content: center; max-width: 300px; margin: 0 auto; }
-    .d-pad-wrap .up { grid-column: 2; grid-row: 1; }
-    .d-pad-wrap .left { grid-column: 1; grid-row: 2; }
-    .d-pad-wrap .right { grid-column: 3; grid-row: 2; }
-    .d-pad-wrap .down { grid-column: 2; grid-row: 3; }
-    .d-pad-wrap button { min-height: 50px; }
-    
-    .signal-board { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; }
-    .signal-pad { border-radius: 24px; border: 4px solid transparent; opacity: 0.3; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); color: transparent; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); touch-action: none; }
-    .signal-pad::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent); }
-    .signal-pad.red { background: var(--danger); } .signal-pad.blue { background: var(--p2); } .signal-pad.green { background: var(--mint); } .signal-pad.gold { background: var(--hot); }
-    .signal-pad.active, .signal-pad:active { opacity: 1; transform: scale(0.96) translateY(4px); box-shadow: 0 0 40px currentColor, inset 0 0 0 rgba(0,0,0,0); border-color: #fff; }
-    
-    .trap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex: 1; perspective: 1000px; }
-    .trap-card { border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); background: linear-gradient(135deg, rgba(17,19,24,0.3), rgba(17,19,24,0.1)); box-shadow: inset 0 4px 10px rgba(255,255,255,0.2), 0 8px 15px rgba(0,0,0,0.1); font-weight: 900; font-size: 1.8rem; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s; transform-style: preserve-3d; position: relative; color: transparent; touch-action: none; }
-    .trap-card:not(.open):hover { transform: translateY(-4px) scale(1.05); border-color: rgba(255,255,255,0.6); }
-    .trap-card.open { transform: rotateY(180deg); color: #fff; box-shadow: none; border: none; pointer-events: none; }
-    .trap-card.safe { background: var(--p2); box-shadow: 0 0 20px color-mix(in srgb, var(--p2) 40%, transparent); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-    .trap-card.bonus { background: var(--mint); box-shadow: 0 0 20px color-mix(in srgb, var(--mint) 40%, transparent); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-    .trap-card.bomb { background: var(--danger); box-shadow: 0 0 30px var(--danger); animation: explode 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .trap-card span { display: inline-block; transform: rotateY(180deg); }
-    
-    .reaction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex: 1; }
-    .reaction-pad { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; background: rgba(17,19,24,0.6); border: 4px solid var(--line); font-size: clamp(1.5rem, 5vw, 3.5rem); font-weight: 900; text-align: center; user-select: none; border-radius: 24px; transition: all 0.1s; position: relative; overflow: hidden; touch-action: none; }
-    .reaction-pad small { font-size: 1.2rem; opacity: 0.8; margin-top: 10px; letter-spacing: 0.1em; }
-    .reaction-pad.go { background: var(--mint); box-shadow: 0 0 60px color-mix(in srgb, var(--mint) 60%, transparent); border-color: #fff; transform: scale(1.02); }
-    .reaction-pad.fake { background: var(--danger); box-shadow: 0 0 60px color-mix(in srgb, var(--danger) 60%, transparent); }
-    .reaction-pad.glitch { background: var(--p2); animation: rgb-split 0.1s infinite; border-color: var(--danger); color: transparent; }
-    .reaction-pad.glitch::before { content: '!@#$'; position: absolute; color: var(--mint); left: 5px; font-family: monospace; font-size: 4rem; }
-    .reaction-pad.glitch::after { content: '%^&*'; position: absolute; color: var(--hot); right: 5px; font-family: monospace; font-size: 4rem; }
-    
-    .screen-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-    @keyframes shake { 10%, 90% { transform: translate3d(-3px, 0, 0); } 20%, 80% { transform: translate3d(5px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-10px, 0, 0); } 40%, 60% { transform: translate3d(10px, 0, 0); } }
-    
-    .round-result { position: absolute; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 30px; text-align: center; background: rgba(17,19,24,0.95); backdrop-filter: blur(10px); border-radius: 16px; font-weight: 900; font-size: 2.5rem; color: #fff; flex-direction: column; gap: 20px; animation: stamp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .round-result span { color: var(--p2); font-size: 1.5rem; font-family: monospace; }
-    @keyframes stamp-in { 0% { transform: scale(2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    
-    .toast-host { position: fixed; z-index: 10000; left: 50%; top: calc(18px + env(safe-area-inset-top)); display: grid; gap: 8px; width: min(420px, calc(100% - 24px)); transform: translateX(-50%); pointer-events: none; }
-    .toast { padding: 14px 18px; color: #fff; background: rgba(17,19,24,0.95); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; box-shadow: 0 18px 44px rgba(0,0,0,0.4); font-weight: 800; text-align: center; animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(-20px) scale(0.9); } }
-    
-    .stats-dialog { width: min(680px, calc(100% - 24px)); padding: 0; color: var(--ink); background: transparent; border: 0; }
-    .stats-dialog::backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); }
-    .dialog-card { padding: 26px; background: var(--paper-solid); border-radius: 24px; box-shadow: var(--shadow); }
-    .dialog-card header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 20px;}
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
-    .stats-grid div, .achievement-list div { padding: 16px; background: rgba(0,0,0,0.05); border: 1px solid var(--line); border-radius: 16px; transition: transform 0.2s; }
-    .stats-grid div:hover { transform: translateY(-3px); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
-    .stats-grid span { display: block; font-size: 2.2rem; font-weight: 900; color: var(--p1); }
-    .stats-grid small, .achievement-list small { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;}
-    .achievement-list { display: grid; gap: 10px; margin-bottom: 24px; max-height: 200px; overflow-y: auto; padding-right: 10px;}
-    
-    /* MOBILE-FIRST RESPONSIVE FIXES */
-    @media (max-width: 900px) {
-      .hero-zone, .arena-shell { grid-template-columns: 1fr; }
-      .hero-art { min-height: 270px; }
-      .setup-grid { grid-template-columns: repeat(2, 1fr); }
-      .connection-panel, .room-controls { grid-template-columns: 1fr; }
-      .score-rail { position: static; grid-template-columns: 1fr 1fr; z-index: 10; background: var(--paper); border-radius: 16px; padding: 10px; margin-bottom: -10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-      .round-meter { grid-column: 1 / -1; padding: 8px; }
-      #timerText { font-size: 1.5rem; margin-bottom: 5px; }
-    }
-    @media (max-width: 768px) {
-      .sketch-top-bar { flex-wrap: wrap; padding: calc(10px + env(safe-area-inset-top)) 10px 10px; justify-content: center; gap: 10px; }
-      .sketch-brand { display: none; }
-      .sketch-prompt { flex: 1 1 100%; font-size: 0.8rem; }
-      .sketch-actions { flex: 1 1 100%; justify-content: center; }
-      .built-for-monica-watermark { bottom: calc(85px + env(safe-area-inset-bottom)); right: 16px; font-size: 8px; }
-    }
-    @media (max-width: 620px) {
-      .app-shell { width: min(100% - 18px, 1180px); padding-top: calc(10px + env(safe-area-inset-top)); }
-      .brand-mark span:last-child { display: none; }
-      .hero-copy, .setup-panel, .score-rail, .arena-main, .dialog-card { padding: 14px; }
-      .setup-grid, .stats-grid { grid-template-columns: 1fr; }
-      .reaction-grid { grid-template-columns: 1fr; }
-      .reaction-pad { min-height: 180px; }
-      
-      /* Arena Topline Mobile Fix */
-      .arena-topline { grid-template-columns: auto 1fr auto; flex-direction: row; align-items: center; gap: 8px; }
-      .arena-topline h2 { font-size: 1.1rem; text-align: center; }
-      .plain-button, .danger-button, .primary-button { padding: 0 10px; font-size: 0.85rem; min-height: 38px; }
-      .game-mount { min-height: 350px; flex: 1; }
-
-      .maze-grid { gap: 4px; padding: 8px; }
-      .maze-cell { border-radius: 4px; font-size: 0.9rem;}
-      .trap-card { font-size: 1.2rem; }
-    }
-  </style>
-</head>
-<body>
-  <script>
-    (function initPWA() {
-      try {
-        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#ff6b8a"/><text x="50" y="68" font-family="system-ui, sans-serif" font-weight="900" font-size="50" fill="#fff" text-anchor="middle">P</text></svg>`;
-        const iconUrl = 'data:image/svg+xml;base64,' + btoa(iconSvg);
-        const appleIcon = document.createElement('link'); appleIcon.rel = 'apple-touch-icon'; appleIcon.href = iconUrl; document.head.appendChild(appleIcon);
-        
-        const manifest = {
-          name: "Playroom Arcade", short_name: "Playroom", start_url: window.location.pathname,
-          display: "standalone", background_color: "#111318", theme_color: "#111318",
-          icons: [{ src: iconUrl, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; manifestLink.href = URL.createObjectURL(manifestBlob); document.head.appendChild(manifestLink);
-        
-        const swCode = `
-          const CACHE_NAME = 'playroom-v9';
-          self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.pathname]))); self.skipWaiting(); }); 
-          self.addEventListener('activate', e => self.clients.claim()); 
-          self.addEventListener('fetch', e => { 
-             e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).then(fRes => caches.open(CACHE_NAME).then(c => { c.put(e.request, fRes.clone()); return fRes; })))); 
-          });`;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-      } catch(e) {}
-    })();
-  </script>
-
-  <!-- BACKGROUND FX -->
-  <canvas id="worldCanvas" aria-hidden="true"></canvas>
-  <div class="paper-noise" aria-hidden="true"></div>
-  <div class="doodle-field" aria-hidden="true">
-    <span class="doodle d1"></span><span class="doodle d2"></span>
-    <span class="doodle d3"></span><span class="doodle d4"></span>
-    <span class="doodle d5"></span><span class="doodle d6"></span>
-  </div>
-  <div id="toastHost" class="toast-host" aria-live="polite"></div>
-  
-  <div class="app-shell" id="appShell">
-    <header class="topbar">
-      <button class="brand-mark" id="homeBtn" type="button" aria-label="Home">
-        <span class="brand-sigil">P</span>
-        <span><strong>Playroom</strong><small>arcade v9</small></span>
-      </button>
-      <nav class="top-actions" aria-label="App actions">
-        <button class="icon-button" id="sparkBtn" type="button" title="Celebration burst">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5l-10 14M7 5l10 14M2 12h20"/></svg>
-        </button>
-        <button class="icon-button" id="soundBtn" type="button" title="Toggle sound"><span id="soundIcon">ON</span></button>
-        <button class="icon-button" id="statsBtn" type="button" title="Trophy room">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-        </button>
-      </nav>
-    </header>
-    
-    <main>
-      <section id="lobbyScreen" class="screen active">
-        <div class="hero-zone">
-          <div class="hero-copy">
-            <p class="kicker">Two humans. One private arcade.</p>
-            <h1>Crack codes, dodge traps, and paint masterpieces together.</h1>
-            <p class="hero-text">A live two-player playground built for phones and laptops. Now featuring advanced physics, true Fog of War, Minesweeper mechanics, and a pro-grade synchronized sketch lab with zero-latency rendering.</p>
-          </div>
-          <div class="hero-art" aria-hidden="true">
-            <div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
-            <div class="mascot-card one">P1</div><div class="mascot-card two">P2</div>
-            <div class="scribble-line"></div>
-          </div>
-        </div>
-        
-        <section class="panel setup-panel" aria-label="Player setup">
-          <div><p class="section-label">Players</p><h2>Make it yours</h2></div>
-          <div class="setup-grid">
-            <label class="field-card"><span>Your name</span><input id="playerOneInput" maxlength="12" autocomplete="off" /></label>
-            <label class="field-card"><span>Your partner</span><input id="playerTwoInput" maxlength="12" autocomplete="off" /></label>
-            <label class="field-card">
-              <span>Mood color</span>
-              <select id="themeSelect">
-                <option value="sunset">Sunset arcade</option>
-                <option value="mint">Mint pop</option>
-                <option value="berry">Berry neon</option>
-                <option value="ink">Ink and gold</option>
-              </select>
-            </label>
-            <label class="field-card">
-              <span>Round length</span>
-              <select id="roundLengthSelect">
-                <option value="45">45 seconds (Fast)</option>
-                <option value="60">60 seconds (Standard)</option>
-                <option value="90">90 seconds (Marathon)</option>
-                <option value="300">5 Minutes (Sketching)</option>
-              </select>
-            </label>
-          </div>
-          <div id="connPanel" class="connection-panel">
-            <div><p class="section-label">Live room</p><strong id="connectionStatus">Same-screen mode is ready.</strong></div>
-            <div class="room-controls">
-              <button id="createRoomBtn" class="plain-button" type="button">Create room</button>
-              <input id="roomCodeInput" maxlength="6" autocomplete="off" placeholder="CODE" />
-              <button id="joinRoomBtn" class="primary-button" type="button">Join</button>
-            </div>
-          </div>
-        </section>
-        
-        <section class="game-section" aria-label="Games">
-          <div class="section-heading">
-            <div><p class="section-label">Modules</p><h2>Overcharged Arcade</h2></div>
-            <div class="mini-scoreboard"><span id="lobbyP1">You</span><strong id="lobbyScore">0 - 0</strong><span id="lobbyP2">Partner</span></div>
-          </div>
-          <div id="gameGrid" class="game-grid"></div>
-        </section>
-      </section>
-      
-      <section id="arenaScreen" class="screen">
-        <div class="arena-shell">
-          <aside class="score-rail panel">
-            <div class="score-player" id="p1ScoreCard">
-              <span class="avatar-chip p1" id="p1Avatar">Y</span>
-              <span id="p1Name">You</span><strong id="p1Score">0</strong>
-            </div>
-            <div class="score-player" id="p2ScoreCard">
-              <span class="avatar-chip p2" id="p2Avatar">P</span>
-              <span id="p2Name">Partner</span><strong id="p2Score">0</strong>
-            </div>
-            <div class="round-meter">
-              <span id="timerText">00</span>
-              <div class="meter-track"><div id="timerFill" class="meter-fill"></div></div>
-            </div>
-          </aside>
-          
-          <section class="arena-main panel" id="arenaMain">
-            <div class="arena-topline" id="arenaTopline">
-              <button class="plain-button" id="backBtn" type="button">&lt; Lobby</button>
-              <div><p id="gameTag" class="section-label">Game</p><h2 id="gameTitle">Loading</h2></div>
-              <button class="plain-button" id="resetGameBtn" type="button">Restart</button>
-            </div>
-            <div id="gameMount" class="game-mount"></div>
-          </section>
-        </div>
-      </section>
-    </main>
-  </div>
-  
-  <dialog id="statsDialog" class="stats-dialog">
-    <div class="dialog-card">
-      <header>
-        <div><p class="section-label">Trophy room</p><h2>Your saved play history</h2></div>
-        <button id="closeStatsBtn" class="icon-button" type="button" aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </header>
-      <div class="stats-grid">
-        <div><span id="statGames">0</span><small>Games</small></div>
-        <div><span id="statWinsP1">0</span><small id="statP1Label">Your wins</small></div>
-        <div><span id="statWinsP2">0</span><small id="statP2Label">Partner wins</small></div>
-        <div><span id="statStreak">0</span><small>Best streak</small></div>
-      </div>
-      <div id="achievementList" class="achievement-list"></div>
-      <button id="clearStatsBtn" class="danger-button" type="button" style="width:100%">Clear saved stats</button>
-    </div>
-  </dialog>
-  
-  <script>
-    // HARDCORE MOBILE SCROLL PREVENTER
-    document.addEventListener('touchmove', (e) => {
-        if (document.body.classList.contains('sketch-mode-active')) {
-            e.preventDefault(); // Kills iOS rubber banding instantly
-        }
-    }, { passive: false });
-
-    const $ = (selector) => document.querySelector(selector);
-    const $$ = (selector) => [...document.querySelectorAll(selector)];
-    const STORE_KEY = "playroom-arcade-v9";
-    const ROOM_PREFIX = "playroom-arcade-v9-";
-    
-    const vibe = (ms) => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
-    const profile = { names: ["You", "Partner"], theme: "cosmic", roundLength: 60, sound: true, stats: { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] } };
-    const room = { peer: null, conn: null, code: "", connected: false, role: "local", mySlot: 0, suppress: false, pingInterval: null };
-    const app = { activeGame: null, score: [0, 0], timer: null, timeLeft: 0, roomNames: ["You", "Partner"], finished: false };
-    
-    const games = [
-      { id: "cipher", title: "Hyper Cipher", tag: "Codebreaking", icon: "HC", color: "#ff4f7b", desc: "Hack rotating ciphers matrix-style. Type fast as the code visually scrambles." },
-      { id: "maze", title: "Grid Runner", tag: "Fog of War", icon: "GR", color: "#2f7df6", desc: "Navigate a dark, volatile neon grid using a dynamic flashlight. Dodge hidden traps!" },
-      { id: "signal", title: "Synth Memory", tag: "Memory chaos", icon: "SM", color: "#8a5cf6", desc: "Memorize intense glowing signals. Physical buttons press down, building a massive chain." },
-      { id: "trap", title: "Blast Tiles", tag: "Minesweeper-lite", icon: "BT", color: "#38d9a9", desc: "Safe tiles reveal how many bombs touch them! Use logic to build streaks, or risk an explosion." },
-      { id: "reflex", title: "Rift Overcharge", tag: "Fake-out duel", icon: "RO", color: "#ff9f1c", desc: "Wait for the green. Beware the violent RGB glitch phases designed to mess with your brain." },
-      { id: "remix", title: "Chaos Remix", tag: "Creative duel", icon: "CR", color: "#cf5c36", desc: "Build ridiculous scenes from constraint cards. Award style points to your favorite drops." },
-      { id: "sketch", title: "Pro Sketch Lab", tag: "Synced Art", icon: "PS", color: "#111318", desc: "An immersive digital studio. Precision drawing, full symmetry, and zero-latency sync." }
-    ];
-    
-    const cipherRounds = [
-      { encoded: "ORYYB", answer: "HELLO", hint: "Caesar +13. A classic opener." },
-      { encoded: "Uifsf jt b wbvmu", answer: "THERE IS A VAULT", hint: "Shifted forward by 1." },
-      { encoded: "XLMUVGR", answer: "CONFETTI", hint: "Atbash, mirror alphabet." },
-      { encoded: "19-5-3-18-5-20", answer: "SECRET", hint: "A1Z26 numbers." },
-      { encoded: "SYST3M", answer: "SYSTEM", hint: "Leet speak basic." }
-    ];
-    const remixPrompts = ["A luxury date night in a supermarket", "A spaceship crew arguing over the aux cable", "A detective scene inside a dramatic cafe"];
-    const remixConstraints = ["include a fake brand name", "contain one terrible rhyme", "overconfident narrator", "mention a mysterious suitcase"];
-    const sketchPrompts = ["Draw our future villain lair", "Draw a map to the world's most dramatic snack", "Draw the creature that guards our inside jokes", "Draw an epic battle between cats and vacuums"];
-    
-    const audio = {
-      ctx: null,
-      unlock() {
-        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (this.ctx.state === "suspended") this.ctx.resume();
-      },
-      tone(freq, duration = 0.1, type = "sine", gainValue = 0.04) {
-        if (!profile.sound) return; this.unlock();
-        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-        osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(gainValue, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(); osc.stop(this.ctx.currentTime + duration);
-      },
-      pop() { this.tone(520, 0.08); },
-      synthHit() { this.tone(220, 0.2, "square", 0.05); this.tone(110, 0.2, "sawtooth", 0.05); },
-      bad() { this.tone(130, 0.2, "sawtooth", 0.08); document.body.classList.add('screen-shake'); setTimeout(()=>document.body.classList.remove('screen-shake'), 400); },
-      win() { [360, 470, 620, 840, 1020].forEach((f, i) => setTimeout(() => this.tone(f, 0.15, "sine", 0.05), i * 80)); }
-    };
-    
-    function loadProfile() {
-      try { const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
-        Object.assign(profile, { names: saved.names || profile.names, theme: saved.theme || profile.theme, roundLength: saved.roundLength || profile.roundLength, sound: saved.sound ?? profile.sound, stats: saved.stats || profile.stats });
-      } catch { saveProfile(); }
-    }
-    function saveProfile() { localStorage.setItem(STORE_KEY, JSON.stringify(profile)); }
-    function localName() { return profile.names[0] || "You"; }
-    function partnerName() { return profile.names[1] || "Partner"; }
-    
-    function getLocalScore() { return room.connected ? app.score[room.mySlot] : app.score[0]; }
-    function getRemoteScore() { return room.connected ? app.score[room.mySlot === 0 ? 1 : 0] : app.score[1]; }
-    function getRemoteName() { return room.connected ? app.roomNames[room.mySlot === 0 ? 1 : 0] : partnerName(); }
-    function initials(name) { return (name || "?").slice(0, 1).toUpperCase(); }
-    function slotForLocalAction(physicalSide) { return !room.connected ? physicalSide : (physicalSide === 0 ? room.mySlot : (room.mySlot === 0 ? 1 : 0)); }
-    function canonicalName(slot) { return room.connected ? app.roomNames[slot] : (slot === 0 ? localName() : partnerName()); }
-    function toast(message) {
-      const node = document.createElement("div"); node.className = "toast"; node.textContent = message;
-      $("#toastHost").appendChild(node); setTimeout(() => node.remove(), 2800);
-    }
-    
-    function setTheme(theme) { 
-      profile.theme = theme; document.body.dataset.theme = theme; saveProfile(); 
-      const metaTheme = document.querySelector('meta[name="theme-color"]');
-      const colors = { mint: "#08251f", berry: "#1b1026", ink: "#101010", sunset: "#111318" };
-      if (metaTheme) metaTheme.setAttribute("content", colors[theme] || "#111318");
-    }
-    
-    function renderChrome() {
-      $("#playerOneInput").value = localName(); $("#playerTwoInput").value = partnerName();
-      $("#themeSelect").value = profile.theme; $("#roundLengthSelect").value = String(profile.roundLength);
-      $("#soundIcon").textContent = profile.sound ? "ON" : "OFF";
-      
-      $("#lobbyP1").textContent = "You"; $("#lobbyP2").textContent = getRemoteName();
-      $("#lobbyScore").textContent = `${getLocalScore()} - ${getRemoteScore()}`;
-      
-      $("#p1Name").textContent = "You"; $("#p2Name").textContent = getRemoteName();
-      $("#p1Score").textContent = getLocalScore(); $("#p2Score").textContent = getRemoteScore();
-      $("#p1Avatar").textContent = initials(localName()); $("#p2Avatar").textContent = initials(getRemoteName());
-      
-      $("#statP1Label").textContent = `Your wins`; $("#statP2Label").textContent = `Partner wins`;
-      
-      const pNode = $("#connPanel");
-      if(room.connected) {
-        pNode.classList.add("live"); pNode.classList.remove("waiting");
-        $("#connectionStatus").textContent = room.role === "host" ? `Live: Room ${room.code} (Host)` : `Live: Room ${room.code} (Guest)`;
-      } else {
-        pNode.classList.remove("live");
-        if (room.code) {
-           pNode.classList.add("waiting");
-           $("#connectionStatus").textContent = `Waiting for partner in ${room.code}...`;
-        } else {
-           pNode.classList.remove("waiting");
-           $("#connectionStatus").textContent = "Same-screen mode is ready.";
-        }
-      }
-    }
-    
-    function showScreen(id) { $$(".screen").forEach(s => s.classList.remove("active")); $(`#${id}`).classList.add("active"); }
-    function renderGameGrid() {
-      $("#gameGrid").innerHTML = games.map((game) => `
-        <article class="game-card" style="--card-color:${game.color}" data-game="${game.id}" tabindex="0" role="button">
-          <div class="card-icon">${game.icon}</div>
-          <h3>${game.title}</h3><p>${game.desc}</p>
-          <footer><span>${game.tag}</span><span>Launch</span></footer>
-        </article>
-      `).join("");
-      $$(".game-card").forEach((card) => card.addEventListener("click", () => { vibe(15); startGame(card.dataset.game); }));
-    }
-    
-    function startGame(id) {
-      if (room.connected && room.role !== "host" && !room.suppress) return toast("Only the host can launch games.");
-      clearTimer(); app.activeGame = id; app.finished = false;
-      const game = games.find(e => e.id === id);
-      $("#gameTag").textContent = game.tag; $("#gameTitle").textContent = game.title;
-      $("#timerText").textContent = "--"; $("#timerFill").style.width = "100%"; $("#timerFill").classList.remove("danger");
-      
-      document.body.classList.remove('sketch-mode-active');
-      $("#appShell").style.display = 'flex';
-      
-      showScreen("arenaScreen"); audio.synthHit();
-      modules[id].start(); syncRoom();
-    }
-    
-    function addScore(slot, points) { app.score[slot] += points; renderChrome(); syncRoom(); vibe(40); }
-    function setScore(score) { app.score = [Number(score[0] || 0), Number(score[1] || 0)]; renderChrome(); }
-    function resetScores() { app.score = [0, 0]; renderChrome(); syncRoom(); }
-    function winnerFromScore() { if (app.score[0] === app.score[1]) return null; return app.score[0] > app.score[1] ? 0 : 1; }
-    
-    function finishRound(message, winner = winnerFromScore()) {
-      if (app.finished) return; clearTimer(); app.finished = true; profile.stats.games += 1;
-      
-      if (winner !== null) {
-        const localWon = (!room.connected && winner === 0) || (room.connected && winner === room.mySlot);
-        if (localWon) { profile.stats.wins[0] += 1; profile.stats.bestStreak = Math.max(profile.stats.bestStreak, profile.stats.wins[0]); }
-        else profile.stats.wins[1] += 1;
-      }
-      saveProfile(); renderChrome(); audio.win(); celebrate(50);
-      
-      document.body.classList.remove('sketch-mode-active');
-      $("#appShell").style.display = 'flex';
-      
-      if (!$(".round-result")) $("#gameMount").insertAdjacentHTML("afterbegin", `<div class="round-result">${message}<span>SCOREBOARD LOCKED</span></div>`);
-      syncRoom({ finishedMessage: message });
-    }
-    
-    function startTimer(seconds, onEnd) {
-      clearTimer(); app.timeLeft = seconds;
-      
-      const updateVisuals = () => {
-        $("#timerText").textContent = app.timeLeft;
-        const pct = Math.max(0, app.timeLeft / seconds) * 100;
-        $("#timerFill").style.width = `${pct}%`;
-        if(app.timeLeft <= 10) $("#timerFill").classList.add("danger");
-      };
-      
-      updateVisuals();
-      $("#timerFill").classList.remove("danger");
-      
-      app.timer = setInterval(() => {
-        app.timeLeft -= 1; 
-        updateVisuals();
-        
-        if (app.timeLeft <= 0) { clearTimer(); onEnd(); }
-        else if (room.role === "host") syncRoom();
-      }, 1000);
-    }
-    function clearTimer() { if (app.timer) clearInterval(app.timer); app.timer = null; }
-    
-    function isLiveGuest() { return room.connected && room.role === "guest" && !room.suppress; }
-    function send(type, payload = {}) { if (room.connected && room.conn && !room.suppress) room.conn.send({ type, payload }); }
-    function sendAction(action) { send("ACTION", { game: app.activeGame, ...action }); }
-    function sendSketch(payload) { send("SKETCH", payload); }
-    function syncRoom(extra = {}) {
-      if (!room.connected || room.role !== "host" || room.suppress) return;
-      send("SYNC", { score: app.score, names: app.roomNames, activeGame: app.activeGame, timeLeft: app.timeLeft, finished: app.finished, module: app.activeGame && modules[app.activeGame].snapshot ? modules[app.activeGame].snapshot() : null, ...extra });
-    }
-    
-    const peerConfig = {
-      config: {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:stun1.l.google.com:19302" },
-          { urls: "stun:stun.cloudflare.com:3478" } // Aggressive NAT punching
-        ]
-      }
-    };
-    
-    function createRoom() {
-      if (typeof Peer === "undefined") return toast("PeerJS not loaded.");
-      closeRoom(); room.role = "host"; room.mySlot = 0; room.code = Math.floor(1000 + Math.random() * 9000).toString();
-      app.roomNames = [localName(), partnerName()];
-      room.peer = new Peer(`${ROOM_PREFIX}${room.code}`, peerConfig);
-      room.peer.on("open", () => { $("#roomCodeInput").value = room.code; toast(`Room created: ${room.code}`); renderChrome(); });
-      room.peer.on("connection", attachConnection);
-      room.peer.on("error", (err) => { console.error("Host Error:", err); toast("Room error. Generating new code."); });
-      renderChrome();
-    }
-    
-    function joinRoom() {
-      if (typeof Peer === "undefined") return toast("PeerJS not loaded.");
-      const code = $("#roomCodeInput").value.trim(); if (!/^\d{4}$/.test(code)) return toast("Enter 4 digit code.");
-      closeRoom(); room.role = "guest"; room.mySlot = 1; room.code = code;
-      
-      const btn = $("#joinRoomBtn"); btn.textContent = "Syncing..."; btn.disabled = true;
-      room.peer = new Peer(peerConfig);
-      room.peer.on("open", () => attachConnection(room.peer.connect(`${ROOM_PREFIX}${code}`)));
-      room.peer.on("error", (err) => { 
-        if (err.type === 'peer-unavailable') toast("Room not found. Is the host ready?");
-        else toast("Connection error. Network might be strict.");
-        room.code = ""; renderChrome(); btn.textContent = "Join"; btn.disabled = false;
-      });
-      renderChrome();
-    }
-    
-    function attachConnection(conn) {
-      room.conn = conn;
-      conn.on("open", () => {
-        room.connected = true;
-        if (room.role === "host") app.roomNames = [localName(), partnerName()];
-        send("HELLO", { name: localName(), slot: room.mySlot });
-        if (room.role === "host") syncRoom();
-        toast("Arcade Link Established!"); renderChrome();
-        const btn = $("#joinRoomBtn"); btn.textContent = "Join"; btn.disabled = false;
-        
-        // Resilience Ping
-        if (room.pingInterval) clearInterval(room.pingInterval);
-        room.pingInterval = setInterval(() => send("PING"), 3000);
-      });
-      conn.on("data", handleMessage);
-      conn.on("close", () => { room.connected = false; toast("Partner disconnected."); renderChrome(); });
-    }
-    
-    function handleMessage(message) {
-      if (!message || typeof message !== "object") return;
-      if (message.type === "PING") return; // Keepalive
-      if (message.type === "HELLO") {
-        const incomingSlot = room.role === "host" ? 1 : 0;
-        app.roomNames[incomingSlot] = message.payload.name || app.roomNames[incomingSlot];
-        if (room.role === "host") syncRoom(); renderChrome();
-      }
-      else if (message.type === "ACTION") { if (room.role === "host" && modules[app.activeGame]?.remoteAction) modules[app.activeGame].remoteAction(message.payload); }
-      else if (message.type === "SKETCH") { if (app.activeGame === "sketch") modules.sketch.remoteSketch(message.payload); }
-      else if (message.type === "SYNC") applySync(message.payload);
-    }
-    
-    function applySync(payload) {
-      if (!payload) return; room.suppress = true;
-      app.roomNames = payload.names || app.roomNames; setScore(payload.score || app.score);
-      app.timeLeft = payload.timeLeft ?? app.timeLeft; app.finished = Boolean(payload.finished);
-      if (payload.activeGame !== app.activeGame) {
-        app.activeGame = payload.activeGame;
-        if (app.activeGame) {
-          const game = games.find(e => e.id === app.activeGame);
-          $("#gameTag").textContent = game.tag; $("#gameTitle").textContent = game.title;
-          showScreen("arenaScreen");
-        } else showScreen("lobbyScreen");
-      }
-      if (payload.timeLeft !== undefined) {
-        $("#timerText").textContent = payload.timeLeft || "--";
-        $("#timerFill").style.width = `${Math.max(0, payload.timeLeft / profile.roundLength) * 100}%`;
-      }
-      if (app.activeGame && payload.module && modules[app.activeGame]?.restore) modules[app.activeGame].restore(payload.module);
-      if (payload.finishedMessage && !$(".round-result")) $("#gameMount").insertAdjacentHTML("afterbegin", `<div class="round-result">${payload.finishedMessage}<span>SCOREBOARD LOCKED</span></div>`);
-      room.suppress = false; renderChrome();
-    }
-    
-    function closeRoom() {
-      if (room.pingInterval) clearInterval(room.pingInterval);
-      if (room.conn) room.conn.close(); if (room.peer) room.peer.destroy();
-      room.peer = null; room.conn = null; room.connected = false; room.code = ""; room.role = "local"; room.mySlot = 0;
-    }
-    
-    const shuffle = (items) => [...items].sort(() => Math.random() - 0.5);
-    const sample = (items) => items[Math.floor(Math.random() * items.length)];
-    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-    const safe = (txt) => String(txt).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
-    
-    const modules = {
-      cipher: {
-        round: 0, solved: [], scrambleTimer: null,
-        start() { this.round = 0; this.solved = []; this.render(); startTimer(profile.roundLength, () => finishRound(`System locked. Solved ${this.solved.length}.`)); this.scramble(); },
-        current() { return cipherRounds[this.round % cipherRounds.length]; },
-        scramble() {
-          const el = $('#cipherText'); if(!el) return;
-          const target = this.current().encoded; const chars = "!@#$%^&*()_+-=[]{}|;':,./<>?";
-          let ticks = 0; clearInterval(this.scrambleTimer);
-          this.scrambleTimer = setInterval(() => {
-            ticks++;
-            el.textContent = target.split('').map((c, i) => ticks > i*3 ? c : sample(chars.split(''))).join('');
-            if(ticks > target.length * 3 + 10) { clearInterval(this.scrambleTimer); el.textContent = target; }
-          }, 30);
-        },
-        render() {
-          const clue = this.current();
-          $("#gameMount").innerHTML = `
-            <div class="game-panel cipher-panel">
-              <div class="turn-banner"><span>Vault Node ${this.round + 1}</span><span>Type to Decrypt</span></div>
-              <div class="big-prompt">
-                <span class="vault-label">ENCRYPTED SIGNAL DETECTED</span>
-                <strong class="glitch-text" id="cipherText">${safe(clue.encoded)}</strong>
-                <p style="color:var(--mint); margin-top:20px; font-weight:900;">[ HINT: ${safe(clue.hint)} ]</p>
-              </div>
-              <div class="answer-row">
-                <input id="cipherInput" autocomplete="off" placeholder="DECRYPT..." style="background:rgba(0,0,0,0.5); color:var(--mint); border-color:var(--mint)" />
-                <button id="cipherSubmit" class="primary-button" type="button">EXECUTE</button>
-              </div>
-              <div class="word-log">${this.solved.map((item) => `<span class="pill ${item.slot===room.mySlot ? "" : "p2"}">${safe(item.answer)}</span>`).join("")}</div>
-            </div>
-          `;
-          $("#cipherSubmit").addEventListener("click", () => { vibe(15); this.submit(slotForLocalAction(0), $("#cipherInput").value); });
-          $("#cipherInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { vibe(15); audio.pop(); this.submit(slotForLocalAction(0), $("#cipherInput").value); } });
-          setTimeout(() => $("#cipherInput").focus(), 100);
-        },
-        submit(slot, raw) {
-          if (isLiveGuest()) { sendAction({ name: "cipherSubmit", raw }); $("#cipherInput").value = ""; return; }
-          const guess = raw.trim().toUpperCase().replace(/\s+/g, " "); const answer = this.current().answer;
-          if (guess === answer) {
-            addScore(slot, 8 + Math.min(8, answer.length)); this.solved.push({ answer, slot }); this.round += 1;
-            audio.synthHit(); celebrate(15);
-            if (this.round >= cipherRounds.length) finishRound("Mainframe breached. Hack complete.");
-            else { this.render(); this.scramble(); }
-          } else { audio.bad(); vibe([50, 50]); toast("Access Denied."); $('#cipherText').style.animation = "shake 0.3s"; }
-          syncRoom();
-        },
-        remoteAction(action) { if (action.name === "cipherSubmit") this.submit(1, action.raw); },
-        snapshot() { return { round: this.round, solved: this.solved }; },
-        restore(data) { this.round = data.round || 0; this.solved = data.solved || []; this.render(); }
-      },
-      
-      maze: {
-        size: 7, pos: { x: 0, y: 0 }, exit: { x: 6, y: 6 }, traps: [], gems: [], moves: 0,
-        start() {
-          this.pos = { x: 0, y: 0 }; this.exit = { x: 6, y: 6 }; this.moves = 0;
-          this.traps = shuffle([...Array(49).keys()].filter(n => ![0, 48, 1, 7, 41, 47].includes(n))).slice(0, 9);
-          this.gems = shuffle([...Array(49).keys()].filter(n => !this.traps.includes(n) && ![0, 48].includes(n))).slice(0, 8);
-          this.render(); startTimer(profile.roundLength, () => finishRound("Grid power failure. You died in the dark."));
-        },
-        render() {
-          $("#gameMount").innerHTML = `
-            <div class="game-panel">
-              <div class="turn-banner"><span>Pilot the Core</span><span>${this.moves} JUMPS</span></div>
-              <div class="maze-wrap">
-                <div class="maze-fog-overlay" id="fogOverlay"></div>
-                <div class="maze-grid" id="mazeGrid">
-                  ${[...Array(this.size * this.size).keys()].map(i => {
-                    const x = i % this.size; const y = Math.floor(i / this.size);
-                    const here = this.pos.x === x && this.pos.y === y;
-                    const exit = this.exit.x === x && this.exit.y === y;
-                    const trap = this.traps.includes(i); const gem = this.gems.includes(i);
-                    return `<div class="maze-cell ${here ? "here" : ""} ${exit ? "exit" : ""} ${trap ? "trap" : ""} ${gem ? "gem" : ""}">${here ? "US" : exit ? "EX" : gem ? "$" : trap ? "!" : ""}</div>`;
-                  }).join("")}
-                </div>
-              </div>
-              <div class="d-pad-wrap">
-                <button class="plain-button up" data-move="0,-1" type="button">UP</button>
-                <button class="plain-button left" data-move="-1,0" type="button">LEFT</button>
-                <button class="plain-button right" data-move="1,0" type="button">RIGHT</button>
-                <button class="plain-button down" data-move="0,1" type="button">DOWN</button>
-              </div>
-              <p class="instruction">The grid is dark. Dynamic Fog of War is active. Move to reveal.</p>
-            </div>
-          `;
-          this.updateFog();
-          $$("[data-move]").forEach(btn => btn.addEventListener("click", () => {
-            vibe(15);
-            const [dx, dy] = btn.dataset.move.split(",").map(Number);
-            this.move(slotForLocalAction(0), dx, dy);
-          }));
-        },
-        updateFog() {
-           const overlay = $("#fogOverlay"); const grid = $("#mazeGrid");
-           if(!overlay || !grid) return;
-           const pxX = (this.pos.x + 0.5) / this.size * 100;
-           const pxY = (this.pos.y + 0.5) / this.size * 100;
-           overlay.style.setProperty('--fx', `${pxX}%`);
-           overlay.style.setProperty('--fy', `${pxY}%`);
-        },
-        move(slot, dx, dy) {
-          if (isLiveGuest()) return sendAction({ name: "mazeMove", dx, dy });
-          const nx = clamp(this.pos.x + dx, 0, this.size - 1); const ny = clamp(this.pos.y + dy, 0, this.size - 1);
-          if (nx === this.pos.x && ny === this.pos.y) return;
-          this.pos = { x: nx, y: ny }; this.moves += 1; const index = ny * this.size + nx;
-          if (this.gems.includes(index)) { this.gems = this.gems.filter(g => g !== index); addScore(slot, 5); audio.pop(); }
-          if (this.traps.includes(index)) { addScore(slot ? 0 : 1, 3); toast("Trap hit! Partner steals 3."); audio.bad(); vibe([50,50]); }
-          if (nx === this.exit.x && ny === this.exit.y) { addScore(0, 15); addScore(1, 15); finishRound("System escaped. Co-op bonus!", null); } 
-          else this.render();
-          syncRoom();
-        },
-        remoteAction(a) { if (a.name === "mazeMove") this.move(1, a.dx, a.dy); },
-        snapshot() { return { pos: this.pos, traps: this.traps, gems: this.gems, moves: this.moves }; },
-        restore(d) { this.pos = d.pos || this.pos; this.traps = d.traps || []; this.gems = d.gems || []; this.moves = d.moves || 0; this.render(); }
-      },
-      
-      signal: {
-        colors: ["red", "blue", "green", "gold"], sequence: [], input: [], showing: false,
-        start() { this.sequence = [sample(this.colors), sample(this.colors)]; this.input = []; this.showing = false; this.render(); },
-        render() {
-          $("#gameMount").innerHTML = `
-            <div class="game-panel" style="display:flex; flex-direction:column; height:100%;">
-              <div class="turn-banner"><span>Chain Length: ${this.sequence.length}</span><span>${this.showing ? "OBSERVE" : "REPLICATE"}</span></div>
-              <div class="signal-board">
-                ${this.colors.map(c => `<button class="signal-pad ${c}" data-color="${c}" type="button"></button>`).join("")}
-              </div>
-              <button id="showSignalBtn" class="primary-button" type="button" style="padding:20px; font-size:1.2rem; margin-top:20px;">INITIATE SEQUENCE</button>
-            </div>
-          `;
-          $("#showSignalBtn").addEventListener("click", () => { vibe(15); this.flash(); });
-          $$(".signal-pad").forEach(pad => pad.addEventListener("pointerdown", () => { 
-             if(!this.showing) { pad.classList.add("active"); vibe(20); }
-             this.pick(slotForLocalAction(0), pad.dataset.color);
-          }));
-          $$(".signal-pad").forEach(pad => pad.addEventListener("pointerup", () => pad.classList.remove("active")));
-        },
-        flash() {
-          if (isLiveGuest()) return sendAction({ name: "signalFlash" });
-          this.showing = true; this.render();
-          this.sequence.forEach((color, i) => {
-            setTimeout(() => {
-              const pad = $(`.signal-pad.${color}`);
-              if (pad) { pad.classList.add("active"); setTimeout(() => pad.classList.remove("active"), 300); }
-              audio.tone(300 + (this.colors.indexOf(color) * 100), 0.1, "triangle", 0.05);
-            }, i * 450);
-          });
-          setTimeout(() => { this.showing = false; this.input = []; this.render(); syncRoom(); }, this.sequence.length * 450 + 200);
-          syncRoom();
-        },
-        pick(slot, color) {
-          if (isLiveGuest()) return sendAction({ name: "signalPick", color });
-          if (this.showing) return;
-          this.input.push(color);
-          audio.tone(300 + (this.colors.indexOf(color) * 100), 0.1, "triangle", 0.05);
-          const expected = this.sequence[this.input.length - 1];
-          if (color !== expected) {
-            addScore(slot ? 0 : 1, 4); toast("Sequence broken. Partner steals 4.");
-            this.input = []; this.sequence = [sample(this.colors), sample(this.colors)]; audio.bad(); vibe([50,50]); this.render();
-          } else if (this.input.length === this.sequence.length) {
-            addScore(0, this.sequence.length); addScore(1, this.sequence.length);
-            this.sequence.push(sample(this.colors)); this.input = []; celebrate(5);
-            if (this.sequence.length >= 9) finishRound("Absolute Sync Achieved.", null);
-            this.render();
-          }
-          syncRoom();
-        },
-        remoteAction(a) { if (a.name === "signalFlash") this.flash(); if (a.name === "signalPick") this.pick(1, a.color); },
-        snapshot() { return { sequence: this.sequence, input: this.input, showing: this.showing }; },
-        restore(d) { this.sequence = d.sequence || []; this.input = d.input || []; this.showing = Boolean(d.showing); this.render(); }
-      },
-      
-      trap: {
-        tiles: [], bank: [0, 0], turn: 0,
-        start() {
-          this.bank = [0, 0]; this.turn = 0;
-          let rawTiles = [...Array(25).keys()].map((_, i) => ({ id: i, kind: i < 5 ? "bomb" : i < 12 ? "bonus" : "safe", open: false, adj: 0 }));
-          rawTiles = shuffle(rawTiles);
-          const getAdj = (index) => {
-            let count = 0; const x = index % 5; const y = Math.floor(index / 5);
-            for(let dy=-1; dy<=1; dy++) {
-              for(let dx=-1; dx<=1; dx++) {
-                if(dx===0 && dy===0) continue;
-                const nx = x+dx, ny = y+dy;
-                if(nx>=0 && nx<5 && ny>=0 && ny<5) if(rawTiles[ny*5 + nx].kind === 'bomb') count++;
-              }
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        theater: { 900: '#050505', 800: '#0a0a0a', 700: '#141414', 600: '#1f1f1f' },
+                        accent: { 500: '#e50914', 600: '#b80710' } // Cinematic Red
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-in': 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }
+                    }
+                }
             }
-            return count;
-          };
-          rawTiles.forEach((t, i) => { if(t.kind !== 'bomb') t.adj = getAdj(i); });
-          this.tiles = rawTiles; this.render();
-        },
-        render() {
-          const tName = canonicalName(this.turn);
-          $("#gameMount").innerHTML = `
-            <div class="game-panel">
-              <div class="turn-banner"><span>${tName}'s Turn</span><span>Bank: You ${this.bank[room.mySlot]} / ${getRemoteName()} ${this.bank[room.mySlot === 0 ? 1 : 0]}</span></div>
-              <div class="trap-grid">
-                ${this.tiles.map((t, i) => {
-                  let content = "?";
-                  if(t.open) {
-                    if(t.kind === 'bomb') content = "!";
-                    else if(t.kind === 'bonus') content = "+5";
-                    else content = parseInt(t.adj) > 0 ? t.adj : "";
-                  }
-                  return `<button class="trap-card ${t.open ? `open ${t.kind}` : ""}" data-tile="${i}" type="button"><span>${content}</span></button>`;
-                }).join("")}
-              </div>
-              <button id="bankTrapBtn" class="primary-button" type="button" style="padding:15px; font-size:1.1rem">SECURE BANK & PASS</button>
-              <p class="instruction">Logic puzzle: Safe tiles reveal how many bombs touch them! Blue=+2, Green=+5.</p>
-            </div>
-          `;
-          $$(".trap-card").forEach(card => card.addEventListener("click", () => { vibe(10); this.reveal(slotForLocalAction(0), Number(card.dataset.tile)); }));
-          $("#bankTrapBtn").addEventListener("click", () => { vibe(20); this.bankNow(slotForLocalAction(0)); });
-        },
-        reveal(slot, index) {
-          if (isLiveGuest()) return sendAction({ name: "trapReveal", index });
-          if (slot !== this.turn) return toast(`Not your turn.`);
-          const tile = this.tiles[index]; if (!tile || tile.open) return;
-          tile.open = true;
-          if (tile.kind === "bomb") { this.bank[slot] = 0; this.turn = slot ? 0 : 1; audio.bad(); vibe([60,60]); }
-          else { this.bank[slot] += tile.kind === "bonus" ? 5 : 2; audio.pop(); }
-          if (this.tiles.filter(t => t.kind !== 'bomb').every(t => t.open)) finishRound("Minefield cleared."); else this.render();
-          syncRoom();
-        },
-        bankNow(slot) {
-          if (isLiveGuest()) return sendAction({ name: "trapBank" });
-          if (slot !== this.turn) return;
-          if(this.bank[slot] === 0) return toast("Nothing to bank!");
-          addScore(slot, this.bank[slot]); this.bank[slot] = 0; this.turn = slot ? 0 : 1; audio.synthHit(); this.render(); syncRoom();
-        },
-        remoteAction(a) { if (a.name === "trapReveal") this.reveal(1, a.index); if (a.name === "trapBank") this.bankNow(1); },
-        snapshot() { return { tiles: this.tiles, bank: this.bank, turn: this.turn }; },
-        restore(d) { this.tiles = d.tiles || []; this.bank = d.bank || [0, 0]; this.turn = d.turn || 0; this.render(); }
-      },
-      
-      reflex: {
-        phase: "wait", round: 0, timeout: null,
-        start() { this.round = 0; this.next(); },
-        next() {
-          clearTimeout(this.timeout); this.phase = "wait"; this.render(); syncRoom();
-          this.timeout = setTimeout(() => {
-            const r = Math.random();
-            this.phase = r < 0.6 ? "go" : (r < 0.85 ? "glitch" : "fake");
-            this.render();
-            if (this.phase === "go") audio.tone(920, 0.1, "square");
-            else if (this.phase === "fake") audio.tone(180, 0.1);
-            else { audio.tone(440, 0.3, "sawtooth", 0.02); audio.tone(480, 0.3, "square", 0.02); }
-            syncRoom();
-          }, 900 + Math.random() * 2000);
-        },
-        render() {
-          $("#gameMount").innerHTML = `
-            <div class="game-panel">
-              <div class="turn-banner"><span>Phase ${this.round + 1} of 9</span><span>${this.phase === "go" ? "STRIKE" : this.phase === "fake" ? "HOLD" : this.phase === "glitch" ? "ERROR" : "Wait"}</span></div>
-              <div class="reaction-grid">
-                <button class="reaction-pad ${this.phase}" data-slot="0" type="button">${canonicalName(0)}<br><small>${this.phase.toUpperCase()}</small></button>
-                <button class="reaction-pad p2 ${this.phase}" data-slot="1" type="button">${canonicalName(1)}<br><small>${this.phase.toUpperCase()}</small></button>
-              </div>
-            </div>
-          `;
-          $$(".reaction-pad").forEach(pad => pad.addEventListener("pointerdown", () => { vibe(15); this.tap(slotForLocalAction(Number(pad.dataset.slot))); }));
-        },
-        tap(slot) {
-          if (isLiveGuest()) return sendAction({ name: "reflexTap" });
-          clearTimeout(this.timeout);
-          if (this.phase === "go") { addScore(slot, 3); toast(`Direct Hit!`); audio.synthHit(); } 
-          else { addScore(slot ? 0 : 1, 3); toast(`Misfire! Partner scores.`); audio.bad(); vibe([50,50]); }
-          this.round += 1;
-          if (this.round >= 9) finishRound("Rift stabilized."); else setTimeout(() => this.next(), 800);
-          syncRoom();
-        },
-        remoteAction(a) { if (a.name === "reflexTap") this.tap(1); },
-        snapshot() { return { phase: this.phase, round: this.round }; },
-        restore(d) { this.phase = d.phase || "wait"; this.round = d.round || 0; this.render(); }
-      },
-      
-      remix: {
-        prompt: "", constraints: [], entries: [], turn: 0,
-        start() { this.prompt = sample(remixPrompts); this.constraints = shuffle(remixConstraints).slice(0, 2); this.entries = []; this.turn = 0; this.render(); },
-        render() {
-          const tName = canonicalName(this.turn);
-          $("#gameMount").innerHTML = `
-            <div class="game-panel">
-              <div class="turn-banner"><span>${tName} writes</span><span>${this.entries.length}/6 drops</span></div>
-              <div class="big-prompt"><strong>${safe(this.prompt)}</strong></div>
-              <div style="text-align:center; color:var(--muted); font-weight:900;">Rules: [${this.constraints.map(i => safe(i)).join("] & [")}]</div>
-              <div class="answer-row">
-                <input id="remixInput" maxlength="120" autocomplete="off" placeholder="Drop a line..." />
-                <button id="remixSubmit" class="primary-button" type="button">ADD</button>
-              </div>
-              <div class="story-log">${this.entries.map((e, i) => `<span class="pill ${e.slot===1 ? "p2" : ""}">${safe(e.text)}</span>`).join("")}</div>
-              ${this.entries.length >= 6 ? `<div class="pad-row"><button class="plain-button" data-vote="0" type="button">Award ${canonicalName(0)}</button><button class="plain-button" data-vote="1" type="button">Award ${canonicalName(1)}</button></div>` : ""}
-            </div>
-          `;
-          $("#remixSubmit")?.addEventListener("click", () => { vibe(15); this.add(slotForLocalAction(0), $("#remixInput").value); });
-          $("#remixInput")?.addEventListener("keydown", (e) => { if (e.key === "Enter") { vibe(15); this.add(slotForLocalAction(0), $("#remixInput").value); } });
-          $$("[data-vote]").forEach(btn => btn.addEventListener("click", () => { vibe(20); this.vote(slotForLocalAction(Number(btn.dataset.vote))); }));
-        },
-        add(slot, text) {
-          if (isLiveGuest()) { sendAction({ name: "remixAdd", text }); $("#remixInput").value = ""; return; }
-          const clean = text.trim(); if (clean.length < 4) return;
-          this.entries.push({ slot, text: clean }); addScore(slot, 1); this.turn = this.turn ? 0 : 1; this.render(); syncRoom(); audio.pop();
-        },
-        vote(slot) {
-          if (isLiveGuest()) return sendAction({ name: "remixVote", slot });
-          addScore(slot, 8); finishRound(`Style points awarded!`, slot);
-        },
-        remoteAction(a) { if (a.name === "remixAdd") this.add(1, a.text); if (a.name === "remixVote") this.vote(a.slot); },
-        snapshot() { return { prompt: this.prompt, constraints: this.constraints, entries: this.entries, turn: this.turn }; },
-        restore(d) { this.prompt = d.prompt || ""; this.constraints = d.constraints || []; this.entries = d.entries || []; this.turn = d.turn || 0; this.render(); }
-      },
-      
-      sketch: {
-        canvas: null, ctx: null, drawing: false, initialized: false,
-        color: "#ff4f7b", size: 8, prompt: "", glow: true, tool: 'pen',
-        lastP: null, undoStack: [], wrap: null, dpr: 1, _resize: null,
-        syncBuffer: [], syncTimer: null,
+        }
+    </script>
+
+    <!-- PeerJS for P2P Networking -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+    <style>
+        /* --- Core & Reset --- */
+        body { background-color: #050505; color: #f5f5f5; overflow: hidden; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* --- Ambilight Glow Effect --- */
+        .ambilight-container {
+            position: absolute;
+            inset: -5%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        .ambilight-container.active { opacity: 0.6; }
+        #ambilightVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(80px) saturate(150%);
+            transform: scale(1.1);
+        }
+
+        /* --- Video Player & Controls --- */
+        .player-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            outline: none;
+        }
         
-        start() {
-          document.body.classList.add('sketch-mode-active');
-          $("#appShell").style.display = 'none'; 
-          
-          if (!this.prompt) this.prompt = sample(sketchPrompts);
-          
-          if (!$("#sketchLayoutMaster")) {
-            document.body.insertAdjacentHTML("beforeend", `
-              <div class="sketch-layout-master" id="sketchLayoutMaster">
-                <header class="sketch-top-bar">
-                  <div class="sketch-brand">PRO STUDIO</div>
-                  <div class="sketch-prompt prompt-text">${safe(this.prompt)}</div>
-                  <div class="sketch-actions">
-                    <button id="sketchA" class="award-btn p1-bg">Award ${canonicalName(0)}</button>
-                    <button id="sketchB" class="award-btn p2-bg">Award ${canonicalName(1)}</button>
-                    <button id="sketchExit" class="award-btn danger-bg" title="Exit">✕</button>
-                  </div>
-                </header>
+        /* Custom Controls Overlay */
+        .controls-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+            padding: 40px 32px 24px 32px;
+            opacity: 1;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 30;
+        }
+        .player-wrapper.idle .controls-overlay,
+        .player-wrapper.idle .cursor-hide {
+            opacity: 0 !important;
+            cursor: none !important;
+        }
+        .player-wrapper.idle { cursor: none; }
+
+        /* Scrubber/Progress Bar */
+        .scrubber-container {
+            position: relative;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: height 0.2s;
+        }
+        .scrubber-container:hover { height: 8px; }
+        .scrubber-progress {
+            position: absolute;
+            top: 0; left: 0; height: 100%;
+            background: #e50914;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+        .scrubber-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 16px; height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+            pointer-events: none;
+        }
+        .scrubber-container:hover .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }
+
+        /* Range sliders */
+        input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; margin-top: -4px; transition: transform 0.1s; }
+        input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+
+        /* --- Cinematic Overlay Chat --- */
+        .overlay-chat-container {
+            position: absolute;
+            bottom: 100px;
+            left: 32px;
+            width: 350px;
+            max-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            pointer-events: none;
+            z-index: 20;
+            overflow: hidden;
+        }
+        .overlay-message {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 8px 14px;
+            border-radius: 8px;
+            margin-top: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            pointer-events: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: opacity 0.5s ease;
+        }
+        .overlay-message.fade-out { opacity: 0; }
+
+        /* --- Glass Sidebar --- */
+        .glass-sidebar {
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s;
+        }
+        .sidebar-collapsed { transform: translateX(100%); width: 0 !important; border: none; }
+
+        /* UI Utilities */
+        .btn-icon { color: #a3a3a3; transition: all 0.2s; }
+        .btn-icon:hover { color: #fff; transform: scale(1.1); }
+        .btn-primary { background: #e50914; color: white; transition: background 0.2s; }
+        .btn-primary:hover { background: #b80710; }
+        
+        input, select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; }
+        input:focus { outline: none; border-color: #e50914; }
+
+        /* Loading Spinner */
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #e50914; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col selection:bg-accent-500 selection:text-white text-sm">
+
+    <!-- AUDIO FOR VOICE CHAT -->
+    <audio id="remoteAudio" autoplay></audio>
+
+    <!-- ==================== LOBBY SCREEN ==================== -->
+    <div id="lobbyScreen" class="absolute inset-0 z-50 flex items-center justify-center bg-theater-900 transition-opacity duration-700">
+        <!-- Cinematic Background -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-accent-600/10 blur-[150px]"></div>
+            <div class="absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[150px]"></div>
+        </div>
+
+        <div class="relative w-full max-w-4xl p-8 grid md:grid-cols-2 gap-12 items-center">
+            <!-- Branding -->
+            <div class="space-y-6">
+                <h1 class="text-5xl font-bold tracking-tight text-white flex items-center gap-4">
+                    <svg class="w-12 h-12 text-accent-500" fill="currentColor" viewBox="0 0 24 24"><path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H4V5h16v14z"/><path d="M8 15h8l-4-7z"/></svg>
+                    Lumière
+                </h1>
+                <p class="text-gray-400 text-lg leading-relaxed">
+                    A flawless, zero-latency cinematic experience. Sync 4K local files instantly, or share any screen. Perfect for long-distance movie nights.
+                </p>
+                <div class="flex items-center gap-4 text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                    <span><span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>E2E Encrypted</span>
+                    <span><span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Lossless Sync</span>
+                </div>
+            </div>
+
+            <!-- Connection Panel -->
+            <div class="bg-theater-800/80 backdrop-blur-xl border border-white/5 rounded-2xl p-8 shadow-2xl">
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Your Identity</label>
+                        <input type="text" id="nameInput" class="w-full px-4 py-3 rounded-lg text-base" placeholder="Enter your name" value="Viewer">
+                    </div>
+                    
+                    <div class="pt-2">
+                        <button id="hostBtn" class="w-full btn-primary font-semibold rounded-lg px-4 py-3 shadow-[0_0_20px_rgba(229,9,20,0.3)] flex items-center justify-center gap-2 text-base transition-transform hover:scale-[1.02]">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Create Private Theater
+                        </button>
+                    </div>
+
+                    <div class="relative flex items-center py-2">
+                        <div class="flex-grow border-t border-white/10"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-500 text-xs font-medium uppercase tracking-wider">Or</span>
+                        <div class="flex-grow border-t border-white/10"></div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <input type="text" id="joinCodeInput" class="w-full px-4 py-3 rounded-lg text-center uppercase tracking-[0.2em] font-mono text-lg placeholder:tracking-normal placeholder:normal-case placeholder:text-base" placeholder="Room Code" maxlength="6">
+                        <button id="joinBtn" class="bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg px-6 py-3 transition-colors text-base">Join</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN THEATER ==================== -->
+    <div id="theaterScreen" class="hidden flex-1 flex w-full h-full">
+        
+        <!-- MAIN VIEW: Video Player -->
+        <div id="mainView" class="relative flex-1 flex flex-col bg-black transition-all duration-300">
+            
+            <!-- Ambilight Background -->
+            <div id="ambilight" class="ambilight-container">
+                <video id="ambilightVideo" muted playsinline></video>
+            </div>
+
+            <!-- Top Overlay (Hidden on idle) -->
+            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-6 z-30 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-center transition-opacity duration-400">
+                <div class="flex items-center gap-4">
+                    <div class="bg-accent-600 text-white text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wider shadow-lg">Room: <span id="roomCodeDisplay" class="font-mono ml-1">----</span></div>
+                    <div id="syncIndicator" class="flex items-center gap-2 text-xs font-medium text-gray-300">
+                        <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>
+                        <span id="syncText">Waiting for partner</span>
+                    </div>
+                </div>
+                <button id="toggleSidebarBtn" class="btn-icon p-2 bg-black/50 rounded-full hover:bg-white/10 backdrop-blur" title="Toggle Sidebar">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+
+            <!-- Center Placeholder (When no media) -->
+            <div id="noMediaOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
+                <svg class="w-20 h-20 text-white/10 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                <p class="text-gray-400 text-lg font-light tracking-wide">Select a media source from the sidebar to begin.</p>
+            </div>
+
+            <!-- Overlay Chat Container -->
+            <div id="overlayChat" class="overlay-chat-container"></div>
+
+            <!-- Video Player Wrapper -->
+            <div id="playerWrapper" class="player-wrapper group">
+                <video id="mainVideo" playsinline></video>
                 
-                <div class="adaptive-canvas-wrap neon-mode" id="canvasWrap">
-                  <div class="brush-cursor" id="brushCursor"></div>
-                  <canvas id="drawCanvas" touch-action="none"></canvas>
-                  <div class="built-for-monica-watermark">built for monica</div>
+                <!-- Bottom Cinematic Controls -->
+                <div id="videoControls" class="controls-overlay flex flex-col gap-4">
+                    <!-- Progress / Scrubber -->
+                    <div id="scrubber" class="scrubber-container">
+                        <div id="scrubberProgress" class="scrubber-progress w-0"></div>
+                        <div id="scrubberThumb" class="scrubber-thumb left-0"></div>
+                    </div>
+
+                    <!-- Buttons Row -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-6">
+                            <button id="playPauseBtn" class="btn-icon">
+                                <svg id="iconPlay" class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <svg id="iconPause" class="w-10 h-10 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+                            
+                            <!-- Volume Group -->
+                            <div class="flex items-center gap-3 group/vol">
+                                <button id="muteBtn" class="btn-icon">
+                                    <svg id="iconVol" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                                    <svg id="iconVolMuted" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                                </button>
+                                <input type="range" id="volSlider" class="w-0 opacity-0 group-hover/vol:w-24 group-hover/vol:opacity-100 transition-all duration-300 origin-left" min="0" max="1" step="0.05" value="1">
+                            </div>
+
+                            <span id="timeDisplay" class="text-gray-300 font-mono text-sm tracking-wide">00:00 / 00:00</span>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            <!-- Sync / Drift Indicator -->
+                            <div id="driftIndicator" class="hidden text-xs text-green-400 font-medium px-2 py-1 bg-green-400/10 rounded">In Sync</div>
+                            
+                            <!-- Theater Lighting Toggle -->
+                            <button id="ambilightBtn" class="btn-icon" title="Toggle Ambilight">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                            </button>
+
+                            <button id="fullscreenBtn" class="btn-icon">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR: Controls & Chat -->
+        <div id="sidebar" class="glass-sidebar w-80 lg:w-96 flex flex-col h-full flex-shrink-0 relative z-40 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+            
+            <!-- Voice Panel -->
+            <div class="p-5 border-b border-white/5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Voice Comms</h3>
+                    <button id="micBtn" class="p-2.5 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10" title="Toggle Mic">
+                        <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                        <svg id="iconMicMuted" class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <input type="range" id="voiceVolSlider" class="flex-1" min="0" max="1" step="0.05" value="0.8" title="Voice Chat Volume">
+                </div>
+            </div>
+
+            <!-- Media Sources -->
+            <div class="p-5 border-b border-white/5 bg-white/[0.02]">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Media Source</h3>
+                
+                <div class="space-y-3">
+                    <!-- Local File (Best Quality) -->
+                    <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-2.5 cursor-pointer transition shadow-lg shadow-accent-500/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <span class="font-medium">Sync Local File (4K Lossless)</span>
+                        <input type="file" id="fileInput" class="hidden" accept="video/mp4,video/webm,video/ogg,video/x-matroska">
+                    </label>
+                    <p class="text-[10px] text-gray-500 text-center -mt-1 mb-2">Both users select the same downloaded file.</p>
+                    
+                    <!-- Screen Share (Fallback) -->
+                    <button id="shareScreenBtn" class="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-lg px-4 py-2.5 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <span class="font-medium">Share Screen (Any Site)</span>
+                    </button>
+                    
+                    <!-- Direct URL -->
+                    <div class="flex gap-2 pt-2">
+                        <input type="url" id="urlInput" class="flex-1 px-3 py-2 text-xs rounded border border-white/10 bg-black/50" placeholder="Direct .mp4 URL">
+                        <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded text-xs font-medium transition">Load</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col min-h-0 bg-theater-900/50">
+                <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+                    <div class="text-center text-xs text-gray-500 font-medium py-2">E2E Encrypted Chat Session Started</div>
                 </div>
                 
-                <div class="floating-dock">
-                  <div class="dock-group">
-                    <button class="tool-btn active" data-tool="pen" title="Pro Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
-                    <button class="tool-btn" data-tool="eraser" title="Eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L20 9C20.5 9.5 20.5 10.5 20 11L11 20"></path><path d="M10 11l5 5"></path></svg></button>
-                  </div>
-                  <div class="dock-group">
-                    <input type="range" id="brushSize" min="2" max="60" value="${this.size}">
-                    <div class="color-picker-wrap"><input type="color" id="nativeColor" value="${this.color}"></div>
-                    <button class="tool-btn active" id="glowToggle" title="Neon Glow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg></button>
-                  </div>
-                  <div class="dock-group" style="border:none;">
-                    <button id="undoCanvas" class="tool-btn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path></svg></button>
-                    <button id="clearCanvas" class="tool-btn" title="Clear Canvas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg></button>
-                    <button id="downloadCanvas" class="tool-btn" title="Save Masterpiece"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
-                  </div>
+                <div class="p-4 bg-theater-800/80 border-t border-white/5">
+                    <form id="chatForm" class="relative">
+                        <input type="text" id="chatInput" class="w-full bg-black/50 border border-white/10 rounded-lg pl-4 pr-12 py-3 text-sm focus:border-accent-500 transition-colors placeholder:text-gray-600" placeholder="Send a message..." autocomplete="off">
+                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-white transition-colors rounded-md hover:bg-white/10">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        </button>
+                    </form>
                 </div>
-              </div>
-            `);
-          } else {
-            $("#sketchLayoutMaster").style.display = "flex";
-            $(".prompt-text").textContent = this.prompt;
-          }
-          
-          this.canvas = $("#drawCanvas"); 
-          this.ctx = this.canvas.getContext("2d"); // GPU Hardware Acceleration Unlocked
-          this.wrap = $("#canvasWrap");
-          
-          // DELAY DOM RENDER ON MOBILE TO PREVENT 0x0 CANVAS ERROR
-          setTimeout(() => {
-              if (!this.initialized) {
-                this.bindUI(); 
-                this.bindCanvas();
-                this.initialized = true;
-              }
-              
-              if (this._resize) window.removeEventListener("resize", this._resize);
-              this._resize = this.resizeCanvas.bind(this);
-              window.addEventListener("resize", this._resize);
-              
-              this.resizeCanvas();
-              this.clear(false); 
-              this.undoStack = []; 
-              this.saveState();
-              
-              if (this.syncTimer) clearInterval(this.syncTimer);
-              this.syncTimer = setInterval(() => this.flushSync(), 30);
-          }, 50);
-        },
-        
-        close() {
-          if (this.syncTimer) clearInterval(this.syncTimer);
-          if($("#sketchLayoutMaster")) $("#sketchLayoutMaster").style.display = "none";
-          document.body.classList.remove('sketch-mode-active');
-          $("#appShell").style.display = 'flex';
-          if(this._resize) window.removeEventListener("resize", this._resize);
-        },
+            </div>
+        </div>
+    </div>
 
-        resizeCanvas() {
-          if (!this.wrap || !this.canvas) return;
-          const rect = this.wrap.getBoundingClientRect();
-          this.dpr = window.devicePixelRatio || 1;
-          
-          if (this.canvas.style.width === `${rect.width}px` && this.canvas.style.height === `${rect.height}px`) return;
-          
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
-          if (this.canvas.width > 0) tempCanvas.getContext('2d').drawImage(this.canvas, 0, 0);
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
-          this.canvas.width = rect.width * this.dpr;
-          this.canvas.height = rect.height * this.dpr;
-          this.canvas.style.width = `${rect.width}px`;
-          this.canvas.style.height = `${rect.height}px`;
-          
-          this.ctx.scale(this.dpr, this.dpr);
-          this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
-          
-          if (tempCanvas.width > 0) {
-            this.ctx.save();
-            this.ctx.setTransform(1, 0, 0, 1, 0, 0); 
-            this.ctx.drawImage(tempCanvas, 0, 0);
-            this.ctx.restore();
-          }
-        },
-        
-        bindUI() {
-          $$(".tool-btn[data-tool]").forEach(btn => btn.addEventListener("click", () => {
-            vibe(10); this.tool = btn.dataset.tool; 
-            $$(".tool-btn[data-tool]").forEach(b => b.classList.remove("active")); btn.classList.add("active");
-          }));
-          
-          $("#brushSize").addEventListener("input", e => {
-            this.size = Number(e.target.value);
-            const cursor = $("#brushCursor");
-            if(cursor) { cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`; }
-          });
-          
-          $("#nativeColor").addEventListener("input", e => { this.color = e.target.value; });
-          
-          $("#glowToggle").addEventListener("click", (e) => { 
-            vibe(10); this.glow = !this.glow; e.currentTarget.classList.toggle("active", this.glow); 
-            this.wrap.classList.toggle("neon-mode", this.glow);
-          });
-          
-          $("#undoCanvas").addEventListener("click", () => { vibe(15); this.undo(); });
-          $("#clearCanvas").addEventListener("click", () => { vibe(25); this.saveState(); this.clear(true); });
-          $("#downloadCanvas").addEventListener("click", () => { 
-             vibe(20); 
-             const tempCanvas = document.createElement('canvas'); 
-             tempCanvas.width = this.canvas.width; tempCanvas.height = this.canvas.height;
-             const tCtx = tempCanvas.getContext('2d');
-             tCtx.fillStyle = this.glow ? "#0a0a0f" : "#fffdf5"; 
-             tCtx.fillRect(0,0, tempCanvas.width, tempCanvas.height);
-             tCtx.drawImage(this.canvas, 0, 0);
-             const link = document.createElement('a'); link.download = 'playroom-masterpiece.png'; 
-             link.href = tempCanvas.toDataURL('image/png'); link.click();
-          });
-          
-          $("#sketchA").addEventListener("click", () => this.award(slotForLocalAction(0)));
-          $("#sketchB").addEventListener("click", () => this.award(slotForLocalAction(1)));
-          $("#sketchExit").addEventListener("click", () => { 
-             if (room.connected && room.role !== "host") return toast("Only host can return."); 
-             clearTimer(); app.activeGame = null; app.finished = false; this.close(); showScreen("lobbyScreen"); syncRoom();
-          });
-        },
-        
-        bindCanvas() {
-          const cursor = $("#brushCursor");
-          
-          const getPos = (e) => {
-            const rect = this.wrap.getBoundingClientRect();
-            // Bulletproof mobile fallback for missing clientX
-            const cx = e.clientX !== undefined ? e.clientX : (e.touches && e.touches.length > 0 ? e.touches[0].clientX : 0);
-            const cy = e.clientY !== undefined ? e.clientY : (e.touches && e.touches.length > 0 ? e.touches[0].clientY : 0);
-            return { 
-               x: cx - rect.left, 
-               y: cy - rect.top, 
-               nx: (cx - rect.left) / rect.width, 
-               ny: (cy - rect.top) / rect.height 
-             };
-          };
-          
-          const updateCursor = (e) => { 
-             if (e.pointerType === 'touch') { cursor.style.display = 'none'; return; }
-             const rect = this.wrap.getBoundingClientRect();
-             const cx = e.clientX !== undefined ? e.clientX : 0;
-             const cy = e.clientY !== undefined ? e.clientY : 0;
-             cursor.style.display = 'block';
-             cursor.style.width = `${this.size}px`; cursor.style.height = `${this.size}px`;
-             cursor.style.transform = `translate(${cx - rect.left}px, ${cy - rect.top}px) translate(-50%, -50%)`;
-             cursor.style.color = this.color;
-          };
-          
-          const down = (e) => { 
-             if(!e.isPrimary && e.pointerType !== undefined) return;
-             if(e.target.closest('.floating-dock') || e.target.closest('.sketch-top-bar')) return;
-             
-             e.preventDefault(); 
-             this.drawing = true; 
-             if(this.canvas.setPointerCapture) this.canvas.setPointerCapture(e.pointerId);
-             
-             const p = getPos(e); 
-             this.lastP = p;
-             
-             const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
-             const dynSize = this.size * pressure;
-             
-             this.executeDraw(p.x, p.y, p.x + 0.01, p.y + 0.01, this.color, dynSize, this.tool, this.glow);
-             
-             this.syncBuffer.push({ nx0: p.nx.toFixed(4), ny0: p.ny.toFixed(4), nx1: (p.nx + 0.0001).toFixed(4), ny1: (p.ny + 0.0001).toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
-             updateCursor(e);
-          };
-          
-          const move = (e) => { 
-             if(!e.isPrimary && e.pointerType !== undefined) return;
-             updateCursor(e);
-             if (!this.drawing) return; 
-             
-             e.preventDefault(); 
-             const p = getPos(e); 
-             
-             const pressure = (e.pointerType === 'pen' && e.pressure) ? Math.max(0.2, e.pressure) : 1;
-             const dynSize = this.size * pressure;
+    <script>
+        /* =========================================================================
+           LUMIÈRE CORE ARCHITECTURE
+           Designed for pristine laptop-to-laptop synchronization.
+           ========================================================================= */
 
-             this.executeDraw(this.lastP.x, this.lastP.y, p.x, p.y, this.color, dynSize, this.tool, this.glow);
-             
-             this.syncBuffer.push({ nx0: this.lastP.nx.toFixed(4), ny0: this.lastP.ny.toFixed(4), nx1: p.nx.toFixed(4), ny1: p.ny.toFixed(4), c: this.color, s: dynSize.toFixed(1), t: this.tool, g: this.glow });
-             
-             this.lastP = p;
-          };
-          
-          const up = (e) => { 
-            if(!this.drawing) return;
-            this.drawing = false; 
-            if(this.canvas.releasePointerCapture) this.canvas.releasePointerCapture(e.pointerId); 
-            this.saveState(); 
-          };
-          
-          this.canvas.addEventListener("pointerdown", down); 
-          this.canvas.addEventListener("pointermove", move); 
-          this.canvas.addEventListener("pointerup", up);
-          this.canvas.addEventListener("pointercancel", up);
-          this.canvas.addEventListener("pointerleave", () => { 
-             if(this.drawing) { this.drawing = false; this.saveState(); }
-             cursor.style.display = 'none'; 
-          });
-        },
-        
-        executeDraw(x0, y0, x1, y1, color, size, tool, glow) { 
-           this.ctx.lineCap = "round"; this.ctx.lineJoin = "round";
-           this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = size;
-           
-           if(glow && tool !== 'eraser') { this.ctx.shadowBlur = size * 1.5; this.ctx.shadowColor = color; } else { this.ctx.shadowBlur = 0; }
-           if (tool === 'eraser') { this.ctx.globalCompositeOperation = 'destination-out'; this.ctx.lineWidth = size * 2; this.ctx.shadowBlur = 0; } else { this.ctx.globalCompositeOperation = 'source-over'; }
-           
-           this.ctx.beginPath(); 
-           this.ctx.moveTo(x0, y0); 
-           this.ctx.lineTo(x1, y1); 
-           this.ctx.stroke();
-        },
-        
-        flushSync() {
-          if (this.syncBuffer.length > 0 && room.connected && !room.suppress) {
-            sendSketch({ name: "batch", strokes: this.syncBuffer });
-            this.syncBuffer = [];
-          }
-        },
-        
-        saveState() {
-          // MEMORY LIMIT FOR MOBILE CRASH FIX
-          const isMobile = window.innerWidth <= 768;
-          const limit = isMobile ? 5 : 15;
-          if (this.undoStack.length > limit) this.undoStack.shift();
-          this.undoStack.push(this.canvas.toDataURL('image/webp', 0.5));
-        },
-        
-        undo() {
-          if (this.undoStack.length > 0) {
-            const dataUrl = this.undoStack.pop();
-            const img = new Image();
-            img.onload = () => {
-              this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
-              this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-              this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-              this.ctx.drawImage(img, 0, 0); this.ctx.restore();
-            };
-            img.src = dataUrl;
-            if (room.connected) sendSketch({ name: "syncFull", data: dataUrl });
-          }
-        },
-        
-        clear(sendIt) { 
-           this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
-           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-           if (sendIt) sendSketch({ name: "clear", glow: this.glow }); 
-         },
-        
-        award(slot) { vibe(40); if (isLiveGuest()) return sendAction({ name: "sketchAward", slot }); addScore(slot, 5); syncRoom(); celebrate(20); },
-        remoteAction(a) { if (a.name === "sketchAward") this.award(a.slot); },
-        
-        remoteSketch(p) {
-          if (!this.ctx || !this.wrap) return;
-          if (p.name === "clear") { 
-             this.glow = p.glow; $("#canvasWrap").classList.toggle("neon-mode", this.glow); 
-             $('#glowToggle').classList.toggle("active", this.glow); this.clear(false); 
-           }
-          else if (p.name === "syncFull") {
-            const img = new Image();
-            img.onload = () => {
-                this.ctx.globalCompositeOperation = 'source-over'; this.ctx.shadowBlur = 0;
-               this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-               this.ctx.drawImage(img, 0, 0); this.ctx.restore();
-            };
-            img.src = p.data;
-          }
-          else if (p.name === "batch") {
-            const rect = this.wrap.getBoundingClientRect();
-            p.strokes.forEach(s => {
-               this.executeDraw(s.nx0 * rect.width, s.ny0 * rect.height, s.nx1 * rect.width, s.ny1 * rect.height, s.c, s.s, s.t, s.g);
-            });
-          }
-        },
-        snapshot() { return { prompt: this.prompt, glow: this.glow, image: this.canvas ? this.canvas.toDataURL('image/webp', 0.5) : null }; },
-        restore(d) { 
-           this.prompt = d.prompt || this.prompt || sample(sketchPrompts); this.glow = d.glow ?? true;
-           if (!this.canvas) this.start();
-           const title = $(".prompt-text"); if (title) title.textContent = this.prompt;
-           if(d.image) { this.remoteSketch({name: "syncFull", data: d.image}); }
-        }
-      }
-    };
-    
-    function renderStats() {
-      $("#statGames").textContent = profile.stats.games;
-      $("#statWinsP1").textContent = profile.stats.wins[0]; $("#statWinsP2").textContent = profile.stats.wins[1];
-      $("#statStreak").textContent = profile.stats.bestStreak;
-      $("#achievementList").innerHTML = (profile.stats.achievements.length ? profile.stats.achievements : ["No trophies yet."]).map(i => `<div><strong>${safe(i)}</strong></div>`).join("");
-    }
-    
-    function celebrate(amount = 36) {
-      const canvas = $("#worldCanvas");
-      canvas.dispatchEvent(new CustomEvent("burst", { detail: { amount, x: canvas.width / 2, y: canvas.height * 0.18 } }));
-    }
-    
-    function initBackground() {
-      const canvas = $("#worldCanvas"); const ctx = canvas.getContext("2d");
-      let dots = []; let shards = []; let mouse = { x: -1000, y: -1000 };
-      
-      const updateMouse = (e) => { mouse.x = (e.touches ? e.touches[0].clientX : e.clientX) * devicePixelRatio; mouse.y = (e.touches ? e.touches[0].clientY : e.clientY) * devicePixelRatio; };
-      window.addEventListener('mousemove', updateMouse);
-      window.addEventListener('touchmove', updateMouse, {passive: true});
-      window.addEventListener('mouseout', () => { mouse.x = -1000; mouse.y = -1000; });
-      window.addEventListener('touchend', () => { mouse.x = -1000; mouse.y = -1000; });
-      
-      const resize = () => {
-        canvas.width = window.innerWidth * devicePixelRatio; canvas.height = window.innerHeight * devicePixelRatio;
-        dots = Array.from({ length: Math.min(100, Math.floor(window.innerWidth / 15)) }, () => ({
-          x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-          r: (Math.random() * 2 + 1) * devicePixelRatio, vx: (Math.random() - 0.5) * 0.4 * devicePixelRatio, vy: (Math.random() - 0.5) * 0.4 * devicePixelRatio,
-          c: sample(["#ff4f7b", "#2f7df6", "#ff9f1c", "#38d9a9", "#ffffff"])
-        }));
-      };
-      const draw = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        dots.forEach((dot) => {
-          dot.x += dot.vx; dot.y += dot.vy;
-          if (dot.x < 0 || dot.x > canvas.width) dot.vx *= -1;
-          if (dot.y < 0 || dot.y > canvas.height) dot.vy *= -1;
-          
-          const dx = mouse.x - dot.x; const dy = mouse.y - dot.y; const dist = Math.sqrt(dx*dx + dy*dy);
-          if(dist < 150 * devicePixelRatio) {
-            dot.x -= (dx/dist) * 2; dot.y -= (dy/dist) * 2;
-            ctx.beginPath(); ctx.moveTo(dot.x, dot.y); ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = dot.c; ctx.globalAlpha = 0.2; ctx.stroke();
-          }
-          ctx.globalAlpha = 0.6; ctx.fillStyle = dot.c; ctx.beginPath(); ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2); ctx.fill();
-        });
-        
-        shards.forEach(piece => {
-          piece.x += piece.vx; piece.y += piece.vy; piece.vy += 0.08 * devicePixelRatio; piece.life -= 1;
-          ctx.globalAlpha = Math.max(0, piece.life / 90); ctx.fillStyle = piece.c; ctx.save();
-          ctx.translate(piece.x, piece.y); ctx.rotate(piece.life * 0.1); ctx.fillRect(-piece.s / 2, -piece.s / 2, piece.s, piece.s); ctx.restore();
-        });
-        shards = shards.filter(p => p.life > 0); ctx.globalAlpha = 1;
-        requestAnimationFrame(draw);
-      };
-      canvas.addEventListener("burst", (e) => {
-        for (let i = 0; i < e.detail.amount; i += 1) {
-          shards.push({
-            x: e.detail.x, y: e.detail.y, vx: (Math.random() - 0.5) * 16 * devicePixelRatio, vy: (Math.random() - 1.2) * 14 * devicePixelRatio,
-            s: (Math.random() * 8 + 4) * devicePixelRatio, life: 90, c: sample(["#ff4f7b", "#2f7df6", "#ff9f1c", "#38d9a9", "#fffaf0"])
-          });
-        }
-      });
-      window.addEventListener("resize", resize); resize(); draw();
-    }
-    
-    function bindApp() {
-      $("#playerOneInput").addEventListener("input", e => { profile.names[0] = e.target.value.trim() || "You"; if (room.role === "host") app.roomNames[0] = localName(); if (room.role === "guest") send("HELLO", { name: localName(), slot: 1 }); saveProfile(); renderChrome(); syncRoom(); });
-      $("#playerTwoInput").addEventListener("input", e => { profile.names[1] = e.target.value.trim() || "Partner"; if (!room.connected) app.roomNames[1] = partnerName(); saveProfile(); renderChrome(); });
-      $("#themeSelect").addEventListener("change", e => setTheme(e.target.value));
-      $("#roundLengthSelect").addEventListener("change", e => { profile.roundLength = Number(e.target.value); saveProfile(); });
-      
-      const onBack = () => { 
-          vibe(15);
-         if (room.connected && room.role !== "host") return toast("Only host can return."); 
-          clearTimer(); app.activeGame = null; app.finished = false; 
-          if(modules.sketch.close) modules.sketch.close();
-         showScreen("lobbyScreen"); syncRoom(); 
-       };
-      $("#backBtn").addEventListener("click", onBack);
-      $("#homeBtn").addEventListener("click", onBack);
-      
-      $("#resetGameBtn").addEventListener("click", () => { vibe(15); startGame(app.activeGame); });
-      $("#createRoomBtn").addEventListener("click", () => { vibe(15); createRoom(); });
-      $("#joinRoomBtn").addEventListener("click", () => { vibe(15); joinRoom(); });
-      $("#roomCodeInput").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4));
-      $("#soundBtn").addEventListener("click", () => { vibe(15); profile.sound = !profile.sound; saveProfile(); renderChrome(); });
-      $("#sparkBtn").addEventListener("click", () => { vibe(40); celebrate(); });
-      $("#statsBtn").addEventListener("click", () => { vibe(15); renderStats(); $("#statsDialog").showModal(); });
-      $("#closeStatsBtn").addEventListener("click", () => { vibe(10); $("#statsDialog").close(); });
-      $("#clearStatsBtn").addEventListener("click", () => { vibe(40); profile.stats = { games: 0, wins: [0, 0], bestStreak: 0, achievements: [] }; resetScores(); saveProfile(); renderStats(); toast("Stats cleared."); });
-      document.body.addEventListener("click", () => audio.unlock(), { once: true });
-    }
-    
-    window.addEventListener("DOMContentLoaded", () => {
-        loadProfile(); app.roomNames = [localName(), partnerName()]; setTheme(profile.theme);
-        renderGameGrid(); renderChrome(); bindApp(); initBackground();
-    });
-  </script>
+        // --- 1. Global State & DOM ---
+        const State = {
+            isHost: false,
+            roomId: '',
+            myName: 'Viewer',
+            peer: null,
+            conn: null,
+            mediaConn: null,       // Screen share connection
+            voiceConn: null,       // Persistent voice connection
+            localVoiceStream: null,
+            localScreenStream: null,
+            
+            // Sync & Playback
+            isScreenSharing: false,
+            isSyncing: false,      // Mutex lock to prevent echo-loops during sync
+            lastSyncTime: 0,
+            driftThreshold: 0.8,   // Seconds of drift allowed before forcing sync
+            
+            // UI
+            sidebarOpen: true,
+            controlsTimeout: null,
+            ambilightEnabled: true
+        };
+
+        const UI = {
+            lobby: document.getElementById('lobbyScreen'),
+            theater: document.getElementById('theaterScreen'),
+            nameInput: document.getElementById('nameInput'),
+            hostBtn: document.getElementById('hostBtn'),
+            joinInput: document.getElementById('joinCodeInput'),
+            joinBtn: document.getElementById('joinBtn'),
+            
+            video: document.getElementById('mainVideo'),
+            ambilightVideo: document.getElementById('ambilightVideo'),
+            ambilightContainer: document.getElementById('ambilight'),
+            playerWrapper: document.getElementById('playerWrapper'),
+            noMediaOverlay: document.getElementById('noMediaOverlay'),
+            
+            playBtn: document.getElementById('playPauseBtn'),
+            iconPlay: document.getElementById('iconPlay'),
+            iconPause: document.getElementById('iconPause'),
+            scrubber: document.getElementById('scrubber'),
+            scrubberProgress: document.getElementById('scrubberProgress'),
+            scrubberThumb: document.getElementById('scrubberThumb'),
+            timeDisplay: document.getElementById('timeDisplay'),
+            
+            volSlider: document.getElementById('volSlider'),
+            muteBtn: document.getElementById('muteBtn'),
+            iconVol: document.getElementById('iconVol'),
+            iconVolMuted: document.getElementById('iconVolMuted'),
+            fullscreenBtn: document.getElementById('fullscreenBtn'),
+            ambilightBtn: document.getElementById('ambilightBtn'),
+            
+            sidebar: document.getElementById('sidebar'),
+            toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
+            
+            chatMessages: document.getElementById('chatMessages'),
+            overlayChat: document.getElementById('overlayChat'),
+            chatForm: document.getElementById('chatForm'),
+            chatInput: document.getElementById('chatInput'),
+            
+            fileInput: document.getElementById('fileInput'),
+            shareScreenBtn: document.getElementById('shareScreenBtn'),
+            urlInput: document.getElementById('urlInput'),
+            loadUrlBtn: document.getElementById('loadUrlBtn'),
+            
+            micBtn: document.getElementById('micBtn'),
+            iconMic: document.getElementById('iconMic'),
+            iconMicMuted: document.getElementById('iconMicMuted'),
+            voiceVolSlider: document.getElementById('voiceVolSlider'),
+            remoteAudio: document.getElementById('remoteAudio'),
+            
+            syncDot: document.getElementById('syncDot'),
+            syncText: document.getElementById('syncText'),
+            driftIndicator: document.getElementById('driftIndicator'),
+            roomCodeDisplay: document.getElementById('roomCodeDisplay'),
+            topOverlay: document.getElementById('topOverlay')
+        };
+
+        // --- 2. Utilities ---
+        const Utils = {
+            generateCode: () => Math.random().toString(36).substring(2, 8).toUpperCase(),
+            formatTime: (sec) => {
+                if (isNaN(sec) || !isFinite(sec)) return "00:00";
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                const s = Math.floor(sec % 60);
+                if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            },
+            showToast: (msg, type = 'info') => {
+                const t = document.createElement('div');
+                t.className = `px-5 py-2.5 rounded-lg shadow-xl text-sm font-medium backdrop-blur-md border animate-fade-in ${type === 'error' ? 'bg-red-500/90 text-white border-red-400' : 'bg-black/90 text-white border-white/10'}`;
+                t.textContent = msg;
+                document.getElementById('toastContainer').appendChild(t);
+                setTimeout(() => {
+                    t.style.opacity = '0';
+                    t.style.transform = 'translateY(-10px)';
+                    t.style.transition = 'all 0.4s ease';
+                    setTimeout(() => t.remove(), 400);
+                }, 3500);
+            },
+            logChat: (sender, text, isSystem = false) => {
+                // Main Sidebar Chat
+                const div = document.createElement('div');
+                if (isSystem) {
+                    div.className = "text-center text-xs text-accent-500 font-semibold py-1 uppercase tracking-wide";
+                    div.textContent = text;
+                } else {
+                    const isMe = sender === State.myName;
+                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+                    div.innerHTML = `
+                        <span class="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-1 px-1">${sender}</span>
+                        <div class="px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${isMe ? 'bg-accent-600 text-white rounded-tr-none' : 'bg-white/10 text-white rounded-tl-none'}">
+                            ${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                        </div>
+                    `;
+                }
+                UI.chatMessages.appendChild(div);
+                UI.chatMessages.scrollTop = UI.chatMessages.scrollHeight;
+
+                // Overlay Chat (if sidebar closed or system message)
+                if (!State.sidebarOpen && !isSystem) {
+                    const overlayMsg = document.createElement('div');
+                    overlayMsg.className = 'overlay-message';
+                    overlayMsg.innerHTML = `<strong class="text-accent-500 mr-2">${sender}:</strong>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+                    UI.overlayChat.appendChild(overlayMsg);
+                    setTimeout(() => {
+                        overlayMsg.classList.add('fade-out');
+                        setTimeout(() => overlayMsg.remove(), 500);
+                    }, 4000);
+                }
+            }
+        };
+
+        // --- 3. Network & WebRTC Management ---
+        const peerConfig = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun.cloudflare.com:3478' }
+                ]
+            }
+        };
+
+        const Network = {
+            initHost: async () => {
+                State.myName = UI.nameInput.value.trim() || 'Host';
+                State.isHost = true;
+                State.roomId = Utils.generateCode();
+                
+                UI.hostBtn.disabled = true;
+                UI.hostBtn.innerHTML = `<div class="spinner mr-2"></div> Initializing...`;
+
+                await AudioEngine.initMic();
+
+                State.peer = new Peer(`lumiere-${State.roomId}`, peerConfig);
+                
+                State.peer.on('open', () => {
+                    UI.roomCodeDisplay.textContent = State.roomId;
+                    App.transitionToTheater();
+                    Utils.showToast("Private theater created.");
+                });
+
+                State.peer.on('connection', (conn) => {
+                    State.conn = conn;
+                    Network.setupDataChannel();
+                });
+
+                State.peer.on('call', Network.handleIncomingCall);
+                State.peer.on('error', () => { Utils.showToast("Failed to create room.", "error"); UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Create Private Theater"; });
+            },
+
+            initGuest: async () => {
+                const code = UI.joinInput.value.trim().toUpperCase();
+                if (code.length < 4) return Utils.showToast("Invalid code.", "error");
+                
+                State.myName = UI.nameInput.value.trim() || 'Viewer';
+                State.isHost = false;
+                State.roomId = code;
+
+                UI.joinBtn.disabled = true;
+                UI.joinBtn.textContent = "Connecting...";
+
+                await AudioEngine.initMic();
+
+                State.peer = new Peer(peerConfig);
+                
+                State.peer.on('open', () => {
+                    State.conn = State.peer.connect(`lumiere-${code}`, { reliable: true });
+                    Network.setupDataChannel();
+                });
+
+                State.peer.on('call', Network.handleIncomingCall);
+                State.peer.on('error', () => { Utils.showToast("Connection failed.", "error"); UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join"; });
+            },
+
+            setupDataChannel: () => {
+                State.conn.on('open', () => {
+                    if (!State.isHost) {
+                        UI.roomCodeDisplay.textContent = State.roomId;
+                        App.transitionToTheater();
+                    }
+                    Network.updateStatus(true);
+                    
+                    // Handshake
+                    State.conn.send({ type: 'INFO', name: State.myName });
+                    
+                    // Guest initiates persistent voice call
+                    if (!State.isHost && State.localVoiceStream) {
+                        AudioEngine.callHost();
+                    }
+                });
+
+                State.conn.on('data', SyncManager.handleData);
+                State.conn.on('close', () => Network.updateStatus(false));
+            },
+
+            handleIncomingCall: (call) => {
+                if (call.metadata?.type === 'voice') {
+                    call.answer(State.localVoiceStream);
+                    State.voiceConn = call;
+                    call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
+                } 
+                else if (call.metadata?.type === 'screen') {
+                    call.answer(); // Receive only
+                    State.mediaConn = call;
+                    Utils.logChat('System', 'Host is sharing their screen.', true);
+                    State.isScreenSharing = true;
+                    
+                    call.on('stream', (stream) => {
+                        MediaEngine.setSource(stream, true);
+                    });
+                    
+                    call.on('close', () => {
+                        State.isScreenSharing = false;
+                        MediaEngine.clearSource();
+                        Utils.logChat('System', 'Screen share ended.', true);
+                    });
+                }
+            },
+
+            updateStatus: (connected) => {
+                if (connected) {
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]";
+                    UI.syncText.textContent = "Encrypted Connection Active";
+                    Utils.logChat('System', 'Partner joined the theater.', true);
+                } else {
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]";
+                    UI.syncText.textContent = "Partner disconnected";
+                    Utils.logChat('System', 'Partner disconnected.', true);
+                }
+            }
+        };
+
+        // --- 4. Audio Engine (Voice Chat) ---
+        const AudioEngine = {
+            isMuted: true,
+            
+            initMic: async () => {
+                try {
+                    State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: { 
+                            echoCancellation: true, 
+                            noiseSuppression: true, 
+                            autoGainControl: true 
+                        }, 
+                        video: false 
+                    });
+                    State.localVoiceStream.getAudioTracks()[0].enabled = false; // Start muted
+                    AudioEngine.updateIcon();
+                } catch (err) {
+                    console.warn("Mic access denied");
+                    Utils.showToast("Microphone access unavailable.", "error");
+                }
+            },
+            
+            toggleMic: () => {
+                if (!State.localVoiceStream) return;
+                AudioEngine.isMuted = !AudioEngine.isMuted;
+                State.localVoiceStream.getAudioTracks()[0].enabled = !AudioEngine.isMuted;
+                AudioEngine.updateIcon();
+                Utils.showToast(AudioEngine.isMuted ? "Microphone muted" : "Microphone active");
+            },
+            
+            updateIcon: () => {
+                if (AudioEngine.isMuted) {
+                    UI.iconMic.classList.add('hidden');
+                    UI.iconMicMuted.classList.remove('hidden');
+                    UI.micBtn.classList.replace('bg-white/5', 'bg-red-500/20');
+                    UI.micBtn.classList.replace('border-white/10', 'border-red-500/30');
+                } else {
+                    UI.iconMicMuted.classList.add('hidden');
+                    UI.iconMic.classList.remove('hidden');
+                    UI.micBtn.classList.replace('bg-red-500/20', 'bg-white/10');
+                    UI.micBtn.classList.replace('border-red-500/30', 'border-white/20');
+                }
+            },
+
+            callHost: () => {
+                const call = State.peer.call(State.conn.peer, State.localVoiceStream, { metadata: { type: 'voice' } });
+                State.voiceConn = call;
+                call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });
+            }
+        };
+
+        // --- 5. Media Engine ---
+        const MediaEngine = {
+            setSource: (src, isStream = false) => {
+                // Cleanup previous screen share if switching to file
+                if (!isStream && State.localScreenStream) {
+                    State.localScreenStream.getTracks().forEach(t => t.stop());
+                    State.localScreenStream = null;
+                    if (State.mediaConn) State.mediaConn.close();
+                }
+
+                State.isScreenSharing = isStream;
+                UI.video.srcObject = null;
+                UI.video.src = "";
+
+                if (isStream) {
+                    UI.video.srcObject = src;
+                } else {
+                    UI.video.src = src;
+                }
+
+                UI.noMediaOverlay.classList.add('hidden');
+                
+                // Ambilight Setup
+                if (State.ambilightEnabled) {
+                    UI.ambilightContainer.classList.add('active');
+                    if (isStream) UI.ambilightVideo.srcObject = src;
+                    else UI.ambilightVideo.src = src;
+                }
+            },
+
+            clearSource: () => {
+                UI.video.srcObject = null;
+                UI.video.src = "";
+                UI.ambilightVideo.srcObject = null;
+                UI.ambilightVideo.src = "";
+                UI.noMediaOverlay.classList.remove('hidden');
+                UI.ambilightContainer.classList.remove('active');
+            },
+
+            shareScreen: async () => {
+                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for partner to connect.", "error");
+                try {
+                    // Optimized for video playback
+                    State.localScreenStream = await navigator.mediaDevices.getDisplayMedia({ 
+                        video: { frameRate: { ideal: 60 }, width: { ideal: 1920 } }, 
+                        audio: true 
+                    });
+                    
+                    MediaEngine.setSource(State.localScreenStream, true);
+                    UI.video.play();
+                    
+                    State.mediaConn = State.peer.call(State.conn.peer, State.localScreenStream, { metadata: { type: 'screen' } });
+                    Utils.logChat('System', 'You are sharing your screen.', true);
+                    
+                    State.localScreenStream.getVideoTracks()[0].onended = () => {
+                        if (State.mediaConn) State.mediaConn.close();
+                        MediaEngine.clearSource();
+                        State.isScreenSharing = false;
+                        Utils.logChat('System', 'Screen share ended.', true);
+                    };
+                } catch (err) { console.error(err); }
+            }
+        };
+
+        // --- 6. Synchronization Manager ---
+        const SyncManager = {
+            send: (type, data = {}) => {
+                if (State.conn && State.conn.open && !State.isSyncing) {
+                    State.conn.send({ type, ...data });
+                }
+            },
+
+            handleData: (data) => {
+                switch (data.type) {
+                    case 'INFO':
+                        Utils.logChat('System', `${data.name} is ready.`, true);
+                        break;
+                    case 'CHAT':
+                        Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text);
+                        break;
+                    case 'REQ_FILE':
+                        Utils.logChat('System', `Partner loaded a local file: ${data.name}. Load the same file to sync.`, true);
+                        Utils.showToast(`Load: ${data.name}`);
+                        break;
+                    case 'REQ_URL':
+                        Utils.logChat('System', `Partner loaded a URL stream. Syncing...`, true);
+                        MediaEngine.setSource(data.url);
+                        break;
+                    
+                    /* Playback Controls (Mutex locked) */
+                    case 'PLAY':
+                        if (State.isScreenSharing) return;
+                        State.isSyncing = true;
+                        if (Math.abs(UI.video.currentTime - data.time) > State.driftThreshold) {
+                            UI.video.currentTime = data.time;
+                        }
+                        UI.video.play().catch(e=>console.log(e));
+                        setTimeout(() => State.isSyncing = false, 300);
+                        break;
+                    case 'PAUSE':
+                        if (State.isScreenSharing) return;
+                        State.isSyncing = true;
+                        UI.video.pause();
+                        UI.video.currentTime = data.time;
+                        setTimeout(() => State.isSyncing = false, 300);
+                        break;
+                    case 'SEEK':
+                        if (State.isScreenSharing) return;
+                        State.isSyncing = true;
+                        UI.video.currentTime = data.time;
+                        setTimeout(() => State.isSyncing = false, 300);
+                        break;
+                    case 'HEARTBEAT':
+                        if (State.isScreenSharing || UI.video.paused) return;
+                        // Correct drift gracefully
+                        const drift = Math.abs(UI.video.currentTime - data.time);
+                        if (drift > State.driftThreshold) {
+                            UI.driftIndicator.classList.remove('hidden');
+                            UI.driftIndicator.textContent = `Correcting Sync...`;
+                            UI.driftIndicator.className = "hidden text-xs text-yellow-400 font-medium px-2 py-1 bg-yellow-400/10 rounded";
+                            
+                            State.isSyncing = true;
+                            UI.video.currentTime = data.time;
+                            setTimeout(() => {
+                                State.isSyncing = false;
+                                UI.driftIndicator.textContent = `In Sync`;
+                                UI.driftIndicator.className = "hidden text-xs text-green-400 font-medium px-2 py-1 bg-green-400/10 rounded";
+                                setTimeout(()=> UI.driftIndicator.classList.add('hidden'), 2000);
+                            }, 300);
+                        }
+                        break;
+                }
+            },
+
+            heartbeatCheck: () => {
+                if (State.isHost && State.conn && State.conn.open && !UI.video.paused && !State.isScreenSharing) {
+                    const now = Date.now();
+                    if (now - State.lastSyncTime > 3000) { // Check every 3 seconds
+                        SyncManager.send('HEARTBEAT', { time: UI.video.currentTime });
+                        State.lastSyncTime = now;
+                    }
+                }
+            }
+        };
+
+        // --- 7. Application & Event Binding ---
+        const App = {
+            transitionToTheater: () => {
+                UI.lobby.classList.add('opacity-0');
+                setTimeout(() => {
+                    UI.lobby.classList.add('hidden');
+                    UI.theater.classList.remove('hidden');
+                }, 700);
+            },
+
+            bindUI: () => {
+                // Lobby
+                UI.hostBtn.addEventListener('click', Network.initHost);
+                UI.joinBtn.addEventListener('click', Network.initGuest);
+                
+                // Sidebar & Chat
+                UI.toggleSidebarBtn.addEventListener('click', () => {
+                    State.sidebarOpen = !State.sidebarOpen;
+                    if (State.sidebarOpen) {
+                        UI.sidebar.classList.remove('sidebar-collapsed');
+                    } else {
+                        UI.sidebar.classList.add('sidebar-collapsed');
+                    }
+                });
+                
+                UI.chatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const txt = UI.chatInput.value.trim();
+                    if (!txt) return;
+                    Utils.logChat(State.myName, txt);
+                    SyncManager.send('CHAT', { text: txt });
+                    UI.chatInput.value = '';
+                });
+
+                // Voice & Volume
+                UI.micBtn.addEventListener('click', AudioEngine.toggleMic);
+                UI.voiceVolSlider.addEventListener('input', (e) => {
+                    UI.remoteAudio.volume = e.target.value;
+                });
+
+                // Media Inputs
+                UI.fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    MediaEngine.setSource(URL.createObjectURL(file));
+                    SyncManager.send('REQ_FILE', { name: file.name });
+                    Utils.logChat('System', `You loaded local file: ${file.name}. Partner must select it too.`, true);
+                });
+
+                UI.loadUrlBtn.addEventListener('click', () => {
+                    const url = UI.urlInput.value.trim();
+                    if (!url) return;
+                    MediaEngine.setSource(url);
+                    SyncManager.send('REQ_URL', { url });
+                    Utils.logChat('System', `Loaded URL stream.`, true);
+                    UI.urlInput.value = '';
+                });
+
+                UI.shareScreenBtn.addEventListener('click', MediaEngine.shareScreen);
+
+                // Video Controls Logic
+                const togglePlay = () => {
+                    if (State.isScreenSharing) return; 
+                    UI.video.paused ? UI.video.play() : UI.video.pause();
+                };
+
+                UI.playBtn.addEventListener('click', togglePlay);
+                UI.playerWrapper.addEventListener('click', (e) => {
+                    if (!e.target.closest('#videoControls') && !e.target.closest('#topOverlay')) togglePlay();
+                });
+
+                // Keyboard Shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (document.activeElement.tagName === 'INPUT') return;
+                    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+                    if (e.code === 'KeyF') { e.preventDefault(); UI.fullscreenBtn.click(); }
+                    if (e.code === 'KeyM') { e.preventDefault(); UI.muteBtn.click(); }
+                });
+
+                // Cinematic Fade for Controls
+                const resetFade = () => {
+                    UI.playerWrapper.classList.remove('idle');
+                    clearTimeout(State.controlsTimeout);
+                    State.controlsTimeout = setTimeout(() => {
+                        if (!UI.video.paused) UI.playerWrapper.classList.add('idle');
+                    }, 3000);
+                };
+                UI.playerWrapper.addEventListener('mousemove', resetFade);
+                UI.playerWrapper.addEventListener('mouseleave', () => { if (!UI.video.paused) UI.playerWrapper.classList.add('idle'); });
+
+                // Video Event Hooks
+                UI.video.addEventListener('play', () => {
+                    UI.iconPlay.classList.add('hidden'); UI.iconPause.classList.remove('hidden');
+                    if (State.ambilightEnabled) UI.ambilightVideo.play().catch(()=>{});
+                    resetFade();
+                    SyncManager.send('PLAY', { time: UI.video.currentTime });
+                });
+
+                UI.video.addEventListener('pause', () => {
+                    UI.iconPause.classList.add('hidden'); UI.iconPlay.classList.remove('hidden');
+                    if (State.ambilightEnabled) UI.ambilightVideo.pause();
+                    UI.playerWrapper.classList.remove('idle');
+                    SyncManager.send('PAUSE', { time: UI.video.currentTime });
+                });
+
+                UI.video.addEventListener('timeupdate', () => {
+                    if (State.isScreenSharing) return;
+                    
+                    const curr = UI.video.currentTime;
+                    const total = UI.video.duration;
+                    UI.timeDisplay.textContent = `${Utils.formatTime(curr)} / ${Utils.formatTime(total)}`;
+                    
+                    if (total > 0) {
+                        const pct = (curr / total) * 100;
+                        UI.scrubberProgress.style.width = `${pct}%`;
+                        UI.scrubberThumb.style.left = `${pct}%`;
+                    }
+                    
+                    SyncManager.heartbeatCheck();
+                });
+
+                // Scrubber Logic
+                let isDragging = false;
+                const updateScrub = (e) => {
+                    if (State.isScreenSharing || !UI.video.duration) return;
+                    const rect = UI.scrubber.getBoundingClientRect();
+                    let pos = (e.clientX - rect.left) / rect.width;
+                    pos = Math.max(0, Math.min(1, pos));
+                    const time = pos * UI.video.duration;
+                    
+                    UI.scrubberProgress.style.width = `${pos * 100}%`;
+                    UI.scrubberThumb.style.left = `${pos * 100}%`;
+                    
+                    if (!isDragging) {
+                        UI.video.currentTime = time;
+                        if (State.ambilightEnabled) UI.ambilightVideo.currentTime = time;
+                        SyncManager.send('SEEK', { time });
+                    }
+                };
+
+                UI.scrubber.addEventListener('mousedown', (e) => { isDragging = true; updateScrub(e); });
+                document.addEventListener('mousemove', (e) => { if (isDragging) updateScrub(e); });
+                document.addEventListener('mouseup', (e) => {
+                    if (isDragging) {
+                        isDragging = false;
+                        const rect = UI.scrubber.getBoundingClientRect();
+                        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        UI.video.currentTime = pos * UI.video.duration;
+                        SyncManager.send('SEEK', { time: UI.video.currentTime });
+                    }
+                });
+
+                // Volume
+                let lastVol = 1;
+                UI.volSlider.addEventListener('input', (e) => {
+                    UI.video.volume = e.target.value;
+                    updateVolIcon(e.target.value);
+                });
+                UI.muteBtn.addEventListener('click', () => {
+                    if (UI.video.volume > 0) {
+                        lastVol = UI.video.volume;
+                        UI.video.volume = 0;
+                        UI.volSlider.value = 0;
+                    } else {
+                        UI.video.volume = lastVol || 1;
+                        UI.volSlider.value = lastVol || 1;
+                    }
+                    updateVolIcon(UI.video.volume);
+                });
+                const updateVolIcon = (vol) => {
+                    if (vol <= 0) { UI.iconVol.classList.add('hidden'); UI.iconVolMuted.classList.remove('hidden'); }
+                    else { UI.iconVolMuted.classList.add('hidden'); UI.iconVol.classList.remove('hidden'); }
+                };
+
+                // Fullscreen
+                UI.fullscreenBtn.addEventListener('click', () => {
+                    if (!document.fullscreenElement) {
+                        // Fullscreen the wrapper so controls and overlay chat stay visible
+                        UI.playerWrapper.requestFullscreen().catch(err => console.log(err));
+                    } else {
+                        document.exitFullscreen();
+                    }
+                });
+
+                // Ambilight Toggle
+                UI.ambilightBtn.addEventListener('click', () => {
+                    State.ambilightEnabled = !State.ambilightEnabled;
+                    if (State.ambilightEnabled && UI.video.src) {
+                        UI.ambilightContainer.classList.add('active');
+                        UI.ambilightVideo.src = UI.video.src;
+                        UI.ambilightVideo.srcObject = UI.video.srcObject;
+                        UI.ambilightVideo.currentTime = UI.video.currentTime;
+                        if (!UI.video.paused) UI.ambilightVideo.play();
+                        UI.ambilightBtn.classList.replace('text-gray-500', 'text-white');
+                    } else {
+                        UI.ambilightContainer.classList.remove('active');
+                        UI.ambilightBtn.classList.replace('text-white', 'text-gray-500');
+                    }
+                });
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', App.bindUI);
+
+    </script>
 </body>
 </html>
