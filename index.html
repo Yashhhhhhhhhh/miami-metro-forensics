@@ -29,7 +29,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>
     
     <style>
-        body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; }
+        body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.8s ease; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
         
         .cinema-grid {
@@ -46,18 +46,22 @@
         .ambilight-container.active { opacity: 0.6; }
         #ambilightVideo { width: 100%; height: 100%; object-fit: cover; filter: blur(80px) saturate(150%) brightness(0.7); transform: scale(1.1); }
         
-        /* 16:9 Aspect Ratio Container Lock (Pristine Layout) */
-        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }
         .video-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        video, iframe { width: 100%; height: 100%; object-fit: contain; outline: none; background: transparent; z-index: 2; border: none; max-height: 100vh; max-width: 100vw; }
         
-        ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 500; padding: 4px 12px; border-radius: 4px; }
+        /* Dynamic Aspect Ratio Modes */
+        video, iframe { width: 100%; height: 100%; outline: none; background: transparent; z-index: 2; border: none; max-height: 100vh; max-width: 100vw; transition: object-fit 0.3s ease; }
+        video.mode-contain { object-fit: contain; }
+        video.mode-cover { object-fit: cover; }
+        video.mode-fill { object-fit: fill; }
+
+        ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 500; padding: 4px 12px; border-radius: 4px; letter-spacing: 0.5px; }
 
         .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .overlay-layer.active { opacity: 1; pointer-events: auto; }
-        .bg-overlay { background: rgba(3, 3, 4, 0.9); }
+        .bg-overlay { background: rgba(3, 3, 4, 0.85); }
         
-        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%); padding: 40px 36px 24px 36px; opacity: 1; z-index: 30; transition: opacity 0.4s ease, transform 0.4s ease; display: flex; flex-direction: column; gap: 14px; }
+        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s ease, transform 0.5s ease; width: 100%; display: flex; flex-direction: column; gap: 16px; }
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(15px); pointer-events: none; }
         .player-wrapper.idle { cursor: none; }
         
@@ -72,18 +76,18 @@
         .glass-sidebar { background: rgba(3, 3, 4, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.03); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s ease; }
         .sidebar-collapsed { transform: translateX(100%); width: 0 !important; border: none; }
         
-        .overlay-chat-container { position: absolute; bottom: 110px; left: 36px; width: 360px; max-height: 280px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 20; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }
-        .overlay-message { background: rgba(9, 9, 11, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 10px; margin-top: 8px; color: #e4e4e7; font-size: 0.9rem; font-weight: 500; animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .overlay-message.fade-out { opacity: 0; transform: translateY(10px) scale(0.98); transition: all 0.5s ease; }
-        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .overlay-chat-container { position: absolute; bottom: 130px; left: 40px; width: 380px; max-height: 300px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 20; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }
+        .overlay-message { background: rgba(9, 9, 11, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); padding: 10px 16px; border-radius: 10px; margin-top: 10px; color: #e4e4e7; font-size: 0.9rem; font-weight: 500; animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .overlay-message.fade-out { opacity: 0; transform: translateY(10px) scale(0.98); transition: all 0.6s ease; }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         
-        .btn-icon { color: #a1a1aa; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
-        .btn-icon:hover { color: #f4f4f5; transform: scale(1.08); }
-        .btn-primary { background: #991b1b; color: #f4f4f5; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(153, 27, 27, 0.25); }
-        .btn-primary:hover:not(:disabled) { background: #7f1d1d; box-shadow: 0 6px 25px rgba(153, 27, 27, 0.45); transform: translateY(-1px); }
+        .btn-icon { color: #a1a1aa; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .btn-icon:hover { color: #f4f4f5; transform: scale(1.1); }
+        .btn-primary { background: #991b1b; color: #f4f4f5; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(153, 27, 27, 0.2); }
+        .btn-primary:hover:not(:disabled) { background: #7f1d1d; box-shadow: 0 6px 25px rgba(153, 27, 27, 0.4); transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        .eq-btn { flex: 1; padding: 7px; border-radius: 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #a1a1aa; transition: all 0.2s; cursor: pointer; }
+        .eq-btn { flex: 1; padding: 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #a1a1aa; transition: all 0.2s; cursor: pointer; }
         .eq-btn.active { background: #991b1b; border-color: #991b1b; color: #fff; box-shadow: 0 0 15px rgba(153, 27, 27, 0.4); }
 
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }
@@ -92,7 +96,7 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #e4e4e7; margin-top: -5px; box-shadow: 0 1px 4px rgba(0,0,0,0.8);}
         input[type=text], input[type=url] { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #e4e4e7; transition: border-color 0.2s, background 0.2s; }
         input:focus { outline: none; border-color: #991b1b; background: rgba(255,255,255,0.05); }
-        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #991b1b; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #991b1b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -105,7 +109,7 @@
         <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-6">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span> 16:9 Aspect Lock & Equalizer Suite
+                    <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span> 16:9 Geometry & Equalizer Suite
                 </div>
                 <h1 class="text-6xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-4">Lumière Studio</h1>
                 <p class="text-zinc-400 text-lg leading-relaxed font-light">
@@ -152,14 +156,14 @@
     </div>
 
     <!-- MAIN THEATER -->
-    <div id="theaterScreen" class="hidden flex-1 flex w-full h-full relative overflow-hidden">
+    <div id="theaterScreen" class="hidden flex-1 flex w-full h-full relative">
         <div id="mainView" class="relative flex-1 flex flex-col bg-black transition-all duration-300">
             <!-- Ambilight -->
             <div id="ambilight" class="ambilight-container dimmable"><video id="ambilightVideo" muted playsinline></video></div>
             
             <!-- Top Status Bar -->
-            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-6 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">
-                <div class="flex flex-col gap-1.5 pointer-events-auto">
+            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">
+                <div class="flex flex-col gap-2 pointer-events-auto">
                     <div class="flex items-center gap-3 glass-panel px-3 py-1.5 rounded-lg">
                         <div class="bg-accent-600 text-zinc-100 text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider">Session</div>
                         <span id="roomCodeDisplay" class="font-mono text-lg font-semibold tracking-widest text-zinc-200 px-1">----</span>
@@ -202,7 +206,7 @@
             <!-- Player Wrapper (16:9 Proportional Container Lock) -->
             <div id="playerWrapper" class="player-wrapper group">
                 <div class="video-container">
-                    <video id="mainVideo" playsinline></video>
+                    <video id="mainVideo" class="mode-contain" playsinline></video>
                     <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none">
                         <div id="ytPlayerDiv" class="w-full h-full"></div>
                     </div>
@@ -223,37 +227,39 @@
                     <div class="flex items-center justify-between w-full">
                         <div class="flex items-center gap-6">
                             <button id="playPauseBtn" class="btn-icon text-zinc-100 hover:text-accent-500">
-                                <svg id="iconPlay" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                <svg id="iconPause" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                <svg id="iconPlay" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                             </button>
                             
-                            <div class="flex items-center gap-2.5">
+                            <div class="flex items-center gap-3">
                                 <button id="skipBackBtn" class="btn-icon text-zinc-400 hover:text-zinc-100" title="-10s">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg>
                                 </button>
                                 <button id="skipFwdBtn" class="btn-icon text-zinc-400 hover:text-zinc-100" title="+10s">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"></path></svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"></path></svg>
                                 </button>
                             </div>
                             
-                            <div class="flex items-center gap-2 group/vol ml-1">
+                            <div class="flex items-center gap-2.5 group/vol ml-2">
                                 <button id="muteBtn" class="btn-icon text-zinc-300">
                                     <svg id="iconVol" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                                     <svg id="iconVolMuted" class="w-5 h-5 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                                 </button>
-                                <input type="range" id="volSlider" class="w-0 opacity-0 group-hover/vol:w-20 group-hover/vol:opacity-100 transition-all duration-300 origin-left" min="0" max="1" step="0.05" value="1">
+                                <input type="range" id="volSlider" class="w-0 opacity-0 group-hover/vol:w-24 group-hover/vol:opacity-100 transition-all duration-300 origin-left" min="0" max="1" step="0.05" value="1">
                             </div>
-                            <span id="timeDisplay" class="text-zinc-300 font-mono text-xs tracking-wider ml-1">00:00 / 00:00</span>
+                            <span id="timeDisplay" class="text-zinc-300 font-mono text-xs tracking-wider ml-2">00:00 / 00:00</span>
                         </div>
                         
-                        <div class="flex items-center gap-4">
-                            <div id="driftIndicator" class="hidden flex items-center gap-1.5 text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded uppercase tracking-wider">
+                        <div class="flex items-center gap-5">
+                            <div id="driftIndicator" class="hidden flex items-center gap-1.5 text-[9px] text-yellow-500 font-bold px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded uppercase tracking-wider">
                                 <div class="w-1 h-1 rounded-full bg-yellow-500 animate-ping"></div> Syncing
                             </div>
-                            <button id="pipBtn" class="btn-icon" title="Picture-in-Picture"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
-                            <button id="cinemaModeBtn" class="btn-icon" title="Toggle Cinema Dimming"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
-                            <button id="ambilightBtn" class="btn-icon" title="Toggle Ambilight"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
-                            <button id="fullscreenBtn" class="btn-icon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
+                            <!-- Aspect Ratio Switcher -->
+                            <button id="aspectBtn" class="btn-icon text-xs font-mono bg-white/5 px-2 py-1 rounded border border-white/10 hover:bg-white/10" title="Toggle Fit Mode">FIT</button>
+                            <button id="pipBtn" class="btn-icon" title="Picture-in-Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
+                            <button id="cinemaModeBtn" class="btn-icon" title="Toggle Cinema Dimming"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>
+                            <button id="ambilightBtn" class="btn-icon" title="Toggle Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
+                            <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                         </div>
                     </div>
                 </div>
@@ -261,9 +267,9 @@
         </div>
 
         <!-- SIDEBAR CONTROLS -->
-        <div id="sidebar" class="glass-sidebar w-[360px] flex flex-col h-full flex-shrink-0 relative z-50 dimmable">
-            <!-- Voice Comms & Audio Equalizer -->
-            <div class="p-5 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent space-y-3.5">
+        <div id="sidebar" class="glass-sidebar w-[380px] flex flex-col h-full flex-shrink-0 relative z-50 dimmable">
+            <!-- Voice Comms -->
+            <div class="p-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent space-y-4">
                 <div class="flex items-center justify-between">
                     <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                         <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse hidden" id="voiceActiveDot"></div> Spatial Voice
@@ -273,7 +279,7 @@
                         <svg id="iconMicMuted" class="w-4 h-4 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                     </button>
                 </div>
-                <div class="flex items-center gap-3 bg-black/40 p-2.5 rounded-lg border border-white/5">
+                <div class="flex items-center gap-3 bg-black/40 p-3 rounded-lg border border-white/5">
                     <svg class="w-4 h-4 text-zinc-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                     <input type="range" id="voiceVolSlider" class="flex-1" min="0" max="1" step="0.05" value="0.8">
                 </div>
@@ -288,28 +294,28 @@
             </div>
 
             <!-- Host Stream Deck -->
-            <div class="p-5 border-b border-white/5 bg-black/20 overflow-y-auto" id="hostControlsPanel">
-                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Media Deck</h3>
-                <div class="space-y-3">
+            <div class="p-6 border-b border-white/5 bg-black/20 overflow-y-auto" id="hostControlsPanel">
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Media Deck</h3>
+                <div class="space-y-4">
                     
-                    <div class="p-3.5 bg-black/40 border border-white/5 rounded-xl space-y-2.5">
-                        <div class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex justify-between items-center">
+                    <div class="p-4 bg-black/40 border border-white/5 rounded-xl space-y-3 group hover:border-accent-500/30 transition-colors">
+                        <div class="text-[10px] text-zinc-400 font-bold uppercase mb-1 tracking-wider flex justify-between items-center">
                             <span>Dual-Local</span>
                             <span class="text-green-500/80 bg-green-500/10 px-2 py-0.5 rounded font-mono text-[9px]">Lossless Sync</span>
                         </div>
-                        <label class="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-200 rounded-lg px-4 py-2 cursor-pointer transition text-xs font-semibold">
+                        <label class="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-200 rounded-lg px-4 py-2.5 cursor-pointer transition text-xs font-semibold">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                             <span>Sync Local File</span>
                             <input type="file" id="fileSyncInput" class="hidden" accept="video/mp4,video/webm,video/ogg">
                         </label>
                     </div>
 
-                    <div class="p-3.5 bg-black/40 border border-white/5 rounded-xl space-y-2.5">
-                        <div class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex justify-between items-center">
+                    <div class="p-4 bg-black/40 border border-white/5 rounded-xl space-y-3 group transition-colors">
+                        <div class="text-[10px] text-zinc-400 font-bold uppercase mb-1 tracking-wider flex justify-between items-center">
                             <span>WebRTC Broadcaster</span>
                             <span class="text-blue-500/80 bg-blue-500/10 px-2 py-0.5 rounded font-mono text-[9px]">Live Capture</span>
                         </div>
-                        <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-2 cursor-pointer transition shadow-[0_2px_15px_rgba(153,27,27,0.3)] text-xs font-semibold">
+                        <label class="flex items-center justify-center gap-2 w-full bg-accent-600 hover:bg-accent-500 text-white rounded-lg px-4 py-2.5 cursor-pointer transition shadow-[0_2px_15px_rgba(153,27,27,0.3)] text-xs font-semibold">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>Stream to Partner</span>
                             <input type="file" id="fileStreamInput" class="hidden" accept="video/mp4,video/webm">
@@ -318,7 +324,7 @@
 
                     <div class="flex gap-2">
                         <input type="url" id="urlInput" class="flex-1 px-3 py-2.5 text-xs rounded-lg border border-white/5 bg-black/40 focus:border-accent-500" placeholder="URL or YouTube Link">
-                        <button id="loadUrlBtn" class="bg-white/5 hover:bg-white/10 px-3.5 py-2.5 rounded-lg text-xs font-bold transition border border-white/5 text-zinc-300">Load</button>
+                        <button id="loadUrlBtn" class="bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg text-xs font-bold transition border border-white/5 text-zinc-300">Load</button>
                     </div>
                     
                     <button id="shareScreenBtn" class="flex items-center justify-center gap-2 w-full bg-black/40 hover:bg-white/10 border border-white/5 text-zinc-300 rounded-lg px-4 py-2.5 transition text-xs font-semibold">
@@ -330,13 +336,13 @@
 
             <!-- Chat -->
             <div class="flex-1 flex flex-col min-h-0 bg-theater-950/40">
-                <div id="chatMessages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+                <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
                     <div class="text-center text-[9px] text-zinc-600 font-bold tracking-widest py-2 border-b border-white/5 uppercase">DataChannel Live</div>
                 </div>
                 
-                <div class="p-3.5 bg-theater-900/80 border-t border-white/5 backdrop-blur-xl">
+                <div class="p-4 bg-theater-900/80 border-t border-white/5 backdrop-blur-xl">
                     <form id="chatForm" class="relative">
-                        <input type="text" id="chatInput" class="w-full bg-black/50 border border-white/5 rounded-lg pl-3.5 pr-10 py-2.5 text-xs focus:border-accent-500 transition-colors placeholder:text-zinc-600" placeholder="Message..." autocomplete="off">
+                        <input type="text" id="chatInput" class="w-full bg-black/50 border border-white/5 rounded-lg pl-4 pr-10 py-3 text-xs focus:border-accent-500 transition-colors placeholder:text-zinc-600" placeholder="Message..." autocomplete="off">
                         <button type="submit" class="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 text-accent-500 hover:text-white transition-colors rounded hover:bg-accent-500/20">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                         </button>
@@ -355,6 +361,9 @@
         const firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         let audioCtx = null, sourceNode = null, eqFilter = null, compNode = null;
+        let aspectModes = ['mode-contain', 'mode-cover', 'mode-fill'];
+        let aspectLabels = ['FIT', 'FILL', 'STRETCH'];
+        let currentAspectIdx = 0;
 
         const State = {
             isHost: false, roomId: '', myName: 'Viewer',
@@ -380,7 +389,7 @@
             scrubberProgress: document.getElementById('scrubberProgress'), scrubberThumb: document.getElementById('scrubberThumb'),
             timeDisplay: document.getElementById('timeDisplay'), volSlider: document.getElementById('volSlider'),
             muteBtn: document.getElementById('muteBtn'), iconVol: document.getElementById('iconVol'), iconVolMuted: document.getElementById('iconVolMuted'),
-            fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'), pipBtn: document.getElementById('pipBtn'), cinemaModeBtn: document.getElementById('cinemaModeBtn'),
+            fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'), pipBtn: document.getElementById('pipBtn'), cinemaModeBtn: document.getElementById('cinemaModeBtn'), aspectBtn: document.getElementById('aspectBtn'),
             sidebar: document.getElementById('sidebar'), toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
             hostControlsPanel: document.getElementById('hostControlsPanel'), chatMessages: document.getElementById('chatMessages'),
             overlayChat: document.getElementById('overlayChat'), chatForm: document.getElementById('chatForm'), chatInput: document.getElementById('chatInput'),
@@ -401,7 +410,7 @@
             },
             showToast: (msg, type = 'info', duration = 4000) => {
                 const t = document.createElement('div');
-                t.className = `px-5 py-3 rounded-xl shadow-2xl text-xs font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] uppercase tracking-widest ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-zinc-300 border-white/5')}`;
+                t.className = `px-5 py-3.5 rounded-xl shadow-2xl text-xs font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] uppercase tracking-widest ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-zinc-300 border-white/5')}`;
                 t.innerHTML = type === 'error' ? `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${msg}` : msg;
                 document.getElementById('toastContainer').appendChild(t);
                 setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 400); }, duration);
@@ -510,8 +519,10 @@
             },
 
             monitorTelemetry: (callObj) => {
-                UI.telemetryBadge.classList.remove('hidden'); UI.telemetryBadge.classList.add('flex');
+                UI.telemetryBadge.classList.remove('hidden');
+                UI.telemetryBadge.classList.add('flex');
                 if (State.telemetryInterval) clearInterval(State.telemetryInterval);
+                
                 State.telemetryInterval = setInterval(async () => {
                     const pc = callObj?.peerConnection;
                     if (!pc || pc.connectionState !== 'connected') return;
@@ -519,7 +530,8 @@
                         const stats = await pc.getStats();
                         stats.forEach(report => {
                             if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-                                UI.telemetryLatency.textContent = `${Math.round(report.currentRoundTripTime * 1000)}ms`;
+                                const rtt = Math.round(report.currentRoundTripTime * 1000);
+                                UI.telemetryLatency.textContent = `${rtt}ms`;
                             }
                         });
                     } catch(e) {}
@@ -703,7 +715,7 @@
                 UI.video.src = blobUrl; UI.video.muted = false; AudioDSP.init();
                 
                 MediaEngine.updateUI(`Broadcasting: ${file.name}`);
-                Utils.showToast("Initializing Broadcast...", "info");
+                Utils.showToast("Initializing 60FPS Broadcast...", "info");
                 
                 UI.video.onplaying = () => {
                     if (State.activeMediaStream) return; 
@@ -732,8 +744,9 @@
                     
                     const initYT = () => {
                         if (!ytReady) return setTimeout(initYT, 200); 
-                        if (ytPlayer) { ytPlayer.loadVideoById(ytMatch[1]); } 
-                        else {
+                        if (ytPlayer) {
+                            ytPlayer.loadVideoById(ytMatch[1]);
+                        } else {
                             ytPlayer = new YT.Player('ytPlayerDiv', {
                                 videoId: ytMatch[1],
                                 playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
@@ -750,7 +763,8 @@
                         }
                         MediaEngine.updateUI("YouTube Stream");
                     };
-                    initYT(); return;
+                    initYT();
+                    return;
                 }
 
                 State.playMode = 'url';
@@ -773,8 +787,12 @@
                 try {
                     State.activeMediaStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60 }, audio: true });
                     MediaEngine.clearSource(); State.playMode = 'screenshare';
-                    UI.video.srcObject = State.activeMediaStream; UI.video.play().catch(e=>{});
-                    AudioDSP.init(); MediaEngine.updateUI("Broadcasting Screen");
+                    
+                    UI.video.srcObject = State.activeMediaStream;
+                    UI.video.play().catch(e=>{});
+                    AudioDSP.init();
+                    MediaEngine.updateUI("Broadcasting Screen");
+                    
                     Network.broadcastStream("Screen Broadcast");
                     State.activeMediaStream.getVideoTracks()[0].onended = () => { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); };
                 } catch(e) {}
@@ -796,6 +814,7 @@
                         State.syncState.duration = UI.video.duration || 0;
                         State.syncState.paused = UI.video.paused;
                     }
+                    
                     if (State.conn?.open) State.conn.send({ type: 'STATE_UPDATE', state: State.syncState });
                 }, 500);
             },
@@ -809,14 +828,18 @@
                     case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;
                     case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, "Host Feed", false); break;
                     case 'REQ_SYNC_FILE': 
-                        Utils.showToast(`Host requests identical file`, "info", 10000); 
+                        Utils.showToast(`Host requests you load: ${data.name}`, "info", 10000); 
+                        Utils.logChat('System', `Please click 'Sync Local File' and select ${data.name} from your computer.`, true);
                         UI.hostControlsPanel.style.display = 'block';
                         break;
                     case 'GUEST_MOUNTED': 
-                        Utils.showToast("Partner mounted file. Sync active.", "success");
+                        Utils.showToast("Partner mounted file successfully. Sync is fully active.", "success");
                         if(State.isHost) {
                             State.conn.send({ type: 'CMD_SEEK', time: UI.video.currentTime });
-                            setTimeout(() => { SyncEngine.triggerPlay(true); State.conn.send({ type: 'CMD_PLAY' }); }, 150); 
+                            setTimeout(() => {
+                                SyncEngine.triggerPlay(true);
+                                State.conn.send({ type: 'CMD_PLAY' });
+                            }, 150); 
                         }
                         break;
                     case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;
@@ -919,7 +942,7 @@
                 try {
                     State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                     State.localVoiceStream.getAudioTracks()[0].enabled = false; AudioEngine.updateIcon();
-                } catch (err) {}
+                } catch (err) { console.warn("Mic note:", err); }
             },
             toggleMic: () => {
                 if (!State.localVoiceStream) return Utils.showToast("Microphone not available.", "error");
@@ -965,6 +988,14 @@
                         if (State.sidebarOpen) UI.toggleSidebarBtn.click();
                         Utils.showToast("Cinema Mode Engaged", "success");
                     } else { document.body.classList.remove('cinema-mode'); }
+                });
+
+                // Aspect Ratio Switcher Binding
+                UI.aspectBtn.addEventListener('click', () => {
+                    currentAspectIdx = (currentAspectIdx + 1) % aspectModes.length;
+                    UI.video.className = aspectModes[currentAspectIdx];
+                    UI.aspectBtn.textContent = aspectLabels[currentAspectIdx];
+                    Utils.showToast(`Aspect Ratio: ${aspectLabels[currentAspectIdx]}`, "info", 1500);
                 });
 
                 UI.pipBtn.addEventListener('click', async () => {
