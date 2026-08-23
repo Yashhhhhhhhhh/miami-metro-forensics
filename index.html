@@ -28,10 +28,10 @@
         }
     </script>
     
-    <!-- Core Engine Libraries (using highly reliable CDNs) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/webtorrent/2.1.32/webtorrent.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>
+    <!-- Core Engine Libraries (using jsdelivr for reliability) -->
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webtorrent@2.1.32/webtorrent.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.3.5/dist/hls.min.js"></script>
     
     <style>
         body { background-color: #030303; color: #f5f5f5; overflow: hidden; -webkit-font-smoothing: antialiased; }
@@ -391,7 +391,7 @@
         const State = {
             isHost: false, roomId: '', myName: 'Viewer',
             peer: null, conn: null, mediaConn: null, voiceConn: null,
-            localVoiceStream: null, activeMediaStream: null,
+            localVoiceStream: null, activeMediaStream: null, activeMediaSource: null,
             
             // Engines
             torrentClient: null,
@@ -408,7 +408,8 @@
             
             // Guest specific
             lastHostHeartbeat: 0,
-            ignoreNextSeekEvent: false // Prevents echo loops on client
+            ignoreNextSeekEvent: false, // Prevents echo loops on client
+            syncLockTimeout: null
         };
 
         const UI = {
@@ -528,7 +529,7 @@
                         SyncEngine.startHostHeartbeat(); // Start sending timeline data
                     });
                     
-                    State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(); });
+                    State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(conn); });
                     State.peer.on('call', Network.handleIncomingCall);
                     
                     State.peer.on('error', (e) => {
@@ -562,7 +563,7 @@
                     State.peer.on('open', () => {
                         UI.joinBtn.textContent = "Connecting...";
                         State.conn = State.peer.connect(`lumiere-${code}`, { reliable: true });
-                        Network.setupDataChannel();
+                        Network.setupDataChannel(State.conn);
                     });
                     
                     State.peer.on('call', Network.handleIncomingCall);
@@ -576,8 +577,8 @@
                 }
             },
             
-            setupDataChannel: () => {
-                State.conn.on('open', () => {
+            setupDataChannel: (conn) => {
+                conn.on('open', () => {
                     if (!State.isHost) {
                         UI.roomCodeDisplay.textContent = State.roomId; App.transitionToTheater();
                         UI.hostControlsPanel.style.display = 'none'; // Lock out guest
@@ -587,13 +588,24 @@
                         UI.roleIndicator.classList.replace('border-accent-500/20', 'border-blue-400/20');
                     }
                     Network.updateStatus(true);
-                    State.conn.send({ type: 'INFO', name: State.myName });
+                    conn.send({ type: 'INFO', name: State.myName });
                     if (!State.isHost && State.localVoiceStream) AudioEngine.callHost();
+                    
+                    // Late-Joiner State Injection
+                    if (State.isHost) {
+                        if (State.playMode === 'torrent' && State.activeTorrent) {
+                            conn.send({ type: 'CMD_LOAD_TORRENT', magnet: State.activeTorrent.magnetURI, name: State.activeTorrent.name || 'Shared Media' });
+                        } else if (State.playMode === 'url' && State.activeMediaSource) {
+                            conn.send({ type: 'CMD_LOAD_URL', url: State.activeMediaSource });
+                        } else if (State.playMode === 'screenshare' && State.activeMediaStream) {
+                            State.mediaConn = State.peer.call(conn.peer, State.activeMediaStream, { metadata: { type: 'screenshare' } });
+                        }
+                    }
                 });
                 
-                State.conn.on('data', SyncEngine.handleData);
-                State.conn.on('close', () => { Network.updateStatus(false); if(State.isHost) SyncEngine.stopHostHeartbeat(); });
-                State.conn.on('error', () => { Network.updateStatus(false); });
+                conn.on('data', SyncEngine.handleData);
+                conn.on('close', () => { Network.updateStatus(false); if(State.isHost) SyncEngine.stopHostHeartbeat(); });
+                conn.on('error', () => { Network.updateStatus(false); });
             },
             
             handleIncomingCall: (call) => {
@@ -631,6 +643,7 @@
             seedFile: (file) => {
                 MediaEngine.clearSource(); State.playMode = 'torrent';
                 Utils.showToast("Chunking file for P2P network...");
+                State.activeMediaSource = file.name;
                 
                 // Host plays the local file instantly
                 const url = URL.createObjectURL(file);
@@ -691,6 +704,7 @@
                 if (State.activeMediaStream) { State.activeMediaStream.getTracks().forEach(t => t.stop()); State.activeMediaStream = null; }
                 if (State.activeTorrent) { State.activeTorrent.destroy(); State.activeTorrent = null; }
                 if (State.mediaConn) { State.mediaConn.close(); State.mediaConn = null; }
+                State.activeMediaSource = null;
                 
                 UI.video.srcObject = null; UI.video.src = ""; UI.video.removeAttribute('src');
                 UI.ambilightVideo.srcObject = null; UI.ambilightVideo.src = "";
@@ -711,6 +725,7 @@
             },
             loadURL: (url, broadcast = true) => {
                 MediaEngine.clearSource(); State.playMode = 'url';
+                State.activeMediaSource = url;
                 if (broadcast && State.isHost && State.conn?.open) State.conn.send({ type: 'CMD_LOAD_URL', url });
                 
                 const onReady = () => { MediaEngine.updateUI("Network Stream"); Utils.logChat('System', 'External URL Mounted.', true); };
@@ -794,16 +809,16 @@
                 }
                 
                 // 2. Enforce Timeline (Anti-Drift)
+                if (State.ignoreNextSeekEvent) return; // Skip time enforcement during Sync Lock
+                
                 const drift = Math.abs(UI.video.currentTime - hostState.time);
                 if (drift > 1.0 && !hostState.paused) {
                     // Severe drift while playing -> Snap to host
                     UI.driftIndicator.classList.remove('hidden');
-                    State.ignoreNextSeekEvent = true;
                     UI.video.currentTime = hostState.time;
                     setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
                 } else if (hostState.paused && drift > 0.1) {
                     // Stricter sync required when paused (scrubbing)
-                    State.ignoreNextSeekEvent = true;
                     UI.video.currentTime = hostState.time;
                 }
             },
@@ -821,6 +836,9 @@
                 if (State.isHost) UI.video.currentTime = time;
                 else if (State.conn?.open) {
                     UI.video.currentTime = time; // Optimistic local update
+                    State.ignoreNextSeekEvent = true; // Activating Sync Lock
+                    if (State.syncLockTimeout) clearTimeout(State.syncLockTimeout);
+                    State.syncLockTimeout = setTimeout(() => { State.ignoreNextSeekEvent = false; }, 3000);
                     State.conn.send({ type: 'REQ_SEEK', time });
                 }
             }
