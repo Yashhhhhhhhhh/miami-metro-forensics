@@ -623,27 +623,33 @@
                     UI.video.classList.add('hidden');
                     UI.ytPlayerContainer.classList.remove('hidden');
                     
-                    if (!ytReady) return Utils.showToast("YouTube API still loading, try again in a moment.", "error");
-                    
-                    if (ytPlayer) {
-                        ytPlayer.loadVideoById(ytMatch[1]);
-                    } else {
-                        ytPlayer = new YT.Player('ytPlayerDiv', {
-                            videoId: ytMatch[1],
-                            playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
-                            events: {
-                                'onReady': (e) => { e.target.playVideo(); },
-                                'onStateChange': (e) => {
-                                    // Map YT States: 1=playing, 2=paused, 3=buffering
-                                    if (State.isHost && State.conn?.open && !State.isSeekingUI) {
-                                        if (e.data === 1) State.conn.send({ type: 'STATE_UPDATE', state: { time: ytPlayer.getCurrentTime(), duration: ytPlayer.getDuration(), paused: false } });
-                                        else if (e.data === 2) State.conn.send({ type: 'STATE_UPDATE', state: { time: ytPlayer.getCurrentTime(), duration: ytPlayer.getDuration(), paused: true } });
+                    const initYT = () => {
+                        if (!ytReady) {
+                            Utils.showToast("Initializing YouTube API...", "info", 1000);
+                            return setTimeout(initYT, 500); 
+                        }
+                        
+                        if (ytPlayer) {
+                            ytPlayer.loadVideoById(ytMatch[1]);
+                        } else {
+                            ytPlayer = new YT.Player('ytPlayerDiv', {
+                                videoId: ytMatch[1],
+                                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
+                                events: {
+                                    'onReady': (e) => { e.target.playVideo(); },
+                                    'onStateChange': (e) => {
+                                        // Map YT States: 1=playing, 2=paused, 3=buffering
+                                        if (State.isHost && State.conn?.open && !State.isSeekingUI) {
+                                            if (e.data === 1) State.conn.send({ type: 'STATE_UPDATE', state: { time: ytPlayer.getCurrentTime(), duration: ytPlayer.getDuration(), paused: false } });
+                                            else if (e.data === 2) State.conn.send({ type: 'STATE_UPDATE', state: { time: ytPlayer.getCurrentTime(), duration: ytPlayer.getDuration(), paused: true } });
+                                        }
                                     }
                                 }
-                            }
-                        });
-                    }
-                    MediaEngine.updateUI("YouTube Stream");
+                            });
+                        }
+                        MediaEngine.updateUI("YouTube Stream");
+                    };
+                    initYT();
                     return;
                 }
 
@@ -718,7 +724,10 @@
                         break;
                     case 'GUEST_MOUNTED': 
                         Utils.showToast("Partner mounted file successfully. Sync is fully active.", "success");
-                        if(State.isHost) SyncEngine.triggerPlay();
+                        if(State.isHost) {
+                            if (State.conn?.open) State.conn.send({ type: 'REQ_SEEK', time: UI.video.currentTime });
+                            setTimeout(() => SyncEngine.triggerPlay(true), 150); 
+                        }
                         break;
                     case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;
                     case 'REQ_PLAY': if(State.isHost) SyncEngine.triggerPlay(true); break;
@@ -1001,8 +1010,54 @@
 
                 document.addEventListener('keydown', (e) => {
                     if (document.activeElement.tagName === 'INPUT') return;
-                    if (e.code === 'Space') { e.preventDefault(); togglePlayUI(); }
-                    if (e.code === 'KeyF') { e.preventDefault(); UI.fullscreenBtn.click(); }
+                    
+                    switch(e.code) {
+                        case 'Space': 
+                            e.preventDefault(); 
+                            togglePlayUI(); 
+                            break;
+                        case 'KeyF': 
+                            e.preventDefault(); 
+                            UI.fullscreenBtn.click(); 
+                            break;
+                        case 'KeyM': 
+                            e.preventDefault(); 
+                            UI.muteBtn.click(); 
+                            break;
+                        case 'KeyC':
+                            e.preventDefault();
+                            UI.cinemaModeBtn.click();
+                            break;
+                        case 'KeyP':
+                            e.preventDefault();
+                            UI.pipBtn.click();
+                            break;
+                        case 'ArrowRight': 
+                            e.preventDefault();
+                            if (State.isHost) {
+                                const dur = State.playMode === 'youtube' ? ytPlayer.getDuration() : UI.video.duration;
+                                const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
+                                SyncEngine.triggerSeek(Math.min((dur || 0), curr + 5), true);
+                            }
+                            break;
+                        case 'ArrowLeft': 
+                            e.preventDefault();
+                            if (State.isHost) {
+                                const curr = State.playMode === 'youtube' ? ytPlayer.getCurrentTime() : UI.video.currentTime;
+                                SyncEngine.triggerSeek(Math.max(0, curr - 5), true);
+                            }
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            UI.volSlider.value = Math.min(1, parseFloat(UI.volSlider.value) + 0.1);
+                            UI.volSlider.dispatchEvent(new Event('input'));
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            UI.volSlider.value = Math.max(0, parseFloat(UI.volSlider.value) - 0.1);
+                            UI.volSlider.dispatchEvent(new Event('input'));
+                            break;
+                    }
                 });
 
                 UI.fullscreenBtn.addEventListener('click', () => {
