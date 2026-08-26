@@ -314,7 +314,7 @@
                 
                 <div class="space-y-8 relative z-10">
                     <div>
-                        <label class="block text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Alias Profile</label>
+                        <label class="block text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-2" for="nameInput">Alias Profile</label>
                         <input type="text" id="nameInput" class="w-full px-4 py-3.5 rounded-xl text-base focus:ring-2 focus:ring-accent-500/50" placeholder="e.g. Director" autocomplete="off">
                     </div>
                     
@@ -332,7 +332,7 @@
                     </div>
                     
                     <div class="flex gap-3">
-                        <input type="text" id="joinCodeInput" class="w-full px-4 py-3.5 rounded-xl text-center uppercase font-mono tracking-widest text-lg focus:ring-2 focus:ring-white/20 placeholder:text-zinc-600" placeholder="CODE" maxlength="6" autocomplete="off">
+                        <input type="text" id="joinCodeInput" aria-label="Join Session Code" class="w-full px-4 py-3.5 rounded-xl text-center uppercase font-mono tracking-widest text-lg focus:ring-2 focus:ring-white/20 placeholder:text-zinc-600" placeholder="CODE" maxlength="6" autocomplete="off">
                         <button id="joinBtn" class="bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl px-8 py-3.5 transition-all text-base border border-white/10 disabled:opacity-50">Join</button>
                     </div>
                 </div>
@@ -443,7 +443,7 @@
                                     <svg id="iconVolMuted" class="w-6 h-6 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                                 </button>
                                 <div class="vol-slider-wrapper">
-                                    <input type="range" id="volSlider" class="vertical-slider" min="0" max="1" step="0.05" value="1">
+                                    <input type="range" id="volSlider" aria-label="Volume" class="vertical-slider" min="0" max="1" step="0.05" value="1">
                                 </div>
                             </div>
                             
@@ -481,7 +481,8 @@
                 </div>
                 
                 <div class="flex items-center gap-3 bg-black/40 p-2.5 rounded-xl border border-white/5 shadow-inner">
-                    <svg class="w-4 h-4 text-zinc-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                    <label for="voiceVolSlider" class="sr-only">Voice Volume</label>
+                    <svg aria-hidden="true" class="w-4 h-4 text-zinc-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                     <input type="range" id="voiceVolSlider" class="horizontal-slider" min="0" max="1" step="0.05" value="0.8">
                 </div>
                 
@@ -523,6 +524,7 @@
                     </div>
                     
                     <div class="flex gap-2 pt-1">
+                        <label for="urlInput" class="sr-only">URL or YouTube Link</label>
                         <input type="url" id="urlInput" class="flex-1 px-4 py-3 text-xs rounded-lg border border-white/10 bg-black/60 focus:border-accent-500 shadow-inner placeholder:text-zinc-600" placeholder="URL or YouTube Link">
                         <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-xs font-bold transition border border-white/10 text-white">Load</button>
                     </div>
@@ -541,8 +543,9 @@
                 
                 <div class="p-4 bg-black/50 border-t border-white/5 backdrop-blur-xl">
                     <form id="chatForm" class="relative">
+                        <label for="chatInput" class="sr-only">Chat Message</label>
                         <input type="text" id="chatInput" class="w-full bg-black/80 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:border-accent-500 transition-colors placeholder:text-zinc-600 shadow-inner" placeholder="Send a message..." autocomplete="off">
-                        <button type="submit" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-accent-500 hover:text-white transition-colors rounded-lg hover:bg-accent-500 border border-transparent">
+                        <button type="submit" aria-label="Send message" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-accent-500 hover:text-white transition-colors rounded-lg hover:bg-accent-500 border border-transparent">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                         </button>
                     </form>
@@ -576,7 +579,7 @@
             playMode: 'idle', currentFileSize: 0, currentMediaTitle: '',
             syncState: { time: 0, duration: 0, paused: true },
             isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true, cinemaMode: false,
-            ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null, telemetryInterval: null, controlsTimeout: null
+            ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null, telemetryInterval: null, controlsTimeout: null, pingInterval: null
         };
 
         const UI = {
@@ -758,6 +761,7 @@
                     UI.bufferingOverlay.classList.remove('active');
                 } else if (state === 2 || state === 0) { // Paused or Ended
                     UI.iconPause.classList.add('hidden'); UI.iconPlay.classList.remove('hidden');
+                    UI.bufferingOverlay.classList.remove('active');
                 } else if (state === 3) { // Buffering
                     UI.bufferingOverlay.classList.add('active');
                     UI.bufferStatusText.textContent = "Buffering Stream...";
@@ -840,6 +844,7 @@
 
                         SyncEngine.startHostHeartbeat(); AudioEngine.initMic();
                     });
+                    State.peer.on('disconnected', () => { if (!State.peer.destroyed) State.peer.reconnect(); });
                     State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(conn); });
                     State.peer.on('call', Network.handleIncomingCall);
                     State.peer.on('error', (e) => {
@@ -890,6 +895,7 @@
                             });
                         });
                     });
+                    State.peer.on('disconnected', () => { if (!State.peer.destroyed) State.peer.reconnect(); });
                     State.peer.on('call', Network.handleIncomingCall);
                     State.peer.on('error', (e) => {
                         Utils.showToast("Host unreachable.", "error"); UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
@@ -918,6 +924,10 @@
 
                 if (conn.open) handleOpen();
                 else conn.on('open', handleOpen);
+
+                // Anti-Idle Keep-Alive Pings for Background Tabs
+                if (State.pingInterval) clearInterval(State.pingInterval);
+                State.pingInterval = setInterval(() => { if (conn.open) conn.send({ type: 'PING' }); }, 3000);
 
                 conn.on('data', SyncEngine.handleData);
                 conn.on('close', () => {
@@ -957,6 +967,7 @@
                     Utils.showToast("Partner connected.", "success");
                     Utils.logChat('System', 'Partner connected.', true);
                 } else {
+                    if (State.pingInterval) clearInterval(State.pingInterval);
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500 shadow-[0_0_10px_#ef4444]";
                     UI.syncText.textContent = "Connection Lost";
                     Utils.logChat('System', 'Connection lost.', true);
@@ -976,6 +987,7 @@
                 
                 UI.video.src = ""; UI.video.srcObject = null;
                 UI.ytPlayerContainer.classList.add('hidden'); UI.video.classList.remove('hidden');
+                UI.bufferingOverlay.classList.remove('active');
                 
                 State.playMode = 'idle';
                 
@@ -1150,6 +1162,8 @@
             stopHostHeartbeat: () => { if (State.hostInterval) clearInterval(State.hostInterval); },
             handleData: (data) => {
                 switch (data.type) {
+                    case 'PING': break; // Keep-alive to prevent UDP timeout
+                    case 'REQ_SYNC_STATE': if (State.isHost && State.conn?.open) State.conn.send({ type: 'STATE_UPDATE', state: State.syncState }); break;
                     case 'INFO':
                         Utils.logChat('System', `${data.name} connected.`, true);
                         if(State.isHost && State.playMode !== 'idle') {
@@ -1420,6 +1434,14 @@
                     UI.chatInput.value = '';
                 });
                 
+                // Visibility API: Force Re-sync and Re-connect when returning from background
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        if (State.peer && State.peer.disconnected && !State.peer.destroyed) State.peer.reconnect();
+                        if (!State.isHost && State.conn?.open) State.conn.send({ type: 'REQ_SYNC_STATE' });
+                    }
+                });
+
                 UI.micBtn.addEventListener('click', AudioEngine.toggleMic);
                 UI.voiceVolSlider.addEventListener('input', (e) => { UI.remoteAudio.volume = e.target.value; });
                 
@@ -1458,8 +1480,11 @@
                 });
                 
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });
+                UI.video.addEventListener('canplay', () => { UI.bufferingOverlay.classList.remove('active'); }); // Ultimate Failsafe
                 
                 UI.video.addEventListener('timeupdate', () => {
+                    if (UI.video.readyState >= 3) UI.bufferingOverlay.classList.remove('active'); // Prevents infinite loading lock
+                    
                     if (State.playMode === 'local_stream' || State.playMode === 'screenshare') { UI.timeDisplay.textContent = "LIVE BROADCAST"; return; }
                     if (State.isHost && State.playMode !== 'youtube') {
                         const curr = UI.video.currentTime, total = UI.video.duration;
