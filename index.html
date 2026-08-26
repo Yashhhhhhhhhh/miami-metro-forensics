@@ -54,6 +54,22 @@
         video.mode-cover { object-fit: cover; }         
         video.mode-fill { object-fit: fill; }         
         ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 500; padding: 4px 12px; border-radius: 4px; letter-spacing: 0.5px; }         
+        
+        /* Fullscreen Sidebar Overlay Fix */
+        :fullscreen #sidebar, :-webkit-full-screen #sidebar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            background: rgba(3, 3, 4, 0.7);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            transform: translateX(0);
+        }
+        :fullscreen #sidebar.sidebar-collapsed, :-webkit-full-screen #sidebar.sidebar-collapsed {
+            transform: translateX(100%);
+        }
+
         .overlay-layer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }         
         .overlay-layer.active { opacity: 1; pointer-events: auto; }         
         .bg-overlay { background: rgba(3, 3, 4, 0.85); }                  
@@ -322,17 +338,17 @@
         window.onYouTubeIframeAPIReady = () => { ytReady = true; };         
         const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";         
         const firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);         
-        let audioCtx = null, sourceNode = null, eqFilter = null, compNode = null;         
+        let audioCtx = null, sourceNode = null, eqFilter = null, gainNode = null, compNode = null;         
         let aspectModes = ['mode-contain', 'mode-cover', 'mode-fill'];         
         let aspectLabels = ['FIT', 'FILL', 'STRETCH'];         
         let currentAspectIdx = 0;         
-        let lastVol = 1; // initialized properly in bindUI to prevent audio shocks
+        let lastVol = 1; 
         
         const State = {             
             isHost: false, roomId: '', myName: 'Viewer',             
             peer: null, conn: null, mediaConn: null, voiceConn: null,             
             localVoiceStream: null, activeMediaStream: null, hlsPlayer: null,             
-            playMode: 'idle',              
+            playMode: 'idle', currentFileSize: 0,              
             syncState: { time: 0, duration: 0, paused: true },             
             isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true, cinemaMode: false,             
             ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null, telemetryInterval: null         
@@ -405,22 +421,29 @@
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();                     
                     sourceNode = audioCtx.createMediaElementSource(UI.video);                     
                     eqFilter = audioCtx.createBiquadFilter();                     
+                    gainNode = audioCtx.createGain(); // Enhanced Gain Block for output boost
                     compNode = audioCtx.createDynamicsCompressor();                     
+                    
                     AudioDSP.setProfile('speaker');                     
+                    
+                    // Routing: Source -> EQ -> Gain -> Compressor -> Destination
                     sourceNode.connect(eqFilter);                     
-                    eqFilter.connect(compNode);                     
+                    eqFilter.connect(gainNode);
+                    gainNode.connect(compNode);
                     compNode.connect(audioCtx.destination);                 
                 } catch(e) {}             
             },             
             setProfile: (mode) => {                 
-                if (!eqFilter || !compNode) return;                 
+                if (!eqFilter || !compNode || !gainNode) return;                 
                 if (mode === 'speaker') {                     
                     eqFilter.type = 'highpass'; eqFilter.frequency.value = 120; eqFilter.Q.value = 1.0;                     
-                    compNode.threshold.value = -18; compNode.ratio.value = 4;                     
+                    gainNode.gain.value = 2.5; // Strong boost for laptop speakers
+                    compNode.threshold.value = -18; compNode.ratio.value = 4; // Hard ceiling to prevent clipping                  
                     UI.eqSpeakerBtn.classList.add('active'); UI.eqEarphoneBtn.classList.remove('active');                     
                     Utils.showToast("Audio Profile: Laptop Speakers Active", "info", 2000);                 
                 } else {                     
                     eqFilter.type = 'lowshelf'; eqFilter.frequency.value = 250; eqFilter.gain.value = 4.0;                     
+                    gainNode.gain.value = 1.0; // Flat line for earphones
                     compNode.threshold.value = -24; compNode.ratio.value = 2;                     
                     UI.eqEarphoneBtn.classList.add('active'); UI.eqSpeakerBtn.classList.remove('active');                     
                     Utils.showToast("Audio Profile: Earphones Active", "info", 2000);                 
@@ -468,9 +491,7 @@
                             if (sender.track && sender.track.kind === 'video') {                                 
                                 const params = sender.getParameters();                                 
                                 if (!params.encodings) params.encodings = [{}];                                 
-                                // Changed Bitrate limiting for robust sync
-                                params.encodings[0].maxBitrate = 4000000; // 4 Mbps                                 
-                                // Ensure scaling is balanced
+                                params.encodings[0].maxBitrate = 4000000; // Stabilized to 4 Mbps for broad compatibility                                
                                 params.degradationPreference = 'balanced';                                 
                                 sender.setParameters(params).catch(e => {});                             
                             }                         
@@ -525,12 +546,29 @@
                 localStorage.setItem('lumiereAlias', State.myName);                 
                 State.isHost = false; State.roomId = code;                 
                 UI.joinBtn.disabled = true; UI.joinBtn.textContent = "Locating...";                                  
+                
                 try {                     
                     State.peer = new Peer(Network.peerConfig);                     
                     State.peer.on('open', () => {                         
                         UI.joinBtn.textContent = "Connecting...";                         
+                        
+                        // Strict Connection Timeout Fallback
+                        let connectionTimeout = setTimeout(() => {
+                            if (!State.conn || !State.conn.open) {
+                                State.peer.destroy();
+                                Utils.showToast("Signaling server timeout. Try again.", "error");
+                                UI.joinBtn.disabled = false;
+                                UI.joinBtn.textContent = "Join";
+                            }
+                        }, 10000); // 10-second fail-safe
+
                         State.conn = State.peer.connect(`lumiere-${code}`, { reliable: true });                         
-                        Network.setupDataChannel(State.conn);                         
+                        
+                        State.conn.on('open', () => {
+                            clearTimeout(connectionTimeout); // Clear fallback on success
+                            Network.setupDataChannel(State.conn);
+                        });
+
                         AudioEngine.initMic().then(() => {                             
                             const call = State.peer.call(`lumiere-${code}`, State.localVoiceStream, { metadata: { type: 'voice' } });                             
                             call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });                         
@@ -633,15 +671,24 @@
             },                          
             syncLocalFile: (file) => {                 
                 if (file.name.endsWith('.mkv')) return Utils.showToast("Browsers cannot decode MKV natively. Use MP4.", "error", 6000);                 
-                MediaEngine.clearSource(); State.playMode = 'local_sync';                                  
+                MediaEngine.clearSource(); State.playMode = 'local_sync';
+                State.currentFileSize = file.size; // Store byte size for strict validation
+                                                 
                 const blobUrl = URL.createObjectURL(file);                 
                 UI.video.src = blobUrl; MediaEngine.updateUI(file.name); AudioDSP.init();                                  
                 if (State.isHost) {                     
                     Utils.logChat('System', `Awaiting guest to mount identical file...`, true);                     
-                    if (State.conn?.open) State.conn.send({ type: 'REQ_SYNC_FILE', name: file.name });                 
+                    if (State.conn?.open) State.conn.send({ 
+                        type: 'REQ_SYNC_FILE', 
+                        name: file.name, 
+                        size: file.size // Transmit size to check guest divergence
+                    });                 
                 } else {                     
                     Utils.logChat('System', `File mounted. Sync active.`, true);                     
-                    if (State.conn?.open) State.conn.send({ type: 'GUEST_MOUNTED' });                 
+                    if (State.conn?.open) State.conn.send({ 
+                        type: 'GUEST_MOUNTED', 
+                        size: file.size 
+                    });                 
                 }             
             },                          
             streamLocalFile: (file) => {                 
@@ -652,17 +699,32 @@
                 UI.video.src = blobUrl; UI.video.muted = false; AudioDSP.init();                                  
                 MediaEngine.updateUI(`Broadcasting: ${file.name}`);                 
                 Utils.showToast("Initializing 60FPS Broadcast...", "info");                                  
+                
                 UI.video.onplaying = () => {                     
                     if (State.activeMediaStream) return;                      
                     let stream = null;                     
                     try {                         
-                        if (UI.video.captureStream) stream = UI.video.captureStream(60);                         
-                        else if (UI.video.mozCaptureStream) stream = UI.video.mozCaptureStream(60);                     
-                    } catch (err) {}                                          
+                        // 1. Capture the video frames
+                        const videoStream = UI.video.captureStream ? UI.video.captureStream(60) : UI.video.mozCaptureStream(60);                     
+                        
+                        // 2. Extract processed audio from the DSP context
+                        if (audioCtx && compNode) {
+                            const destNode = audioCtx.createMediaStreamDestination();
+                            compNode.connect(destNode); // Branch the master audio pipe out to RTC
+                            
+                            // 3. Merge Video Track + DSP Audio Track for a unified stream
+                            const videoTrack = videoStream.getVideoTracks()[0];
+                            const audioTrack = destNode.stream.getAudioTracks()[0];
+                            stream = new MediaStream([videoTrack, audioTrack]);
+                        } else {
+                            stream = videoStream;
+                        }
+                    } catch (err) { console.error("Capture Error:", err); }                                          
+                    
                     if (stream && stream.getVideoTracks().length > 0) {                         
                         State.activeMediaStream = stream;                         
                         Network.broadcastStream(file.name);                     
-                    } else { Utils.showToast("Capture failed.", "error"); }                 
+                    } else { Utils.showToast("Media capture failed.", "error"); }                 
                 };                 
                 UI.video.play().catch(()=>{});             
             },                          
@@ -751,19 +813,25 @@
                     case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;                     
                     case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, "Host Feed", false); break;                     
                     case 'REQ_SYNC_FILE':                          
-                         Utils.showToast(`Host requests you load: ${data.name}`, "info", 10000);                          
-                         Utils.logChat('System', `Please click 'Sync Local File' and select ${data.name} from your computer.`, true);                         
+                        Utils.showToast(`Host requests you load: ${data.name}`, "info", 10000);                          
+                        Utils.logChat('System', `Please click 'Sync Local File' and select ${data.name} from your computer.`, true);                         
                         UI.hostControlsPanel.style.display = 'block';                         
                         break;                     
                     case 'GUEST_MOUNTED':                          
-                         Utils.showToast("Partner mounted file successfully. Sync is fully active.", "success");                         
-                        if(State.isHost) {                             
+                        if(State.isHost) {
+                            // Strict Validation: Ensure sizes match closely (allow 100KB variance for OS differences)
+                            if (data.size && State.currentFileSize && Math.abs(data.size - State.currentFileSize) > 100000) { 
+                                Utils.showToast("Warning: File size mismatch. Desync and playback crashes likely.", "error", 8000);
+                            } else {
+                                Utils.showToast("Partner mounted exact file. Sync is active.", "success");
+                            }
+                            
                             State.conn.send({ type: 'CMD_SEEK', time: UI.video.currentTime });                             
                             setTimeout(() => {                                 
                                 SyncEngine.triggerPlay(true);                                 
                                 State.conn.send({ type: 'CMD_PLAY' });                             
                             }, 150);                          
-                         }                         
+                        }                         
                         break;                     
                     case 'STATE_UPDATE': SyncEngine.enforceHostState(data.state); break;                     
                     case 'CMD_PLAY': if(!State.isHost) SyncEngine.triggerPlay(true); break;                     
@@ -782,13 +850,20 @@
                     UI.scrubberProgress.style.width = `${pct}%`; UI.scrubberThumb.style.left = `${pct}%`;                     
                     UI.timeDisplay.textContent = `${Utils.formatTime(hostState.time)} / ${Utils.formatTime(hostState.duration)}`;                 
                 }                                  
+                
+                // Pure Stream Mode (No local sync tracking needed beyond play/pause indicator)
                 if (State.playMode === 'local_stream' || State.playMode === 'screenshare') {                     
                     if (hostState.paused) { UI.iconPlay.classList.remove('hidden'); UI.iconPause.classList.add('hidden'); }                      
                     else { UI.iconPause.classList.remove('hidden'); UI.iconPlay.classList.add('hidden'); }                     
                     return;                 
                 }                 
+                
+                // YouTube Sync Enforcement
                 if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {                     
                     const ytState = ytPlayer.getPlayerState();                     
+                    
+                    if (ytState === 3) return; // Wait to enforce if currently buffering an ad
+
                     if (hostState.paused && ytState === 1) ytPlayer.pauseVideo();                     
                     if (!hostState.paused && ytState !== 1 && ytState !== 3) ytPlayer.playVideo();                                          
                     if (State.ignoreNextSeekEvent) return;                     
@@ -799,17 +874,37 @@
                     }                     
                     return;                 
                 }                                  
+                
+                // Local Video Sync Enforcement (Smooth Adjustments applied)
                 if (hostState.paused && !UI.video.paused) UI.video.pause();                 
                 if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) {                      
                     UI.video.play().catch(()=>{}); UI.bufferingOverlay.classList.remove('active');                 
                 }                                  
                 if (State.ignoreNextSeekEvent) return;                  
-                const drift = Math.abs(UI.video.currentTime - hostState.time);                 
-                if (drift > 1.0 && !hostState.paused) {                     
-                    UI.driftIndicator.classList.remove('hidden');                     
-                    UI.video.currentTime = hostState.time;                     
-                    setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);                 
-                } else if (hostState.paused && drift > 0.1) { UI.video.currentTime = hostState.time; }             
+                
+                const drift = UI.video.currentTime - hostState.time;                 
+                const absDrift = Math.abs(drift);
+
+                if (absDrift > 3.0 && !hostState.paused) {
+                    // Severe desync: Hard seek required
+                    UI.driftIndicator.classList.remove('hidden');
+                    UI.video.currentTime = hostState.time;
+                    setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
+                } else if (absDrift > 0.3 && !hostState.paused) {
+                    // Minor desync: Smoothly throttle playback speed to catch up invisibly
+                    if (drift > 0) {
+                        UI.video.playbackRate = 0.95; // Viewer is ahead, slow down slightly
+                    } else {
+                        UI.video.playbackRate = 1.05; // Viewer is behind, speed up slightly
+                    }
+                } else {
+                    // Perfectly in sync
+                    UI.video.playbackRate = 1.0;
+                }
+
+                if (hostState.paused && absDrift > 0.1) {
+                    UI.video.currentTime = hostState.time;
+                }            
             },                          
             triggerPlay: (forceLocal = false) => {                 
                 if (State.isHost || forceLocal) {                     
@@ -1025,7 +1120,6 @@
                     }                 
                 });                 
                 
-                // Initialize default volume dynamically based on HTML attributes if present
                 lastVol = UI.video.volume || 1;
                 UI.volSlider.addEventListener('input', (e) => {                      
                     const vol = e.target.value;                     
@@ -1038,7 +1132,7 @@
                 UI.muteBtn.addEventListener('click', () => {                     
                     const currentVol = (State.playMode === 'youtube' && ytPlayer) ? (ytPlayer.getVolume() / 100) : UI.video.volume;                     
                     if (currentVol > 0) {                         
-                        lastVol = currentVol; // Save before muting to fix shock
+                        lastVol = currentVol; 
                         if (State.playMode === 'youtube' && ytPlayer) ytPlayer.setVolume(0);                         
                         else UI.video.volume = 0;                         
                         UI.volSlider.value = 0;                     
@@ -1056,11 +1150,12 @@
                 };                 
                 
                 document.addEventListener('keydown', (e) => {                     
-                    // Added Enter Key Hook to seamlessly chat while in Fullscreen
-                    if (e.code === 'Enter' && document.activeElement !== UI.chatInput) {
+                    const isTheaterActive = !UI.theater.classList.contains('hidden');
+
+                    if (e.code === 'Enter' && isTheaterActive && document.activeElement !== UI.chatInput) {
                         e.preventDefault();
                         if (!State.sidebarOpen) UI.toggleSidebarBtn.click();
-                        UI.chatInput.focus();
+                        setTimeout(() => UI.chatInput.focus(), 50); 
                         return;
                     }
 
@@ -1088,7 +1183,6 @@
                 
                 UI.fullscreenBtn.addEventListener('click', () => {                     
                     if (!document.fullscreenElement) {
-                        // Apply fullscreen to the entire theater screen to retain chat accessibility
                         UI.theater.requestFullscreen().catch(()=>{}); 
                     } else {
                         document.exitFullscreen();
