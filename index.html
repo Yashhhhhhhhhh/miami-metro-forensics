@@ -18,7 +18,7 @@
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },                     
                     colors: {                         
                         theater: { 950: '#030304', 900: '#09090b', 850: '#121214', 800: '#18181b' },                         
-                        accent: { 500: '#991b1b', 600: '#7f1d1d' }                     
+                        accent: { 500: '#991b1b', 600: '#7f1d1d', 400: '#b91c1c' }                     
                     }                 
                 }             
             }         
@@ -27,6 +27,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>         
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.7.4/dash.all.min.js"></script>
 
     <style>         
         body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.8s ease; touch-action: manipulation; }         
@@ -37,15 +38,15 @@
                                radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);             
             background-size: 100% 100%, 40px 40px;         
         }         
-        body.cinema-mode { background-image: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.85) 100%); background-color: #000; }                 
+        body.cinema-mode { background-image: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.92) 100%); background-color: #000; }                 
 
         .dimmable { transition: opacity 0.5s ease, filter 0.5s ease; }         
-        body.cinema-mode .dimmable { opacity: 0.02 !important; filter: blur(3px); pointer-events: none; }                 
+        body.cinema-mode .dimmable { opacity: 0.01 !important; filter: blur(4px); pointer-events: none; }                 
 
-        #ambilightCanvas { position: absolute; inset: -15%; z-index: 0; width: 130%; height: 130%; object-fit: cover; filter: blur(80px) saturate(150%) brightness(0.7); pointer-events: none; opacity: 0; transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1); }         
-        #ambilightCanvas.active { opacity: 0.6; }                 
+        #ambilightCanvas { position: absolute; inset: -15%; z-index: 0; width: 130%; height: 130%; object-fit: cover; filter: blur(80px) saturate(160%) brightness(0.65); pointer-events: none; opacity: 0; transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1); }         
+        #ambilightCanvas.active { opacity: 0.7; }                 
 
-        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }         
+        .player-wrapper { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #000; overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.95); }         
         .player-wrapper.drag-over { border: 4px dashed #991b1b; background: rgba(153, 27, 27, 0.1); }
         .video-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }                 
 
@@ -53,15 +54,15 @@
         video.mode-contain { object-fit: contain; }         
         video.mode-cover { object-fit: cover; }         
         video.mode-fill { object-fit: fill; }         
-        ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 500; padding: 4px 12px; border-radius: 4px; letter-spacing: 0.5px; }         
+        ::cue { background: rgba(0, 0, 0, 0.85); color: #e5e5e5; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 500; padding: 6px 16px; border-radius: 6px; letter-spacing: 0.5px; }         
 
         :fullscreen #sidebar, :-webkit-full-screen #sidebar {
             position: absolute;
             right: 0;
             top: 0;
             height: 100vh;
-            background: rgba(3, 3, 4, 0.7);
-            backdrop-filter: blur(20px);
+            background: rgba(3, 3, 4, 0.8);
+            backdrop-filter: blur(25px);
             border-left: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -69,19 +70,18 @@
         .overlay-layer.active { opacity: 1; pointer-events: auto; }         
         .bg-overlay { background: rgba(3, 3, 4, 0.85); }                 
 
-        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s ease, transform 0.5s ease; width: 100%; display: flex; flex-direction: column; gap: 16px; }         
+        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.7) 40%, transparent 100%); padding: 60px 40px 30px 40px; opacity: 1; z-index: 30; transition: opacity 0.5s ease, transform 0.5s ease; width: 100%; display: flex; flex-direction: column; gap: 16px; }         
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(15px); pointer-events: none; }         
         .player-wrapper.idle { cursor: none; }                 
 
-        .scrubber-container { width: 100%; position: relative; height: 5px; background: rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; transition: height 0.15s ease; touch-action: none;}         
-        .scrubber-container:hover { height: 8px; }         
-        .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.2); border-radius: 999px; pointer-events: none; transition: width 0.2s linear; }         
-        .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #991b1b; border-radius: 999px; pointer-events: none; z-index: 2; transition: width 0.1s linear;}         
-        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 14px; height: 14px; background: #d4d4d8; border-radius: 50%; box-shadow: 0 0 10px rgba(153, 27, 27, 0.8); transition: transform 0.15s ease; pointer-events: none; }         
+        .scrubber-container { width: 100%; position: relative; height: 6px; background: rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; transition: height 0.15s ease; touch-action: none;}         
+        .scrubber-container:hover { height: 10px; }         
+        .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.25); border-radius: 999px; pointer-events: none; transition: width 0.2s linear; }         
+        .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #b91c1c; border-radius: 999px; pointer-events: none; z-index: 2; transition: width 0.1s linear;}         
+        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 16px; height: 16px; background: #f4f4f5; border-radius: 50%; box-shadow: 0 0 12px rgba(185, 28, 28, 0.9); transition: transform 0.15s ease; pointer-events: none; }         
         .scrubber-container:hover .scrubber-thumb, .scrubber-container:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }                 
 
         .glass-panel { background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.9); }         
-        
         .glass-sidebar { background: rgba(3, 3, 4, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.03); transition: margin-right 0.4s cubic-bezier(0.16, 1, 0.3, 1); width: 400px; max-width: 90vw; }         
         .sidebar-collapsed { margin-right: -400px; }
         @media (max-width: 768px) { .sidebar-collapsed { margin-right: -100vw; } }
@@ -92,29 +92,30 @@
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }                 
 
         .btn-icon { color: #a1a1aa; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }         
-        .btn-icon:hover { color: #f4f4f5; transform: scale(1.1); }         
-        .btn-primary { background: #991b1b; color: #f4f4f5; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(153, 27, 27, 0.2); }         
-        .btn-primary:hover:not(:disabled) { background: #7f1d1d; box-shadow: 0 6px 25px rgba(153, 27, 27, 0.4); transform: translateY(-1px); }         
+        .btn-icon:hover { color: #f4f4f5; transform: scale(1.15); }         
+        .btn-primary { background: #b91c1c; color: #f4f4f5; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(185, 28, 28, 0.2); }         
+        .btn-primary:hover:not(:disabled) { background: #991b1b; box-shadow: 0 6px 25px rgba(185, 28, 28, 0.4); transform: translateY(-1px); }         
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }                 
 
         .eq-btn { flex: 1; padding: 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #a1a1aa; transition: all 0.2s; cursor: pointer; }         
-        .eq-btn.active { background: #991b1b; border-color: #991b1b; color: #fff; box-shadow: 0 0 15px rgba(153, 27, 27, 0.4); }         
+        .eq-btn.active { background: #b91c1c; border-color: #b91c1c; color: #fff; box-shadow: 0 0 15px rgba(185, 28, 28, 0.4); }         
 
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }         
         input[type=range]:focus { outline: none; }         
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }         
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #e4e4e7; margin-top: -5px; box-shadow: 0 1px 4px rgba(0,0,0,0.8);}         
         input[type=text], input[type=url] { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #e4e4e7; transition: border-color 0.2s, background 0.2s; }         
-        input:focus { outline: none; border-color: #991b1b; background: rgba(255,255,255,0.05); }         
-        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #991b1b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }         
+        input:focus { outline: none; border-color: #b91c1c; background: rgba(255,255,255,0.05); }         
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #b91c1c; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }         
         @keyframes spin { 100% { transform: rotate(360deg); } }     
     </style> 
 </head> 
 <body class="w-screen h-screen flex flex-col selection:bg-accent-500 selection:text-white text-sm cinema-grid">         
     
+    <!-- Audio element for spatial voice comms -->
     <audio id="remoteAudio" autoplay></audio>     
     
-    <!-- LOBBY SCREEN -->     
+     
     <div id="lobbyScreen" class="absolute inset-0 z-50 flex items-center justify-center bg-theater-950/95 transition-opacity duration-700 p-4">         
         <div class="relative w-full max-w-5xl p-6 md:p-10 grid md:grid-cols-2 gap-10 md:gap-16 items-center">             
             <div class="space-y-6 text-center md:text-left">                 
@@ -123,7 +124,7 @@
                 </div>                 
                 <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-zinc-100 flex items-center justify-center md:justify-start gap-4">Lumière Studio</h1>                 
                 <p class="text-zinc-400 text-base md:text-lg leading-relaxed font-light">                     
-                    The ultimate private viewing suite. Lossless syncing, zero-latency WebRTC broadcasts, and immersive spatial audio.                 
+                    The ultimate private viewing suite. Lossless syncing, zero-latency WebRTC broadcasts, multi-format streaming, and immersive spatial audio.                 
                 </p>             
             </div>                             
             <div class="glass-panel rounded-2xl p-6 md:p-10 w-full max-w-md mx-auto">                 
@@ -152,14 +153,16 @@
         </div>     
     </div>     
 
-    <!-- MAIN THEATER -->     
+     
     <div id="theaterScreen" class="hidden flex-1 flex w-full h-full relative">         
         
+        <!-- Toast Notifications -->
         <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-11/12 max-w-md items-center text-center"></div>
         
         <div id="mainView" class="relative flex-1 flex flex-col bg-black transition-all duration-300">             
             <canvas id="ambilightCanvas" class="dimmable"></canvas>
 
+            <!-- Top Header UI -->
             <div id="topOverlay" class="absolute top-0 left-0 right-0 p-4 md:p-8 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">                 
                 <div class="flex flex-col gap-2 pointer-events-auto">                     
                     <div class="flex items-center gap-3 glass-panel px-3 py-1.5 rounded-lg">                         
@@ -183,6 +186,7 @@
                 </button>             
             </div>             
             
+             
             <div id="noMediaOverlay" class="overlay-layer active bg-overlay">                 
                 <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">                     
                     <svg class="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>                 
@@ -196,11 +200,13 @@
                 <span class="text-white font-bold tracking-widest uppercase text-base mb-3" id="bufferStatusText">Loading Stream...</span>             
             </div>             
             
+            <!-- Floating Chat Layer for Cinema Mode -->
             <div id="overlayChat" class="overlay-chat-container hidden sm:flex"></div>             
             
+             
             <div id="playerWrapper" class="player-wrapper group">                 
                 <div class="video-container">
-                    <!-- FIX: crossorigin added for Audio Context external URL processing -->                     
+                    <!-- crossorigin="anonymous" is strictly required for Web Audio API to process external URLs -->                     
                     <video id="mainVideo" class="mode-contain" playsinline crossorigin="anonymous"></video>                     
                     <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none bg-black">                         
                         <div id="ytPlayerDiv" class="w-full h-full"></div>                     
@@ -246,6 +252,7 @@
                             <div id="driftIndicator" class="hidden flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] text-yellow-400 font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-xl uppercase tracking-wider">                                 
                                 <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> <span class="hidden sm:inline">Syncing</span>                             
                             </div>                             
+                            <button id="resyncBtn" class="hidden flex items-center gap-1 btn-icon text-xs font-mono bg-accent-500/20 px-2.5 py-1.5 rounded-lg border border-accent-500/30 hover:bg-accent-500 text-white tracking-widest font-bold" title="Force Resync"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>                             
                             <button id="aspectBtn" class="hidden sm:flex btn-icon text-xs font-mono bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-white tracking-widest font-bold" title="Toggle Fit Mode">FIT</button>                             
                             <button id="pipBtn" class="hidden sm:flex btn-icon text-white drop-shadow-md" title="Picture-in-Picture"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>                             
                             <button id="cinemaModeBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Cinema Dimming"><svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>                             
@@ -257,7 +264,7 @@
             </div>         
         </div>         
 
-        <!-- SIDEBAR CONTROLS -->         
+         
         <div id="sidebar" class="glass-sidebar flex flex-col h-full flex-shrink-0 relative z-50 dimmable">             
             <div class="p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent space-y-4">                 
                 <div class="flex items-center justify-between">                     
@@ -347,8 +354,8 @@
         const State = {             
             isHost: false, roomId: '', myName: 'Viewer',             
             peer: null, conn: null, mediaConn: null, voiceConn: null,             
-            localVoiceStream: null, activeMediaStream: null, hlsPlayer: null,             
-            playMode: 'idle', currentFileSize: 0,              
+            localVoiceStream: null, activeMediaStream: null, hlsPlayer: null, dashPlayer: null,             
+            playMode: 'idle', currentFileSize: 0, currentMediaUrl: '', currentMediaTitle: '',              
             syncState: { time: 0, duration: 0, paused: true },             
             isSeekingUI: false, ambilightEnabled: true, sidebarOpen: true, cinemaMode: false,             
             ignoreNextSeekEvent: false, syncLockTimeout: null, hostInterval: null, telemetryInterval: null,
@@ -369,7 +376,7 @@
             scrubberProgress: document.getElementById('scrubberProgress'), scrubberThumb: document.getElementById('scrubberThumb'),             
             timeDisplay: document.getElementById('timeDisplay'), volSlider: document.getElementById('volSlider'),             
             muteBtn: document.getElementById('muteBtn'), iconVol: document.getElementById('iconVol'), iconVolMuted: document.getElementById('iconVolMuted'),             
-            fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'), pipBtn: document.getElementById('pipBtn'), cinemaModeBtn: document.getElementById('cinemaModeBtn'), aspectBtn: document.getElementById('aspectBtn'),             
+            fullscreenBtn: document.getElementById('fullscreenBtn'), ambilightBtn: document.getElementById('ambilightBtn'), pipBtn: document.getElementById('pipBtn'), cinemaModeBtn: document.getElementById('cinemaModeBtn'), aspectBtn: document.getElementById('aspectBtn'), resyncBtn: document.getElementById('resyncBtn'),            
             sidebar: document.getElementById('sidebar'), toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),             
             hostControlsPanel: document.getElementById('hostControlsPanel'), chatMessages: document.getElementById('chatMessages'),             
             overlayChat: document.getElementById('overlayChat'), chatForm: document.getElementById('chatForm'), chatInput: document.getElementById('chatInput'),             
@@ -382,25 +389,26 @@
             videoControls: document.getElementById('videoControls'), bufferStatusText: document.getElementById('bufferStatusText')
         };         
 
-        // --- Hardware Accelerated Ambilight System ---
         let ambilightLoopRef = null;
         const startAmbilight = () => {
             if (!State.ambilightEnabled) return;
             const canvas = UI.ambilightCanvas;
-            const ctx = canvas.getContext('2d', { alpha: false }); 
+            const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true }); 
             
-            if(canvas.width !== 160) {
-                canvas.width = 160; 
-                canvas.height = 90;
-            }
+            if(canvas.width !== 160) { canvas.width = 160; canvas.height = 90; }
 
             const draw = () => {
-                // FIX: Request next frame BEFORE potential return to ensure loop survives pauses
                 ambilightLoopRef = requestAnimationFrame(draw);
                 if (!State.ambilightEnabled || UI.video.paused || UI.video.ended || UI.video.classList.contains('hidden') || UI.video.readyState < 2) return;
-                ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+                try {
+                    // Safe execution wrap: Prevents total app crash if video is strictly cross-origin locked without CORS headers
+                    ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+                } catch(e) {
+                    console.warn("CORS Ambilight Blocked:", e);
+                    State.ambilightEnabled = false; 
+                    UI.ambilightCanvas.classList.remove('active');
+                }
             };
-            // Cancel any existing loop before starting a new one to prevent exponential calls
             if(ambilightLoopRef) cancelAnimationFrame(ambilightLoopRef);
             draw();
         };
@@ -454,10 +462,9 @@
                         eqFilter.connect(gainNode);
                         gainNode.connect(compNode);
                         compNode.connect(audioCtx.destination);                 
-                    } catch(e) { console.warn("Audio Context init blocked by browser until interacted with."); }             
+                    } catch(e) { console.warn("Audio Context init blocked or element already connected."); }             
                 }
                 
-                // FIX: Ensure un-suspension on dynamic network media loads
                 if (audioCtx && audioCtx.state === 'suspended') {
                     audioCtx.resume().catch(e => console.warn("Could not resume audio context. Needs user click."));
                 }
@@ -469,13 +476,13 @@
                     gainNode.gain.value = 2.5; 
                     compNode.threshold.value = -18; compNode.ratio.value = 4;                 
                     UI.eqSpeakerBtn.classList.add('active'); UI.eqEarphoneBtn.classList.remove('active');                     
-                    Utils.showToast("Audio Profile: Laptop Speakers Active", "info", 2000);                 
+                    Utils.showToast("Audio Profile: Laptop Speakers", "info", 2000);                 
                 } else {                     
                     eqFilter.type = 'lowshelf'; eqFilter.frequency.value = 250; eqFilter.gain.value = 4.0;                     
                     gainNode.gain.value = 1.0; 
                     compNode.threshold.value = -24; compNode.ratio.value = 2;                     
                     UI.eqEarphoneBtn.classList.add('active'); UI.eqSpeakerBtn.classList.remove('active');                     
-                    Utils.showToast("Audio Profile: Earphones Active", "info", 2000);                 
+                    Utils.showToast("Audio Profile: Earphones", "info", 2000);                 
                 }             
             }         
         };         
@@ -508,7 +515,10 @@
         };         
 
         const Network = {             
-            peerConfig: { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }, debug: 0 },                         
+            peerConfig: { 
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }, { urls: 'stun:stun.cloudflare.com:3478' }] }, 
+                debug: 0 
+            },                         
             
             broadcastStream: (fileName) => {                 
                 if (!State.conn || !State.activeMediaStream) return;                 
@@ -521,9 +531,9 @@
                             if (sender.track && sender.track.kind === 'video') {                                 
                                 const params = sender.getParameters();                                 
                                 if (!params.encodings) params.encodings = [{}];                                 
-                                params.encodings[0].maxBitrate = 4000000;                                 
-                                params.degradationPreference = 'balanced';                                 
-                                sender.setParameters(params).catch(e => {});                             
+                                // Adaptive fallback instead of hard limits to prevent crashing
+                                params.degradationPreference = 'maintain-framerate';                                 
+                                sender.setParameters(params).catch(e => console.warn("Failed to set video parameters:", e));                             
                             }                         
                         });                     
                     };                     
@@ -567,7 +577,7 @@
                     State.peer.on('connection', (conn) => { State.conn = conn; Network.setupDataChannel(conn); });                     
                     State.peer.on('call', Network.handleIncomingCall);                     
                     State.peer.on('error', (e) => {                         
-                        Utils.showToast("Network Error", "error"); UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Generate Session";                     
+                        Utils.showToast("Network Error: " + e.message, "error"); UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = "Generate Session";                     
                     });                 
                 } catch (err) { Utils.showToast("Failed to initiate.", "error"); }             
             },                         
@@ -587,10 +597,10 @@
                         let connectionTimeout = setTimeout(() => {
                             if (!State.conn || !State.conn.open) {
                                 State.peer.destroy();
-                                Utils.showToast("Signaling server timeout. Try again.", "error");
+                                Utils.showToast("Signaling server timeout. Ensure host is active.", "error");
                                 UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
                             }
-                        }, 10000);
+                        }, 12000); // Extended timeout
 
                         State.conn = State.peer.connect(`lumiere-${code}`);                         
                         
@@ -627,12 +637,13 @@
                         UI.roleIndicator.classList.replace('text-accent-500', 'text-zinc-400');                         
                         UI.roleIndicator.classList.replace('bg-accent-500/10', 'bg-white/10');                         
                         UI.roleIndicator.classList.replace('border-accent-500/20', 'border-white/10');                     
+                        UI.resyncBtn.classList.remove('hidden');
+                        UI.resyncBtn.classList.add('flex');
                     }                     
                     Network.updateStatus(true);                     
+                    
+                    // The Initial Handshake Packet
                     conn.send({ type: 'INFO', name: State.myName });                                         
-                    if (State.isHost && State.playMode === 'local_stream' && State.activeMediaStream) {                         
-                        setTimeout(() => { Network.broadcastStream(State.currentMediaTitle); }, 1500);                     
-                    } 
                     
                     if (State.pingInterval) clearInterval(State.pingInterval);
                     State.pingInterval = setInterval(() => {
@@ -665,12 +676,17 @@
                     call.on('stream', (stream) => { UI.remoteAudio.srcObject = stream; });                 
                 } else if (call.metadata?.type === 'media_stream' || call.metadata?.type === 'screenshare') {                     
                     call.answer(); Network.monitorTelemetry(call);                                         
+                    
+                    // Force update status incase data channel is lagging
+                    Network.updateStatus(true);
+
                     call.on('stream', (stream) => {                         
                         MediaEngine.clearSource();                                         
                         UI.ytPlayerContainer.classList.add('hidden'); UI.video.classList.remove('hidden');                         
                         UI.video.srcObject = stream;                                         
                         State.mediaConn = call; State.playMode = call.metadata?.type === 'screenshare' ? 'screenshare' : 'local_stream';                                         
                         const videoTrack = stream.getVideoTracks()[0];                         
+                        
                         if (videoTrack) {                             
                             videoTrack.onmute = () => { UI.bufferingOverlay.classList.add('active'); };                             
                             videoTrack.onunmute = () => { UI.bufferingOverlay.classList.remove('active'); };                         
@@ -678,7 +694,7 @@
                         
                         UI.video.play().catch(e => {
                             if(e.name === 'NotAllowedError') {
-                                Utils.showToast("Click anywhere on the player to allow audio playback.", "error", 8000);
+                                Utils.showToast("Autoplay blocked. Click the screen to start broadcast.", "error", 8000);
                                 UI.bufferingOverlay.classList.remove('active');
                             }
                         }); 
@@ -689,19 +705,27 @@
                         UI.nowPlayingText.classList.remove('hidden');                                         
                         if (State.ambilightEnabled) UI.ambilightCanvas.classList.add('active');                     
                     });                     
-                    call.on('close', () => { if (State.mediaConn === call) { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); } });                 
+                    
+                    call.on('close', () => { 
+                        if (State.mediaConn === call) { 
+                            MediaEngine.clearSource(); 
+                            Utils.logChat('System', 'Broadcast Ended.', true); 
+                        } 
+                    });                 
+                    
+                    call.on('error', (err) => {
+                        console.error("WebRTC Error:", err);
+                        Utils.showToast("Media connection dropped. Network instability.", "error");
+                    });
                 }             
             },                         
             updateStatus: (connected) => {                 
                 if (connected) {                     
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";                     
                     UI.syncText.textContent = "Encrypted Link Active";                     
-                    Utils.showToast("Viewer joined.", "success");                     
-                    Utils.logChat('System', 'Partner connected.', true);                 
                 } else {                     
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]";                     
                     UI.syncText.textContent = "Connection lost.";                     
-                    Utils.logChat('System', 'Connection lost.', true);                 
                 }             
             }         
         };         
@@ -709,12 +733,13 @@
         const MediaEngine = {             
             clearSource: () => {                 
                 if (State.hlsPlayer) { State.hlsPlayer.destroy(); State.hlsPlayer = null; }                 
+                if (State.dashPlayer) { State.dashPlayer.reset(); State.dashPlayer = null; }                 
                 if (State.activeMediaStream) { State.activeMediaStream.getTracks().forEach(t => t.stop()); State.activeMediaStream = null; }                 
                 if (State.mediaConn) { State.mediaConn.close(); State.mediaConn = null; }                 
                 if (State.telemetryInterval) clearInterval(State.telemetryInterval);                 
                 UI.telemetryBadge.classList.add('hidden');                                 
                 
-                // FIX: Complete structural wipe of video element to kill ghosts
+                // Deep memory wipe for persistent ghosts
                 UI.video.pause();
                 UI.video.removeAttribute('src'); 
                 UI.video.srcObject = null;
@@ -738,13 +763,14 @@
                 UI.bufferingOverlay.classList.remove('active');             
                 UI.nowPlayingText.querySelector('span:first-child').textContent = title;                 
                 UI.nowPlayingText.classList.remove('hidden');                                 
+                State.currentMediaTitle = title;
                 
                 if (State.playMode === 'youtube' && ytPlayer) ytPlayer.setVolume(UI.volSlider.value * 100);
                 else UI.video.volume = UI.volSlider.value;
 
                 if (State.ambilightEnabled && State.playMode !== 'youtube') {                     
                     UI.ambilightCanvas.classList.add('active');
-                    startAmbilight(); // Reactivate loop if it died in idle                 
+                    startAmbilight(); // Reactivate loop                 
                 } else {                     
                     UI.ambilightCanvas.classList.remove('active');                 
                 }             
@@ -753,6 +779,7 @@
                 if (file.name.endsWith('.mkv')) return Utils.showToast("Browsers cannot decode MKV natively. Use MP4.", "error", 6000);                 
                 MediaEngine.clearSource(); State.playMode = 'local_sync';
                 State.currentFileSize = file.size; 
+                State.currentMediaTitle = file.name;
 
                 const blobUrl = URL.createObjectURL(file);                 
                 UI.video.src = blobUrl; MediaEngine.updateUI(file.name); AudioDSP.init();                                 
@@ -765,20 +792,25 @@
                 }             
             },                         
             streamLocalFile: (file) => {                 
-                if (file.name.endsWith('.mkv')) return Utils.showToast("Cannot broadcast MKV directly. Use MP4.", "error", 6000);                 
-                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for viewer.", "error");                                 
+                if (file.name.endsWith('.mkv')) return Utils.showToast("Cannot broadcast MKV directly. Use MP4/WebM.", "error", 6000);                 
+                if (!State.conn || !State.conn.open) return Utils.showToast("Wait for viewer to join first.", "error");                                 
+                
                 MediaEngine.clearSource(); State.playMode = 'local_stream'; State.currentMediaTitle = file.name;                 
                 const blobUrl = URL.createObjectURL(file);                 
                 UI.video.src = blobUrl; UI.video.muted = false; AudioDSP.init();                                 
                 MediaEngine.updateUI(`Broadcasting: ${file.name}`);                 
-                Utils.showToast("Initializing 60FPS Broadcast...", "info");                                 
+                Utils.showToast("Initializing Broadcast...", "info");                                 
 
                 UI.video.onplaying = () => {                     
                     if (State.activeMediaStream) return;                     
                     let stream = null;                     
                     try {                         
                         stream = UI.video.captureStream ? UI.video.captureStream(60) : UI.video.mozCaptureStream(60);                     
-                    } catch (err) { console.error("Capture Error:", err); }                                         
+                    } catch (err) { 
+                        console.error("Capture Error:", err); 
+                        Utils.showToast("Capture blocked by browser. Is this file DRM protected?", "error", 8000);
+                        return;
+                    }                                         
 
                     if (stream && stream.getVideoTracks().length > 0) {                         
                         State.activeMediaStream = stream;                         
@@ -789,9 +821,13 @@
                     Utils.showToast("Playback blocked. Please click the player.", "error");
                 });             
             },                         
-            loadURL: (url, title = "Lumière Remote Feed", broadcast = true) => {                 
+            loadURL: (url, title = "Lumière Feed", broadcast = true) => {                 
                 MediaEngine.clearSource();                 
-                if (broadcast && State.isHost && State.conn?.open) State.conn.send({ type: 'CMD_LOAD_URL', url });                 
+                State.currentMediaUrl = url;
+                
+                if (broadcast && State.isHost && State.conn?.open) State.conn.send({ type: 'CMD_LOAD_URL', url, title });                 
+                
+                // YouTube Parser
                 const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);                 
                 if (ytMatch) {                     
                     State.playMode = 'youtube';                     
@@ -804,39 +840,49 @@
                         } else {                             
                             ytPlayer = new YT.Player('ytPlayerDiv', {                                 
                                 videoId: ytMatch[1],                                 
-                                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },                                 
+                                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'origin': window.location.origin },                                 
                                 events: {                                     
                                     'onReady': (e) => { e.target.playVideo(); }                                     
                                 }                             
                             });                         
                         }                         
-                        MediaEngine.updateUI("YouTube Stream");                     
+                        MediaEngine.updateUI(title !== "Lumière Feed" ? title : "YouTube Stream");                     
                     };                     
                     initYT();                     
                     return;                 
                 }                 
+                
                 State.playMode = 'url';                 
                 const onReady = () => { MediaEngine.updateUI(title); AudioDSP.init(); Utils.logChat('System', 'Media Feed Mounted.', true); };                                 
                 
                 try {
                     if (url.includes('.m3u8')) {                     
                         if (typeof Hls !== 'undefined' && Hls.isSupported()) {                         
-                            State.hlsPlayer = new Hls({ maxBufferLength: 30 });                         
+                            State.hlsPlayer = new Hls({ maxBufferLength: 30, enableWorker: true });                         
                             State.hlsPlayer.loadSource(url);                         
                             State.hlsPlayer.attachMedia(UI.video);                         
                             State.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, onReady);                     
                         } else if (UI.video.canPlayType('application/vnd.apple.mpegurl')) {                         
                             UI.video.src = url; onReady();                     
-                        } else { Utils.showToast("HLS unsupported.", "error"); }                 
-                    } else { UI.video.src = url; onReady(); } 
+                        } else { Utils.showToast("HLS unsupported in this browser.", "error"); }                 
+                    } else if (url.includes('.mpd')) {
+                        if (typeof dashjs !== 'undefined') {
+                            State.dashPlayer = dashjs.MediaPlayer().create();
+                            State.dashPlayer.initialize(UI.video, url, true);
+                            onReady();
+                        } else { Utils.showToast("DASH unsupported.", "error"); }
+                    } else { 
+                        // Direct video file
+                        UI.video.src = url; onReady(); 
+                    } 
                 } catch(e) {
-                    Utils.showToast("Failed to load stream.", "error");
+                    Utils.showToast("Failed to load stream. Check URL.", "error");
                 }
             },                         
             shareScreen: async () => {                 
                 if (!State.conn || !State.conn.open) return Utils.showToast("Wait for viewer.", "error");                 
                 try {                     
-                    State.activeMediaStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60 }, audio: true });                     
+                    State.activeMediaStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });                     
                     MediaEngine.clearSource(); State.playMode = 'screenshare';                                         
                     UI.video.srcObject = State.activeMediaStream;                     
                     UI.video.play().catch(e=>{});                     
@@ -869,14 +915,48 @@
             handleData: (data) => {                 
                 switch (data.type) { 
                     case 'PING': break;                    
-                    case 'INFO': Utils.logChat('System', `${data.name} connected.`, true);                                   
-                                  if(State.isHost && State.playMode !== 'idle') UI.hostControlsPanel.style.display = 'block';                                   
-                                  break;                     
+                    case 'INFO': 
+                        Utils.logChat('System', `${data.name} connected.`, true);
+                        Utils.showToast(`${data.name} Joined`, "success");                                   
+                        if(State.isHost) {
+                            UI.hostControlsPanel.style.display = 'block'; 
+                            // LATE JOINER PROTOCOL: Send full state to newly connected user
+                            if (State.playMode !== 'idle') {
+                                State.conn.send({
+                                    type: 'SYNC_FULL_STATE',
+                                    payload: {
+                                        playMode: State.playMode,
+                                        title: State.currentMediaTitle,
+                                        url: State.currentMediaUrl,
+                                        fileSize: State.currentFileSize,
+                                        time: State.syncState.time
+                                    }
+                                });
+                                // Automatically re-trigger broadcast if active
+                                if (State.playMode === 'local_stream' && State.activeMediaStream) {
+                                    setTimeout(() => Network.broadcastStream(State.currentMediaTitle), 1500);
+                                }
+                            }
+                        }
+                        break; 
+                    case 'SYNC_FULL_STATE':
+                        // Guest receives the master state upon joining
+                        const p = data.payload;
+                        Utils.logChat('System', `Syncing active session state...`, true);
+                        if (p.playMode === 'url' || p.playMode === 'youtube') {
+                            MediaEngine.loadURL(p.url, p.title, false);
+                            setTimeout(() => SyncEngine.triggerSeek(p.time, true), 1500); // Give time to load
+                        } else if (p.playMode === 'local_sync') {
+                            Utils.showToast(`Host is playing: ${p.title}`, "info", 10000);
+                            Utils.logChat('System', `Please click 'Sync Local File' and mount ${p.title} to join playback.`, true);
+                            UI.hostControlsPanel.style.display = 'block';
+                        }
+                        break;                    
                     case 'CHAT': Utils.logChat(State.isHost ? 'Viewer' : 'Host', data.text); break;                     
-                    case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, "Host Feed", false); break;                     
+                    case 'CMD_LOAD_URL': MediaEngine.loadURL(data.url, data.title, false); break;                     
                     case 'REQ_SYNC_FILE':                          
                         Utils.showToast(`Host requests you load: ${data.name}`, "info", 10000);                          
-                        Utils.logChat('System', `Please click 'Sync Local File' and select ${data.name} from your computer.`, true);                         
+                        Utils.logChat('System', `Please click 'Sync Local File' and mount ${data.name}.`, true);                         
                         UI.hostControlsPanel.style.display = 'block';                         
                         break;                     
                     case 'GUEST_MOUNTED':                          
@@ -886,7 +966,6 @@
                             } else {
                                 Utils.showToast("Partner mounted exact file. Sync is active.", "success");
                             }
-
                             State.conn.send({ type: 'CMD_SEEK', time: UI.video.currentTime });                             
                             setTimeout(() => {                                 
                                 SyncEngine.triggerPlay(true);                                 
@@ -906,6 +985,8 @@
             enforceHostState: (hostState) => {                 
                 if (State.isHost || State.isSeekingUI) return;                 
                 State.syncState = hostState;                                         
+                
+                // Update Progress UI (Without breaking user interactions)
                 if (hostState.duration > 0 && !State.isSeekingUI) {                     
                     const pct = (hostState.time / hostState.duration) * 100;                     
                     UI.scrubberProgress.style.width = `${pct}%`; UI.scrubberThumb.style.left = `${pct}%`;                     
@@ -920,7 +1001,7 @@
 
                 if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {                     
                     const ytState = ytPlayer.getPlayerState();                     
-                    if (ytState === 3) return; 
+                    if (ytState === 3) return; // Ignore while buffering
 
                     if (hostState.paused && ytState === 1) ytPlayer.pauseVideo();                     
                     if (!hostState.paused && ytState !== 1 && ytState !== 3) ytPlayer.playVideo();                                         
@@ -933,6 +1014,7 @@
                     return;                 
                 }                                 
 
+                // HTML5 Video Sync Enforcement
                 if (hostState.paused && !UI.video.paused) UI.video.pause();                 
                 if (!hostState.paused && UI.video.paused && UI.video.readyState >= 3) {                     
                     UI.video.play().catch(e => {
@@ -942,9 +1024,9 @@
                 }                                 
                 if (State.ignoreNextSeekEvent) return;                 
 
-                // FIX: Ping-pong oscillation prevention via exact network latency offset calculations
+                // Math: Calculate drift using ping latency
                 const latencyMs = parseInt(UI.telemetryLatency.textContent) || 50; 
-                const networkOffset = latencyMs / 2000; // Half RTT to seconds
+                const networkOffset = latencyMs / 2000; 
                 const adjustedHostTime = hostState.time + (hostState.paused ? 0 : networkOffset);
                 const drift = UI.video.currentTime - adjustedHostTime;                 
                 const absDrift = Math.abs(drift);
@@ -954,7 +1036,8 @@
                     UI.video.currentTime = adjustedHostTime;
                     UI.video.playbackRate = 1.0;
                     setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
-                } else if (absDrift > 0.3 && !hostState.paused) {
+                } else if (absDrift > 0.4 && !hostState.paused) {
+                    // Micro-adjust speed to resync naturally without snapping
                     if (drift > 0) UI.video.playbackRate = 0.95; 
                     else UI.video.playbackRate = 1.05; 
                 } else {
@@ -1078,6 +1161,11 @@
                 UI.eqSpeakerBtn.addEventListener('click', () => AudioDSP.setProfile('speaker'));                 
                 UI.eqEarphoneBtn.addEventListener('click', () => AudioDSP.setProfile('earphone'));                 
                 
+                UI.resyncBtn.addEventListener('click', () => {
+                    Utils.showToast("Requesting Host State...", "info", 2000);
+                    if (State.conn && State.conn.open) State.conn.send({ type: 'REQ_PLAY' }); // Acts as ping
+                });
+
                 UI.playerWrapper.addEventListener('dragover', (e) => { e.preventDefault(); UI.playerWrapper.classList.add('drag-over'); });
                 UI.playerWrapper.addEventListener('dragleave', (e) => { e.preventDefault(); UI.playerWrapper.classList.remove('drag-over'); });                 
                 UI.playerWrapper.addEventListener('drop', SubtitleEngine.handleDrop);                 
@@ -1101,6 +1189,7 @@
                 });                 
                 UI.shareScreenBtn.addEventListener('click', MediaEngine.shareScreen);                 
 
+                // Basic Video Events
                 UI.video.addEventListener('play', () => {                     
                     UI.iconPlay.classList.add('hidden'); UI.iconPause.classList.remove('hidden');                     
                     UI.bufferingOverlay.classList.remove('active');                 
@@ -1112,7 +1201,7 @@
                 UI.video.addEventListener('waiting', () => {                     
                     if (State.playMode !== 'local_stream' && State.playMode !== 'screenshare') {                         
                         UI.bufferingOverlay.classList.add('active');                         
-                        UI.bufferStatusText.textContent = "Buffering Stream...";                     
+                        UI.bufferStatusText.textContent = "Buffering...";                     
                     }                 
                 });                 
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });                                 
@@ -1149,6 +1238,7 @@
                     if (!e.target.closest('#videoControls') && !e.target.closest('#topOverlay') && State.playMode !== 'youtube') togglePlayUI();                 
                 });                 
 
+                // Mobile Friendly Scrubber System
                 const calculateScrub = (e) => {                     
                     const totalDur = State.isHost ? (State.playMode === 'youtube' ? ytPlayer.getDuration() : UI.video.duration) : State.syncState.duration;                     
                     if (!totalDur || (!State.isHost && (State.playMode === 'local_stream' || State.playMode === 'screenshare'))) return;                                         
@@ -1162,7 +1252,6 @@
                     return targetTime;                 
                 };                                 
 
-                // FIX: Added robust touch support for mobile scrubbing
                 const handleScrubStart = (e) => { 
                     State.isSeekingUI = true; 
                     calculateScrub(e); 
@@ -1235,38 +1324,7 @@
                     else { UI.iconVolMuted.classList.add('hidden'); UI.iconVol.classList.remove('hidden'); }                 
                 };                 
 
-                document.addEventListener('keydown', (e) => {                     
-                    const isTheaterActive = !UI.theater.classList.contains('hidden');
-                    if (e.code === 'Enter' && isTheaterActive && document.activeElement !== UI.chatInput) {
-                        e.preventDefault();
-                        if (!State.sidebarOpen) UI.toggleSidebarBtn.click();
-                        setTimeout(() => UI.chatInput.focus(), 50); 
-                        return;
-                    }
-
-                    if (document.activeElement.tagName === 'INPUT') return;                                         
-                    switch(e.code) {                         
-                        case 'Space': e.preventDefault(); togglePlayUI(); break;                         
-                        case 'KeyF': e.preventDefault(); UI.fullscreenBtn.click(); break;                         
-                        case 'KeyM': e.preventDefault(); UI.muteBtn.click(); break;                         
-                        case 'KeyC': e.preventDefault(); UI.cinemaModeBtn.click(); break;                         
-                        case 'KeyP': e.preventDefault(); UI.pipBtn.click(); break;                         
-                        case 'ArrowRight': e.preventDefault(); UI.skipFwdBtn.click(); break;                         
-                        case 'ArrowLeft': e.preventDefault(); UI.skipBackBtn.click(); break;                         
-                        case 'ArrowUp':                             
-                            e.preventDefault();                             
-                            UI.volSlider.value = Math.min(1, parseFloat(UI.volSlider.value) + 0.1);                             
-                            UI.volSlider.dispatchEvent(new Event('input'));                             
-                            break;                         
-                        case 'ArrowDown':                             
-                            e.preventDefault();                             
-                            UI.volSlider.value = Math.max(0, parseFloat(UI.volSlider.value) - 0.1);                             
-                            UI.volSlider.dispatchEvent(new Event('input'));                             
-                            break;                     
-                    }                 
-                });                 
-
-                // FIX: Standard Webkit Fullscreen Fallback for iOS/Safari compliance
+                // Fullscreen Handling including Webkit Fallback
                 UI.fullscreenBtn.addEventListener('click', () => {                     
                     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                         if (UI.theater.requestFullscreen) UI.theater.requestFullscreen().catch(()=>{}); 
@@ -1288,12 +1346,10 @@
                     }                 
                 });                 
 
+                // UI Fade Logic & Timeout Resets
                 let isHoveringControls = false;
-                UI.videoControls.addEventListener('mouseenter', () => isHoveringControls = true);
-                UI.videoControls.addEventListener('mouseleave', () => {
-                    isHoveringControls = false;
-                    resetFade();
-                });
+                UI.videoControls.addEventListener('mouseenter', () => { isHoveringControls = true; resetFade(); });
+                UI.videoControls.addEventListener('mouseleave', () => { isHoveringControls = false; resetFade(); });
 
                 const resetFade = () => {                     
                     UI.playerWrapper.classList.remove('idle'); clearTimeout(State.controlsTimeout);                     
@@ -1309,6 +1365,7 @@
                     if (isPlaying && State.playMode !== 'idle' && !State.isSeekingUI) UI.playerWrapper.classList.add('idle');                 
                 }); 
                 
+                // YouTube High-Frequency Poller
                 const customPlayerLoop = () => {
                     if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {
                         const state = ytPlayer.getPlayerState();
