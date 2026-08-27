@@ -487,11 +487,19 @@
                 const t = document.createElement('div');
                 const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : 
                               (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
-                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 translate-y-4 opacity-0 w-full ${colors}`;
+                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
                 t.innerHTML = msg;
                 document.getElementById('toastContainer').appendChild(t);
-                requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
-                setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-10px)'; setTimeout(() => t.remove(), 300); }, 3500);
+                
+                // Force a browser reflow to ensure the CSS transition triggers properly
+                t.offsetHeight; 
+                
+                t.classList.remove('translate-y-4', 'opacity-0');
+                
+                setTimeout(() => { 
+                    t.classList.add('translate-y-4', 'opacity-0'); 
+                    setTimeout(() => t.remove(), 300); 
+                }, 3500);
             },
             log: (sender, txt, sys = false) => {
                 const d = document.createElement('div');
@@ -622,7 +630,7 @@
             if(ambLoop) cancelAnimationFrame(ambLoop);
             draw();
         };
-
+        // --- 8. WEBRTC NETWORK ENGINE ---
         const Net = {
             cfg: { config: { iceServers: [{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}] } },
             
@@ -657,29 +665,34 @@
 
                 State.peer = new Peer(Net.cfg);
                 
-                // Solid Error Handling for Guest joining
                 State.peer.on('error', (err) => {
                     console.error("PeerJS Guest Error:", err);
-                    if(err.type === 'peer-unavailable') {
-                        Utils.toast("Host unreachable or invalid code.", "error");
-                    } else {
-                        Utils.toast(`Network issue: ${err.type}`, "error");
-                    }
+                    Utils.toast(err.type === 'peer-unavailable' ? "Host unreachable or invalid code." : `Network issue: ${err.type}`, "error");
                     UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
                 });
 
                 State.peer.on('open', () => {
-                    // Connect immediately. If it fails, the 'error' event above catches 'peer-unavailable'
+                    // Add a strict timeout for connections that hang
+                    let connTimeout = setTimeout(() => {
+                        if(!State.conn || !State.conn.open) {
+                            Utils.toast("Connection timed out. Host might be offline.", "error");
+                            UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
+                            if(State.peer) State.peer.destroy();
+                        }
+                    }, 8000);
+
                     State.conn = State.peer.connect(`lum-${code}`);
                     State.conn.on('open', () => {
+                        clearTimeout(connTimeout); 
                         Net.setupData(State.conn);
-                    });
-
-                    Mic.init().then(() => {
-                        if(State.localVoiceStream) {
-                            const c = State.peer.call(`lum-${code}`, State.localVoiceStream, {metadata:{type:'voice'}});
-                            c.on('stream', s => UI.remoteAud.srcObject = s);
-                        }
+                        
+                        // Initialize mic AFTER successful connection so it doesn't block entering the room
+                        Mic.init().then(() => {
+                            if(State.localVoiceStream) {
+                                const c = State.peer.call(`lum-${code}`, State.localVoiceStream, {metadata:{type:'voice'}});
+                                c.on('stream', s => UI.remoteAud.srcObject = s);
+                            }
+                        });
                     });
                 });
                 State.peer.on('call', Net.handleCall);
@@ -732,7 +745,7 @@
                 }
             }
         };
-
+        // --- 9. SYNC ENGINE (NTP LATENCY COMPENSATED) ---
         const Sync = {
             startHost: () => {
                 if(State.hostBeat) clearInterval(State.hostBeat);
@@ -744,13 +757,23 @@
             },
             handle: (d) => {
                 switch(d.type) {
-                    case 'INFO': Utils.log('System', `${d.name} joined.`, true); break;
+                    case 'INFO': 
+                        Utils.log('System', `${d.name} joined.`, true); 
+                        // Automatically push the current media state to late joiners
+                        if(State.isHost && State.playMode !== 'idle') {
+                            State.conn.send({ type: 'MASTER_STATE', payload: { mode: State.playMode, title: State.mediaTitle, url: State.mediaUrl, size: State.fileSize, time: Player.getTime() } });
+                            if((State.playMode === 'local_stream' || State.playMode === 'screenshare') && State.activeWebRTCStream) {
+                                setTimeout(() => Net.broadcast(State.mediaTitle, State.playMode), 800);
+                            }
+                        }
+                        break;
                     case 'CHAT': Utils.log(State.isHost?'Viewer':'Host', d.text); break;
                     case 'MASTER_STATE':
                         const p = d.payload;
                         if(p.mode === 'url') { App.loadUrl(p.url, p.title, false); setTimeout(()=>Player.seek(p.time), 1000); }
                         else if(p.mode === 'youtube') { Player.loadYT(p.url, p.title); setTimeout(()=>Player.seek(p.time), 1500); }
                         else if(p.mode === 'local_sync') { Utils.toast(`Host playing: ${p.title}. Mount identical file to sync.`, 'info'); }
+                        else if(p.mode === 'local_stream' || p.mode === 'screenshare') { Utils.toast("Host is broadcasting. Awaiting stream...", 'info'); }
                         break;
                     case 'REQ_FILE': Utils.toast(`Host requested file: ${d.name}`, 'info'); break;
                     case 'FILE_MOUNTED': 
