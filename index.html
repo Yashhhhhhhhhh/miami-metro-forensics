@@ -2,7 +2,7 @@
 <html lang="en" class="dark"> 
 <head>     
     <meta charset="UTF-8">     
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">     
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">     
     <title>Lumière Studio | Premium Cinema</title>         
 
     <link rel="preconnect" href="https://fonts.googleapis.com">     
@@ -29,7 +29,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.3.5/hls.min.js"></script>         
 
     <style>         
-        body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.8s ease; }         
+        body { background-color: #030304; color: #e4e4e7; overflow: hidden; -webkit-font-smoothing: antialiased; transition: background-color 0.8s ease; touch-action: manipulation; }         
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }                 
 
         .cinema-grid {             
@@ -73,19 +73,20 @@
         .player-wrapper.idle .controls-overlay { opacity: 0 !important; transform: translateY(15px); pointer-events: none; }         
         .player-wrapper.idle { cursor: none; }                 
 
-        .scrubber-container { width: 100%; position: relative; height: 5px; background: rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; transition: height 0.15s ease; touch-action: none; }         
+        .scrubber-container { width: 100%; position: relative; height: 5px; background: rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; transition: height 0.15s ease; touch-action: none;}         
         .scrubber-container:hover { height: 8px; }         
         .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.2); border-radius: 999px; pointer-events: none; transition: width 0.2s linear; }         
-        .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #991b1b; border-radius: 999px; pointer-events: none; z-index: 2; }         
+        .scrubber-progress { position: absolute; top: 0; left: 0; height: 100%; background: #991b1b; border-radius: 999px; pointer-events: none; z-index: 2; transition: width 0.1s linear;}         
         .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 14px; height: 14px; background: #d4d4d8; border-radius: 50%; box-shadow: 0 0 10px rgba(153, 27, 27, 0.8); transition: transform 0.15s ease; pointer-events: none; }         
         .scrubber-container:hover .scrubber-thumb, .scrubber-container:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }                 
 
         .glass-panel { background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.9); }         
         
-        .glass-sidebar { background: rgba(3, 3, 4, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.03); transition: margin-right 0.4s cubic-bezier(0.16, 1, 0.3, 1); width: 400px; }         
-        .sidebar-collapsed { margin-right: -400px; }                 
+        .glass-sidebar { background: rgba(3, 3, 4, 0.95); backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.03); transition: margin-right 0.4s cubic-bezier(0.16, 1, 0.3, 1); width: 400px; max-width: 90vw; }         
+        .sidebar-collapsed { margin-right: -400px; }
+        @media (max-width: 768px) { .sidebar-collapsed { margin-right: -100vw; } }
 
-        .overlay-chat-container { position: absolute; bottom: 130px; left: 40px; width: 380px; max-height: 300px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 100; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }         
+        .overlay-chat-container { position: absolute; bottom: 130px; left: 40px; width: 380px; max-width: 80vw; max-height: 300px; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 100; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); }         
         .overlay-message { background: rgba(9, 9, 11, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); padding: 10px 16px; border-radius: 10px; margin-top: 10px; color: #e4e4e7; font-size: 0.9rem; font-weight: 500; animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: auto;}         
         .overlay-message.fade-out { opacity: 0; transform: translateY(10px) scale(0.98); transition: all 0.6s ease; }         
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }                 
@@ -110,21 +111,22 @@
     </style> 
 </head> 
 <body class="w-screen h-screen flex flex-col selection:bg-accent-500 selection:text-white text-sm cinema-grid">         
+    
     <audio id="remoteAudio" autoplay></audio>     
     
     <!-- LOBBY SCREEN -->     
-    <div id="lobbyScreen" class="absolute inset-0 z-50 flex items-center justify-center bg-theater-950/95 transition-opacity duration-700">         
-        <div class="relative w-full max-w-5xl p-10 grid md:grid-cols-2 gap-16 items-center">             
-            <div class="space-y-6">                 
+    <div id="lobbyScreen" class="absolute inset-0 z-50 flex items-center justify-center bg-theater-950/95 transition-opacity duration-700 p-4">         
+        <div class="relative w-full max-w-5xl p-6 md:p-10 grid md:grid-cols-2 gap-10 md:gap-16 items-center">             
+            <div class="space-y-6 text-center md:text-left">                 
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-accent-500/10 border border-accent-500/20 text-accent-500 text-xs font-bold tracking-widest uppercase mb-2">                     
                     <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span> Synchronized Media Engine                 
                 </div>                 
-                <h1 class="text-6xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-4">Lumière Studio</h1>                 
-                <p class="text-zinc-400 text-lg leading-relaxed font-light">                     
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-zinc-100 flex items-center justify-center md:justify-start gap-4">Lumière Studio</h1>                 
+                <p class="text-zinc-400 text-base md:text-lg leading-relaxed font-light">                     
                     The ultimate private viewing suite. Lossless syncing, zero-latency WebRTC broadcasts, and immersive spatial audio.                 
                 </p>             
             </div>                             
-            <div class="glass-panel rounded-2xl p-10">                 
+            <div class="glass-panel rounded-2xl p-6 md:p-10 w-full max-w-md mx-auto">                 
                 <div class="space-y-8">                     
                     <div>                         
                         <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3" for="nameInput">Your Alias</label>                         
@@ -153,22 +155,22 @@
     <!-- MAIN THEATER -->     
     <div id="theaterScreen" class="hidden flex-1 flex w-full h-full relative">         
         
-        <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+        <div id="toastContainer" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-11/12 max-w-md items-center text-center"></div>
         
         <div id="mainView" class="relative flex-1 flex flex-col bg-black transition-all duration-300">             
             <canvas id="ambilightCanvas" class="dimmable"></canvas>
 
-            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-8 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">                 
+            <div id="topOverlay" class="absolute top-0 left-0 right-0 p-4 md:p-8 z-40 bg-gradient-to-b from-black/95 via-black/40 to-transparent flex justify-between items-start pointer-events-none dimmable">                 
                 <div class="flex flex-col gap-2 pointer-events-auto">                     
                     <div class="flex items-center gap-3 glass-panel px-3 py-1.5 rounded-lg">                         
-                        <div class="bg-accent-600 text-zinc-100 text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider">Session</div>                         
+                        <div class="bg-accent-600 text-zinc-100 text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider hidden sm:block">Session</div>                         
                         <span id="roomCodeDisplay" class="font-mono text-lg font-semibold tracking-widest text-zinc-200 px-1">----</span>                         
                         <button id="copyCodeBtn" class="btn-icon p-1 hover:text-white" title="Copy Code"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>                     
                     </div>                     
                     <div class="flex items-center gap-2">                         
                         <div id="syncIndicator" class="flex items-center gap-2 text-[11px] font-medium text-zinc-400 glass-panel px-3 py-1 rounded-lg w-max">                             
                             <div class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>                             
-                            <span id="syncText">Waiting for partner...</span>                         
+                            <span id="syncText">Waiting...</span>                         
                         </div>                         
                         <div id="telemetryBadge" class="hidden items-center gap-1.5 text-[10px] font-mono text-emerald-400 glass-panel px-2.5 py-1 rounded-lg">                             
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>                             
@@ -182,11 +184,11 @@
             </div>             
             
             <div id="noMediaOverlay" class="overlay-layer active bg-overlay">                 
-                <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">                     
+                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">                     
                     <svg class="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>                 
                 </div>                 
-                <p class="text-gray-200 text-2xl font-light tracking-wide" id="noMediaTitle">Theater is Ready</p>                 
-                <p class="text-gray-500 text-sm mt-3" id="noMediaSub">Select media from the Media Deck to begin.</p>             
+                <p class="text-gray-200 text-xl md:text-2xl font-light tracking-wide" id="noMediaTitle">Theater is Ready</p>                 
+                <p class="text-gray-500 text-sm mt-3 text-center px-4" id="noMediaSub">Select media from the Media Deck to begin.</p>             
             </div>             
             
             <div id="bufferingOverlay" class="overlay-layer bg-overlay backdrop-blur-md">                 
@@ -194,11 +196,12 @@
                 <span class="text-white font-bold tracking-widest uppercase text-base mb-3" id="bufferStatusText">Loading Stream...</span>             
             </div>             
             
-            <div id="overlayChat" class="overlay-chat-container"></div>             
+            <div id="overlayChat" class="overlay-chat-container hidden sm:flex"></div>             
             
             <div id="playerWrapper" class="player-wrapper group">                 
-                <div class="video-container">                     
-                    <video id="mainVideo" class="mode-contain" playsinline></video>                     
+                <div class="video-container">
+                    <!-- FIX: crossorigin added for Audio Context external URL processing -->                     
+                    <video id="mainVideo" class="mode-contain" playsinline crossorigin="anonymous"></video>                     
                     <div id="ytPlayerContainer" class="hidden w-full h-full absolute inset-0 z-[2] pointer-events-none bg-black">                         
                         <div id="ytPlayerDiv" class="w-full h-full"></div>                     
                     </div>                 
@@ -206,7 +209,7 @@
                 
                 <div id="videoControls" class="controls-overlay flex flex-col gap-4">                     
                     <div id="nowPlayingText" class="text-white/80 text-sm font-medium tracking-wide mb-2 hidden flex justify-between items-end">                         
-                        <span class="drop-shadow-md bg-black/50 px-3 py-1.5 rounded border border-white/5 backdrop-blur-md">Loading...</span>                         
+                        <span class="drop-shadow-md bg-black/50 px-3 py-1.5 rounded border border-white/5 backdrop-blur-md truncate max-w-[70%]">Loading...</span>                         
                         <span id="roleIndicator" class="text-[10px] uppercase font-bold tracking-widest text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-lg border border-accent-500/20 shadow-lg">Host Authority</span>                     
                     </div>                                         
                     <div id="scrubber" class="scrubber-container">                         
@@ -215,12 +218,12 @@
                         <div id="scrubberThumb" class="scrubber-thumb left-0"></div>                     
                     </div>                                         
                     <div class="flex items-center justify-between">                         
-                        <div class="flex items-center gap-8">                             
+                        <div class="flex items-center gap-4 sm:gap-8">                             
                             <button id="playPauseBtn" class="btn-icon text-white hover:text-accent-500 drop-shadow-lg" title="Play/Pause">                                 
-                                <svg id="iconPlay" class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>                                 
-                                <svg id="iconPause" class="w-12 h-12 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>                             
+                                <svg id="iconPlay" class="w-10 h-10 sm:w-12 sm:h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>                                 
+                                <svg id="iconPause" class="w-10 h-10 sm:w-12 sm:h-12 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>                             
                             </button>                                                         
-                            <div class="flex items-center gap-3">                                 
+                            <div class="hidden sm:flex items-center gap-3">                                 
                                 <button id="skipBackBtn" class="btn-icon text-zinc-400 hover:text-zinc-100" title="-10s">                                     
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg>                                 
                                 </button>                                 
@@ -230,24 +233,24 @@
                             </div>                                                         
                             <div class="relative flex items-center group/vol">                                 
                                 <button id="muteBtn" class="btn-icon z-10">                                     
-                                    <svg id="iconVol" class="w-7 h-7 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>                                     
-                                    <svg id="iconVolMuted" class="w-7 h-7 hidden text-accent-500 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>                                 
+                                    <svg id="iconVol" class="w-6 h-6 sm:w-7 sm:h-7 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>                                     
+                                    <svg id="iconVolMuted" class="w-6 h-6 sm:w-7 sm:h-7 hidden text-accent-500 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>                                 
                                 </button>                                 
-                                <div class="absolute left-6 w-0 overflow-hidden group-hover/vol:w-28 transition-all duration-300 pl-2">
+                                <div class="absolute left-6 w-0 overflow-hidden group-hover/vol:w-32 transition-all duration-300 pl-4 py-2 z-20">
                                     <input type="range" id="volSlider" class="w-24" min="0" max="1" step="0.05" value="1" aria-label="Volume">                             
                                 </div>
                             </div>                             
-                            <span id="timeDisplay" class="text-white/90 font-mono text-sm tracking-wide bg-black/50 px-3 py-1.5 rounded-lg border border-white/10 shadow-inner ml-2">00:00 / 00:00</span>                         
+                            <span id="timeDisplay" class="text-white/90 font-mono text-[10px] sm:text-sm tracking-wide bg-black/50 px-2 sm:px-3 py-1.5 rounded-lg border border-white/10 shadow-inner ml-0 sm:ml-2 whitespace-nowrap">00:00 / 00:00</span>                         
                         </div>                                                 
-                        <div class="flex items-center gap-6">                             
-                            <div id="driftIndicator" class="hidden flex items-center gap-2 text-[10px] text-yellow-400 font-bold px-4 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-xl uppercase tracking-wider">                                 
-                                <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> Syncing                             
+                        <div class="flex items-center gap-3 sm:gap-6">                             
+                            <div id="driftIndicator" class="hidden flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] text-yellow-400 font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-xl uppercase tracking-wider">                                 
+                                <div class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></div> <span class="hidden sm:inline">Syncing</span>                             
                             </div>                             
-                            <button id="aspectBtn" class="btn-icon text-xs font-mono bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-white tracking-widest font-bold" title="Toggle Fit Mode">FIT</button>                             
-                            <button id="pipBtn" class="btn-icon text-white drop-shadow-md" title="Picture-in-Picture"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>                             
-                            <button id="cinemaModeBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Cinema Dimming"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>                             
-                            <button id="ambilightBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Canvas Ambilight"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>                             
-                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md" title="Fullscreen"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>                         
+                            <button id="aspectBtn" class="hidden sm:flex btn-icon text-xs font-mono bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-white tracking-widest font-bold" title="Toggle Fit Mode">FIT</button>                             
+                            <button id="pipBtn" class="hidden sm:flex btn-icon text-white drop-shadow-md" title="Picture-in-Picture"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>                             
+                            <button id="cinemaModeBtn" class="btn-icon text-white drop-shadow-md" title="Toggle Cinema Dimming"><svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg></button>                             
+                            <button id="ambilightBtn" class="hidden sm:flex btn-icon text-white drop-shadow-md" title="Toggle Canvas Ambilight"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>                             
+                            <button id="fullscreenBtn" class="btn-icon drop-shadow-md" title="Fullscreen"><svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>                         
                         </div>                     
                     </div>                 
                 </div>             
@@ -317,7 +320,7 @@
                 <div id="chatMessages" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">                     
                     <div class="text-center text-[9px] text-gray-500 font-bold tracking-widest py-3 border-b border-white/5 uppercase">Encrypted Channel Established</div>                 
                 </div>                                 
-                <div class="p-4 bg-theater-800/90 border-t border-white/5 backdrop-blur-xl">                     
+                <div class="p-4 bg-theater-800/90 border-t border-white/5 backdrop-blur-xl pb-8 sm:pb-4">                     
                     <form id="chatForm" class="relative">                         
                         <input type="text" id="chatInput" aria-label="Chat Message" class="w-full bg-black/80 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:border-accent-500 transition-colors placeholder:text-gray-600 shadow-inner" placeholder="Send a message..." autocomplete="off">                         
                         <button type="submit" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-accent-500 hover:text-white transition-colors rounded-lg bg-accent-500/10 hover:bg-accent-500 border border-transparent hover:border-accent-400">                             
@@ -379,6 +382,7 @@
             videoControls: document.getElementById('videoControls'), bufferStatusText: document.getElementById('bufferStatusText')
         };         
 
+        // --- Hardware Accelerated Ambilight System ---
         let ambilightLoopRef = null;
         const startAmbilight = () => {
             if (!State.ambilightEnabled) return;
@@ -391,12 +395,13 @@
             }
 
             const draw = () => {
-                if (!State.ambilightEnabled || UI.video.paused || UI.video.ended || UI.video.classList.contains('hidden')) return;
-                if (UI.video.readyState >= 2) {
-                    ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
-                }
+                // FIX: Request next frame BEFORE potential return to ensure loop survives pauses
                 ambilightLoopRef = requestAnimationFrame(draw);
+                if (!State.ambilightEnabled || UI.video.paused || UI.video.ended || UI.video.classList.contains('hidden') || UI.video.readyState < 2) return;
+                ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
             };
+            // Cancel any existing loop before starting a new one to prevent exponential calls
+            if(ambilightLoopRef) cancelAnimationFrame(ambilightLoopRef);
             draw();
         };
 
@@ -409,8 +414,8 @@
             },             
             showToast: (msg, type = 'info', duration = 4000) => {                 
                 const t = document.createElement('div');                 
-                t.className = `px-5 py-3.5 rounded-xl shadow-2xl text-sm font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-white border-white/10')}`;                 
-                t.innerHTML = type === 'error' ? `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${msg}` : msg;                 
+                t.className = `px-5 py-3.5 rounded-xl shadow-2xl text-sm font-bold backdrop-blur-xl border flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 z-[100] w-full max-w-sm ${type === 'error' ? 'bg-accent-600/90 text-white border-accent-500/50' : (type === 'success' ? 'bg-green-600/90 text-white border-green-500/50' : 'bg-theater-850/95 text-white border-white/10')}`;                 
+                t.innerHTML = type === 'error' ? `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="flex-1 text-left">${msg}</span>` : `<span class="flex-1 text-center md:text-left">${msg}</span>`;                 
                 document.getElementById('toastContainer').appendChild(t);                 
                 setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 400); }, duration);             
             },             
@@ -422,7 +427,7 @@
                 } else {                     
                     const isMe = sender === State.myName;                     
                     div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;                     
-                    div.innerHTML = `<span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1 px-1">${sender}</span><div class="px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${isMe ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 text-white rounded-tl-sm border border-white/5'}">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;                 
+                    div.innerHTML = `<span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1 px-1">${sender}</span><div class="px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm break-words ${isMe ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 text-white rounded-tl-sm border border-white/5'}">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;                 
                 }                 
                 UI.chatMessages.appendChild(div); UI.chatMessages.scrollTop = UI.chatMessages.scrollHeight;                 
 
@@ -437,23 +442,25 @@
 
         const AudioDSP = {             
             init: () => {                 
-                // FIX: Never bind the source node twice or the browser kills audio processing entirely
-                if (audioCtx) {
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
-                    return;
-                }                 
-                try {                     
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();                     
-                    sourceNode = audioCtx.createMediaElementSource(UI.video);                     
-                    eqFilter = audioCtx.createBiquadFilter();                     
-                    gainNode = audioCtx.createGain();
-                    compNode = audioCtx.createDynamicsCompressor();                     
-                    AudioDSP.setProfile('speaker');                     
-                    sourceNode.connect(eqFilter);                     
-                    eqFilter.connect(gainNode);
-                    gainNode.connect(compNode);
-                    compNode.connect(audioCtx.destination);                 
-                } catch(e) { console.warn("Audio Context init pending user interaction."); }             
+                if (!audioCtx) {
+                    try {                     
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();                     
+                        sourceNode = audioCtx.createMediaElementSource(UI.video);                     
+                        eqFilter = audioCtx.createBiquadFilter();                     
+                        gainNode = audioCtx.createGain();
+                        compNode = audioCtx.createDynamicsCompressor();                     
+                        AudioDSP.setProfile('speaker');                     
+                        sourceNode.connect(eqFilter);                     
+                        eqFilter.connect(gainNode);
+                        gainNode.connect(compNode);
+                        compNode.connect(audioCtx.destination);                 
+                    } catch(e) { console.warn("Audio Context init blocked by browser until interacted with."); }             
+                }
+                
+                // FIX: Ensure un-suspension on dynamic network media loads
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(e => console.warn("Could not resume audio context. Needs user click."));
+                }
             },             
             setProfile: (mode) => {                 
                 if (!eqFilter || !compNode || !gainNode) return;                 
@@ -591,6 +598,7 @@
                             clearTimeout(connectionTimeout); 
                             Network.setupDataChannel(State.conn);
                         });
+                        
                         if(State.conn.open) {
                             clearTimeout(connectionTimeout);
                             Network.setupDataChannel(State.conn);
@@ -683,7 +691,19 @@
                     });                     
                     call.on('close', () => { if (State.mediaConn === call) { MediaEngine.clearSource(); Utils.logChat('System', 'Broadcast Ended.', true); } });                 
                 }             
-            }
+            },                         
+            updateStatus: (connected) => {                 
+                if (connected) {                     
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";                     
+                    UI.syncText.textContent = "Encrypted Link Active";                     
+                    Utils.showToast("Viewer joined.", "success");                     
+                    Utils.logChat('System', 'Partner connected.', true);                 
+                } else {                     
+                    UI.syncDot.className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]";                     
+                    UI.syncText.textContent = "Connection lost.";                     
+                    Utils.logChat('System', 'Connection lost.', true);                 
+                }             
+            }         
         };         
 
         const MediaEngine = {             
@@ -694,16 +714,14 @@
                 if (State.telemetryInterval) clearInterval(State.telemetryInterval);                 
                 UI.telemetryBadge.classList.add('hidden');                                 
                 
-                // FIX: Truly kill previous native media to stop background ghost playing
+                // FIX: Complete structural wipe of video element to kill ghosts
                 UI.video.pause();
                 UI.video.removeAttribute('src'); 
                 UI.video.srcObject = null;
-                UI.video.load(); 
+                UI.video.load();
 
-                if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
-                    ytPlayer.stopVideo(); 
-                }                                 
-
+                if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();                                 
+                
                 UI.ytPlayerContainer.classList.add('hidden'); UI.video.classList.remove('hidden');                 
                 UI.noMediaOverlay.classList.remove('hidden'); UI.ambilightCanvas.classList.remove('active');                 
                 UI.nowPlayingText.classList.add('hidden'); State.playMode = 'idle';
@@ -713,7 +731,7 @@
                 UI.timeDisplay.textContent = "00:00 / 00:00";
                 UI.scrubberProgress.style.width = '0%';
                 UI.scrubberThumb.style.left = '0%';
-                UI.scrubberBuffer.style.width = '0%';
+                UI.scrubberBuffer.style.width = '0%';             
             },             
             updateUI: (title) => {                 
                 UI.noMediaOverlay.classList.add('hidden');
@@ -725,7 +743,8 @@
                 else UI.video.volume = UI.volSlider.value;
 
                 if (State.ambilightEnabled && State.playMode !== 'youtube') {                     
-                    UI.ambilightCanvas.classList.add('active');                     
+                    UI.ambilightCanvas.classList.add('active');
+                    startAmbilight(); // Reactivate loop if it died in idle                 
                 } else {                     
                     UI.ambilightCanvas.classList.remove('active');                 
                 }             
@@ -764,7 +783,7 @@
                     if (stream && stream.getVideoTracks().length > 0) {                         
                         State.activeMediaStream = stream;                         
                         Network.broadcastStream(file.name);                     
-                    } else { Utils.showToast("Media capture failed. Browser unsupported.", "error"); }                 
+                    } else { Utils.showToast("Media capture failed.", "error"); }                 
                 };                 
                 UI.video.play().catch(e => {
                     Utils.showToast("Playback blocked. Please click the player.", "error");
@@ -808,7 +827,7 @@
                             State.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, onReady);                     
                         } else if (UI.video.canPlayType('application/vnd.apple.mpegurl')) {                         
                             UI.video.src = url; onReady();                     
-                        } else { Utils.showToast("HLS unsupported in this browser.", "error"); }                 
+                        } else { Utils.showToast("HLS unsupported.", "error"); }                 
                     } else { UI.video.src = url; onReady(); } 
                 } catch(e) {
                     Utils.showToast("Failed to load stream.", "error");
@@ -867,6 +886,7 @@
                             } else {
                                 Utils.showToast("Partner mounted exact file. Sync is active.", "success");
                             }
+
                             State.conn.send({ type: 'CMD_SEEK', time: UI.video.currentTime });                             
                             setTimeout(() => {                                 
                                 SyncEngine.triggerPlay(true);                                 
@@ -886,8 +906,6 @@
             enforceHostState: (hostState) => {                 
                 if (State.isHost || State.isSeekingUI) return;                 
                 State.syncState = hostState;                                         
-                
-                // UI Sync
                 if (hostState.duration > 0 && !State.isSeekingUI) {                     
                     const pct = (hostState.time / hostState.duration) * 100;                     
                     UI.scrubberProgress.style.width = `${pct}%`; UI.scrubberThumb.style.left = `${pct}%`;                     
@@ -902,7 +920,7 @@
 
                 if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {                     
                     const ytState = ytPlayer.getPlayerState();                     
-                    if (ytState === 3) return;
+                    if (ytState === 3) return; 
 
                     if (hostState.paused && ytState === 1) ytPlayer.pauseVideo();                     
                     if (!hostState.paused && ytState !== 1 && ytState !== 3) ytPlayer.playVideo();                                         
@@ -924,23 +942,26 @@
                 }                                 
                 if (State.ignoreNextSeekEvent) return;                 
 
-                const drift = UI.video.currentTime - hostState.time;                 
+                // FIX: Ping-pong oscillation prevention via exact network latency offset calculations
+                const latencyMs = parseInt(UI.telemetryLatency.textContent) || 50; 
+                const networkOffset = latencyMs / 2000; // Half RTT to seconds
+                const adjustedHostTime = hostState.time + (hostState.paused ? 0 : networkOffset);
+                const drift = UI.video.currentTime - adjustedHostTime;                 
                 const absDrift = Math.abs(drift);
 
                 if (absDrift > 3.0 && !hostState.paused) {
                     UI.driftIndicator.classList.remove('hidden');
-                    UI.video.currentTime = hostState.time;
+                    UI.video.currentTime = adjustedHostTime;
                     UI.video.playbackRate = 1.0;
                     setTimeout(() => UI.driftIndicator.classList.add('hidden'), 500);
                 } else if (absDrift > 0.3 && !hostState.paused) {
                     if (drift > 0) UI.video.playbackRate = 0.95; 
                     else UI.video.playbackRate = 1.05; 
                 } else {
-                    // FIX: Ensure playback rate snaps back to 1.0 once caught up
                     if (UI.video.playbackRate !== 1.0) UI.video.playbackRate = 1.0;
                 }
 
-                if (hostState.paused && absDrift > 0.1) {
+                if (hostState.paused && Math.abs(UI.video.currentTime - hostState.time) > 0.1) {
                     UI.video.currentTime = hostState.time;
                 }            
             },                         
@@ -994,7 +1015,7 @@
                 try {                     
                     State.localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });                     
                     State.localVoiceStream.getAudioTracks()[0].enabled = false; AudioEngine.updateIcon();                 
-                } catch (err) { console.warn("Mic denied or unavailable."); }             
+                } catch (err) { console.warn("Mic note:", err); }             
             },             
             toggleMic: () => {                 
                 if (!State.localVoiceStream) return Utils.showToast("Microphone not available.", "error");                 
@@ -1095,17 +1116,17 @@
                     }                 
                 });                 
                 UI.video.addEventListener('playing', () => { UI.bufferingOverlay.classList.remove('active'); });                                 
-                UI.video.addEventListener('canplay', () => { UI.bufferingOverlay.classList.remove('active'); }); 
+                UI.video.addEventListener('canplay', () => { UI.bufferingOverlay.classList.remove('active'); });
 
                 UI.video.addEventListener('timeupdate', () => {                     
                     if (!State.isHost && (State.playMode === 'local_stream' || State.playMode === 'screenshare')) { 
                         UI.timeDisplay.textContent = "LIVE BROADCAST"; 
                         return; 
                     }                                         
-                    if (State.playMode !== 'youtube' && !State.isSeekingUI) {                         
+                    if (State.playMode !== 'youtube') {                         
                         const curr = UI.video.currentTime, total = UI.video.duration;                         
                         UI.timeDisplay.textContent = `${Utils.formatTime(curr)} / ${Utils.formatTime(total)}`;                         
-                        if (total > 0) {                             
+                        if (total > 0 && !State.isSeekingUI) {                             
                             const pct = (curr / total) * 100;                             
                             UI.scrubberProgress.style.width = `${pct}%`; UI.scrubberThumb.style.left = `${pct}%`;                             
                             if (UI.video.buffered.length > 0) {                                 
@@ -1131,31 +1152,25 @@
                 const calculateScrub = (e) => {                     
                     const totalDur = State.isHost ? (State.playMode === 'youtube' ? ytPlayer.getDuration() : UI.video.duration) : State.syncState.duration;                     
                     if (!totalDur || (!State.isHost && (State.playMode === 'local_stream' || State.playMode === 'screenshare'))) return;                                         
-                    
                     const rect = UI.scrubber.getBoundingClientRect();                     
                     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
                     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));                     
-                    
                     UI.scrubberProgress.style.width = `${pos * 100}%`; UI.scrubberThumb.style.left = `${pos * 100}%`;                     
                     
-                    // Display visual time during drag
                     const targetTime = pos * totalDur;
                     UI.timeDisplay.textContent = `${Utils.formatTime(targetTime)} / ${Utils.formatTime(totalDur)}`;
-
                     return targetTime;                 
                 };                                 
 
-                // FIX: Scrubber fighting locks UI to prevent ghost updates
-                const onScrubStart = (e) => {
+                // FIX: Added robust touch support for mobile scrubbing
+                const handleScrubStart = (e) => { 
                     State.isSeekingUI = true; 
                     calculateScrub(e); 
                     UI.playerWrapper.classList.remove('idle');
                     clearTimeout(State.controlsTimeout);
                 };
-                const onScrubMove = (e) => { 
-                    if (State.isSeekingUI) calculateScrub(e); 
-                };
-                const onScrubEnd = (e) => {                     
+                const handleScrubMove = (e) => { if (State.isSeekingUI) calculateScrub(e); };
+                const handleScrubEnd = (e) => {                     
                     if (State.isSeekingUI) {                         
                         State.isSeekingUI = false;                         
                         const targetTime = calculateScrub(e.type.includes('touch') ? e.changedTouches[0] : e);                         
@@ -1163,12 +1178,13 @@
                     }                 
                 };
 
-                UI.scrubber.addEventListener('mousedown', onScrubStart);                 
-                document.addEventListener('mousemove', onScrubMove);                 
-                document.addEventListener('mouseup', onScrubEnd);                 
-                UI.scrubber.addEventListener('touchstart', onScrubStart, {passive: true});                 
-                document.addEventListener('touchmove', onScrubMove, {passive: true});                 
-                document.addEventListener('touchend', onScrubEnd);                 
+                UI.scrubber.addEventListener('mousedown', handleScrubStart);                 
+                document.addEventListener('mousemove', handleScrubMove);                 
+                document.addEventListener('mouseup', handleScrubEnd);
+                
+                UI.scrubber.addEventListener('touchstart', handleScrubStart, {passive: true});                 
+                document.addEventListener('touchmove', handleScrubMove, {passive: true});                 
+                document.addEventListener('touchend', handleScrubEnd);
 
                 UI.skipBackBtn.addEventListener('click', () => {                     
                     if (State.isHost) {                         
@@ -1250,7 +1266,7 @@
                     }                 
                 });                 
 
-                // FIX: Standardized WebKit/Moz Fullscreen fallbacks
+                // FIX: Standard Webkit Fullscreen Fallback for iOS/Safari compliance
                 UI.fullscreenBtn.addEventListener('click', () => {                     
                     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                         if (UI.theater.requestFullscreen) UI.theater.requestFullscreen().catch(()=>{}); 
@@ -1272,7 +1288,6 @@
                     }                 
                 });                 
 
-                // FIX: Better fade out behavior that respects dragging State
                 let isHoveringControls = false;
                 UI.videoControls.addEventListener('mouseenter', () => isHoveringControls = true);
                 UI.videoControls.addEventListener('mouseleave', () => {
