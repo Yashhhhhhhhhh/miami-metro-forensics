@@ -1068,7 +1068,10 @@
                         UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(()=>{});
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
                         Net.broadcastMediaAll("Screen Share", 'screenshare');
-                    } catch(e) {}
+                    } catch(e) {
+                        console.error("Screen capture error:", e);
+                        Utils.toast("Screen capture cancelled or failed.", "error");
+                    }
                 });
 
                 UI.chatForm.addEventListener('submit', e => {
