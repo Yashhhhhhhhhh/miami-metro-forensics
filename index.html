@@ -513,8 +513,12 @@
                 t.innerHTML = msg;
                 document.getElementById('toastContainer').appendChild(t);
                 
-                t.offsetHeight; // Force reflow
-                t.classList.remove('translate-y-4', 'opacity-0');
+                // ⚡ Bolt: Prevent forced synchronous reflow by using double requestAnimationFrame
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        t.classList.remove('translate-y-4', 'opacity-0');
+                    });
+                });
                 
                 setTimeout(() => { 
                     t.classList.add('translate-y-4', 'opacity-0'); 
@@ -536,8 +540,13 @@
                 t.appendChild(txt); t.appendChild(btnRow);
                 
                 document.getElementById('toastContainer').appendChild(t);
-                t.offsetHeight; 
-                t.classList.remove('translate-y-4', 'opacity-0');
+
+                // ⚡ Bolt: Prevent forced synchronous reflow by using double requestAnimationFrame
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        t.classList.remove('translate-y-4', 'opacity-0');
+                    });
+                });
 
                 const cleanup = () => { t.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); };
                 
@@ -567,7 +576,11 @@
                     d.appendChild(senderSpan);
                     d.appendChild(msgDiv);
                 }
-                UI.chatMsgs.appendChild(d); UI.chatMsgs.scrollTop = UI.chatMsgs.scrollHeight;
+                UI.chatMsgs.appendChild(d);
+                // ⚡ Bolt: Batch DOM scroll update to prevent layout thrashing on message append
+                requestAnimationFrame(() => {
+                    UI.chatMsgs.scrollTop = UI.chatMsgs.scrollHeight;
+                });
             },
             copyToClipboard: (text) => {
                 navigator.clipboard.writeText(text).then(() => Utils.toast("Code copied to clipboard!", "success")).catch(() => {
@@ -1130,11 +1143,12 @@
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
 
                 let scrubRAF;
+                let scrubRect; // ⚡ Bolt: Cache bounding rect to prevent forced synchronous layout thrashing on every mousemove
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
-                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    if (!scrubRect) scrubRect = UI.scrubTrack.getBoundingClientRect();
                     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    const pos = Math.max(0, Math.min(1, (clientX - scrubRect.left) / scrubRect.width));
 
                     // ⚡ Bolt: Batch DOM writes during high-frequency scrub events to prevent layout thrashing
                     if (scrubRAF) cancelAnimationFrame(scrubRAF);
@@ -1144,11 +1158,11 @@
 
                     return pos * dur;
                 };
-                const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
+                const sStart = (e) => { State.isScrubbing = true; scrubRect = UI.scrubTrack.getBoundingClientRect(); UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
                 const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
-                        State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
+                        State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing'); scrubRect = null;
                         const t = calcScrub(e.type.includes('touch') ? e.changedTouches[0] : e);
                         if(t !== undefined) {
                             if(State.isHost) { Player.seek(t); Net.broadcastAll({type:'CMD_SEEK', t}); }
