@@ -425,7 +425,7 @@
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
             
-            peer: null, conn: null, mediaConn: null, voiceConn: null,
+            peer: null, connections: new Map(), mediaConns: new Map(), voiceConns: new Map(), // Updated to Maps for multi-peer support
             localVoiceStream: null, activeWebRTCStream: null,
             hls: null, dash: null
         };
@@ -510,8 +510,17 @@
                 } else {
                     const me = sender === State.myName;
                     d.className += ` flex flex-col ${me ? 'items-end' : 'items-start'}`;
-                    d.innerHTML = `<span class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1">${sender}</span>
-                                   <div class="px-4 py-2.5 max-w-[85%] text-sm rounded-2xl ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 border border-white/5 text-zinc-200 rounded-tl-sm'}">${txt.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>`;
+                    
+                    const senderSpan = document.createElement('span');
+                    senderSpan.className = 'text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1';
+                    senderSpan.textContent = sender;
+
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `px-4 py-2.5 max-w-[85%] text-sm rounded-2xl ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 border border-white/5 text-zinc-200 rounded-tl-sm'}`;
+                    msgDiv.textContent = txt; // Replaced innerHTML with textContent for XSS protection
+
+                    d.appendChild(senderSpan);
+                    d.appendChild(msgDiv);
                 }
                 UI.chatMsgs.appendChild(d); UI.chatMsgs.scrollTop = UI.chatMsgs.scrollHeight;
             },
@@ -586,6 +595,7 @@
                 UI.video.crossOrigin = isUrl ? "anonymous" : null;
                 if(isUrl) UI.video.src = srcObj; else UI.video.src = URL.createObjectURL(srcObj);
                 UI.video.play().catch(e => { if(e.name === 'NotAllowedError') UI.gate.classList.add('active'); });
+                App.updateUI(); // Initial UI update
             },
             loadYT: (id, title = "YouTube Stream") => {
                 Player.purge(); UI.emptyState.style.opacity = '0';
@@ -597,7 +607,7 @@
                     else {
                         ytPlayer = new YT.Player('ytPlayerDiv', {
                             videoId: id, playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'origin': window.location.origin },
-                            events: { 'onReady': e => e.target.playVideo() }
+                            events: { 'onReady': e => { e.target.playVideo(); App.startYTLoop(); }, 'onStateChange': App.updateUI }
                         });
                     }
                 };
@@ -654,7 +664,10 @@
                     UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Host New Session`;
                 });
 
-                State.peer.on('connection', c => { State.conn = c; Net.setupData(c); });
+                State.peer.on('connection', c => { 
+                    State.connections.set(c.peer, c); // Add to map
+                    Net.setupData(c); 
+                });
                 State.peer.on('call', Net.handleCall);
             },
             guest: () => {
@@ -674,23 +687,26 @@
                 State.peer.on('open', () => {
                     // Add a strict timeout for connections that hang
                     let connTimeout = setTimeout(() => {
-                        if(!State.conn || !State.conn.open) {
+                        if(State.connections.size === 0) {
                             Utils.toast("Connection timed out. Host might be offline.", "error");
                             UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
                             if(State.peer) State.peer.destroy();
                         }
                     }, 8000);
 
-                    State.conn = State.peer.connect(`lum-${code}`);
-                    State.conn.on('open', () => {
+                    const conn = State.peer.connect(`lum-${code}`);
+                    
+                    conn.on('open', () => {
                         clearTimeout(connTimeout); 
-                        Net.setupData(State.conn);
+                        State.connections.set(conn.peer, conn); // Keep track as guest too, even if it's just the host
+                        Net.setupData(conn);
                         
                         // Initialize mic AFTER successful connection so it doesn't block entering the room
                         Mic.init().then(() => {
                             if(State.localVoiceStream) {
                                 const c = State.peer.call(`lum-${code}`, State.localVoiceStream, {metadata:{type:'voice'}});
                                 c.on('stream', s => UI.remoteAud.srcObject = s);
+                                State.voiceConns.set(c.peer, c);
                             }
                         });
                     });
@@ -711,18 +727,39 @@
                     if(State.isHost && State.playMode !== 'idle') {
                         c.send({ type: 'MASTER_STATE', payload: { mode: State.playMode, title: State.mediaTitle, url: State.mediaUrl, size: State.fileSize, time: Player.getTime() } });
                         if((State.playMode === 'local_stream' || State.playMode === 'screenshare') && State.activeWebRTCStream) {
-                            setTimeout(() => Net.broadcast(State.mediaTitle, State.playMode), 1000);
+                            setTimeout(() => Net.broadcastToPeer(c.peer, State.mediaTitle, State.playMode), 1000);
                         }
                     }
                 };
                 c.on('open', onOpen); if(c.open) onOpen();
-                c.on('data', Sync.handle);
-                c.on('close', () => { UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Link Severed"; Utils.toast("Partner disconnected", "error"); });
+                c.on('data', (d) => Sync.handle(d, c.peer)); // Pass peer ID to handle for routing if needed
+                c.on('close', () => { 
+                    State.connections.delete(c.peer);
+                    if(!State.isHost || State.connections.size === 0) {
+                        UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Link Severed"; 
+                        Utils.toast(State.isHost ? "All partners disconnected" : "Host disconnected", "error"); 
+                    } else {
+                        Utils.toast("A viewer disconnected", "info");
+                    }
+                });
             },
-            broadcast: (title, mode) => {
-                if(!State.conn || !State.activeWebRTCStream) return;
-                State.mediaConn = State.peer.call(State.conn.peer, State.activeWebRTCStream, {metadata:{type: mode, name: title}});
-                const pc = State.mediaConn.peerConnection;
+            broadcastAll: (msg) => {
+                State.connections.forEach(conn => {
+                    if(conn.open) conn.send(msg);
+                });
+            },
+            broadcastMediaAll: (title, mode) => {
+                 if(!State.activeWebRTCStream) return;
+                 State.connections.forEach(conn => {
+                     Net.broadcastToPeer(conn.peer, title, mode);
+                 });
+            },
+            broadcastToPeer: (peerId, title, mode) => {
+                if(!State.activeWebRTCStream) return;
+                const mediaConn = State.peer.call(peerId, State.activeWebRTCStream, {metadata:{type: mode, name: title}});
+                State.mediaConns.set(peerId, mediaConn);
+
+                const pc = mediaConn.peerConnection;
                 if(pc) {
                     const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(()=>{}); } }); };
                     hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
@@ -731,16 +768,20 @@
             handleCall: (call) => {
                 if(call.metadata?.type === 'voice') {
                     if(!State.localVoiceStream) { try{ const c = new AudioContext(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){} }
-                    call.answer(State.localVoiceStream); call.on('stream', s => UI.remoteAud.srcObject = s);
+                    call.answer(State.localVoiceStream); 
+                    call.on('stream', s => UI.remoteAud.srcObject = s);
+                    State.voiceConns.set(call.peer, call);
                 } else {
                     call.answer(); AudioGraph.init();
                     call.on('stream', s => {
                         Player.purge(); UI.emptyState.style.opacity = '0';
-                        UI.video.srcObject = s; State.mediaConn = call;
+                        UI.video.srcObject = s; 
+                        State.mediaConns.set(call.peer, call); // Track media connection
                         State.playMode = call.metadata?.type; State.mediaTitle = call.metadata?.name || "Live Broadcast";
                         UI.title.textContent = State.mediaTitle;
                         UI.video.play().catch(e => { if(e.name === 'NotAllowedError') UI.gate.classList.add('active'); });
                         Ambilight();
+                        App.updateUI(); // Initial UI update
                     });
                 }
             }
@@ -752,22 +793,24 @@
                 State.hostBeat = setInterval(() => {
                     if(State.playMode === 'idle' || State.playMode === 'screenshare') return;
                     State.syncState = { time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now() };
-                    if(State.conn?.open) State.conn.send({type: 'STATE', s: State.syncState});
+                    Net.broadcastAll({type: 'STATE', s: State.syncState});
                 }, 500);
             },
-            handle: (d) => {
+            handle: (d, senderId) => {
                 switch(d.type) {
                     case 'INFO': 
                         Utils.log('System', `${d.name} joined.`, true); 
-                        // Automatically push the current media state to late joiners
-                        if(State.isHost && State.playMode !== 'idle') {
-                            State.conn.send({ type: 'MASTER_STATE', payload: { mode: State.playMode, title: State.mediaTitle, url: State.mediaUrl, size: State.fileSize, time: Player.getTime() } });
-                            if((State.playMode === 'local_stream' || State.playMode === 'screenshare') && State.activeWebRTCStream) {
-                                setTimeout(() => Net.broadcast(State.mediaTitle, State.playMode), 800);
-                            }
-                        }
+                        // Automatically push the current media state to late joiners handled in setupData now
                         break;
-                    case 'CHAT': Utils.log(State.isHost?'Viewer':'Host', d.text); break;
+                    case 'CHAT': 
+                        // If host, relay chat to other viewers
+                        if(State.isHost) {
+                            State.connections.forEach(conn => {
+                                if(conn.peer !== senderId && conn.open) conn.send(d);
+                            });
+                        }
+                        Utils.log(d.senderName || (State.isHost?'Viewer':'Host'), d.text); 
+                        break;
                     case 'MASTER_STATE':
                         const p = d.payload;
                         if(p.mode === 'url') { App.loadUrl(p.url, p.title, false); setTimeout(()=>Player.seek(p.time), 1000); }
@@ -777,16 +820,23 @@
                         break;
                     case 'REQ_FILE': Utils.toast(`Host requested file: ${d.name}`, 'info'); break;
                     case 'FILE_MOUNTED': 
-                        if(State.isHost) { Utils.toast("Guest mounted file.", "success"); State.conn.send({type:'CMD_SEEK', t: Player.getTime()}); setTimeout(()=>{ Player.play(); State.conn.send({type:'CMD_PLAY'}); }, 200); }
+                        if(State.isHost) { 
+                            Utils.toast("Guest mounted file.", "success"); 
+                            const conn = State.connections.get(senderId);
+                            if(conn && conn.open) {
+                                conn.send({type:'CMD_SEEK', t: Player.getTime()}); 
+                                setTimeout(()=>{ Player.play(); conn.send({type:'CMD_PLAY'}); }, 200); 
+                            }
+                        }
                         break;
                     case 'URL': App.loadUrl(d.url, d.title, false); break;
                     case 'STATE': Sync.enforce(d.s); break;
                     case 'CMD_PLAY': if(!State.isHost) Player.play(); break;
                     case 'CMD_PAUSE': if(!State.isHost) Player.pause(); break;
                     case 'CMD_SEEK': if(!State.isHost) { State.ignoreNextSeek=true; Player.seek(d.t); setTimeout(()=>State.ignoreNextSeek=false, 2000); } break;
-                    case 'REQ_PLAY': if(State.isHost) { Player.play(); State.conn.send({type:'CMD_PLAY'}); } break;
-                    case 'REQ_PAUSE': if(State.isHost) { Player.pause(); State.conn.send({type:'CMD_PAUSE'}); } break;
-                    case 'REQ_SEEK': if(State.isHost) { Player.seek(d.t); State.conn.send({type:'CMD_SEEK', t: d.t}); } break;
+                    case 'REQ_PLAY': if(State.isHost) { Player.play(); Net.broadcastAll({type:'CMD_PLAY'}); } break;
+                    case 'REQ_PAUSE': if(State.isHost) { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); } break;
+                    case 'REQ_SEEK': if(State.isHost) { Player.seek(d.t); Net.broadcastAll({type:'CMD_SEEK', t: d.t}); } break;
                 }
             },
             enforce: (h) => {
@@ -826,9 +876,10 @@
         };
 
         const App = {
+            ytLoopInterval: null, // Track youtube loop
             enter: () => { UI.lobby.style.opacity = '0'; setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700); },
             loadUrl: (url, title = "Remote Feed", broadcast = true) => {
-                if(broadcast && State.isHost && State.conn?.open) State.conn.send({type:'URL', url, title});
+                if(broadcast && State.isHost) Net.broadcastAll({type:'URL', url, title});
                 const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                 if(ytMatch) { Player.loadYT(ytMatch[1], title); return; }
 
@@ -846,6 +897,30 @@
                     UI.sidebar.classList.remove('open');
                     UI.toggleSideBtn.classList.remove('active');
                 }
+            },
+            updateUI: () => {
+                if(State.isScrubbing) return;
+                const p = Player.isPaused();
+                p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                
+                if(State.playMode !== 'idle' && State.playMode !== 'screenshare' && State.playMode !== 'local_stream') {
+                    const c = Player.getTime(), d = Player.getDur();
+                    if(d > 0) {
+                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
+                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                    }
+                }
+                // Ambilight handled in its own loop if active, but we can trigger a frame here if paused
+                if(State.ambilight && p) Ambilight(); 
+            },
+            startYTLoop: () => {
+                if(App.ytLoopInterval) clearInterval(App.ytLoopInterval);
+                // Need a loop for YT because it doesn't emit timeupdate events
+                App.ytLoopInterval = setInterval(() => {
+                    if(State.playMode === 'youtube' && !State.isScrubbing && !Player.isPaused()) {
+                         App.updateUI();
+                    }
+                }, 1000 / 30); // 30fps is enough for UI updates
             },
             bind: () => {
                 const sN = localStorage.getItem('lumAlias'); if(sN) UI.nameIn.value = sN;
@@ -865,8 +940,11 @@
                 UI.fileSync.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
-                    if(State.isHost && State.conn?.open) State.conn.send({type:'REQ_FILE', name: f.name});
-                    else if(!State.isHost && State.conn?.open) State.conn.send({type:'FILE_MOUNTED'});
+                    if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
+                    else if(!State.isHost) {
+                         // Send to host
+                         State.connections.forEach(conn => { if(conn.open) conn.send({type:'FILE_MOUNTED'}); });
+                    }
                 });
                 UI.fileStream.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
@@ -878,7 +956,7 @@
                             const tracks = [vs.getVideoTracks()[0]];
                             if(AudioGraph.dest) tracks.push(AudioGraph.dest.stream.getAudioTracks()[0]);
                             State.activeWebRTCStream = new MediaStream(tracks);
-                            Net.broadcast(f.name, 'local_stream');
+                            Net.broadcastMediaAll(f.name, 'local_stream');
                         } catch(err) { Utils.toast("DRM Blocked Capture", "error"); }
                     };
                 });
@@ -888,13 +966,15 @@
                         Player.purge(); UI.emptyState.style.opacity = '0';
                         UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(()=>{});
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
-                        Net.broadcast("Screen Share", 'screenshare');
+                        Net.broadcastMediaAll("Screen Share", 'screenshare');
                     } catch(e) {}
                 });
 
                 UI.chatForm.addEventListener('submit', e => {
                     e.preventDefault(); const t = UI.chatIn.value.trim(); if(!t) return;
-                    Utils.log(State.myName, t); if(State.conn?.open) State.conn.send({type:'CHAT', text: t}); UI.chatIn.value = '';
+                    Utils.log(State.myName, t); 
+                    Net.broadcastAll({type:'CHAT', text: t, senderName: State.myName}); 
+                    UI.chatIn.value = '';
                 });
                 UI.micBtn.addEventListener('click', Mic.toggle);
                 UI.voiceVol.addEventListener('input', e => UI.remoteAud.volume = e.target.value);
@@ -904,8 +984,10 @@
                 const togPlay = () => {
                     if(State.playMode === 'idle' || (!State.isHost && State.playMode.includes('stream'))) return;
                     const p = Player.isPaused();
-                    if(State.isHost) { p ? Player.play() : Player.pause(); State.conn?.send({type: p ? 'CMD_PLAY':'CMD_PAUSE'}); }
-                    else { State.conn?.send({type: p ? 'REQ_PLAY':'REQ_PAUSE'}); }
+                    if(State.isHost) { p ? Player.play() : Player.pause(); Net.broadcastAll({type: p ? 'CMD_PLAY':'CMD_PAUSE'}); }
+                    else { 
+                        State.connections.forEach(conn => { if(conn.open) conn.send({type: p ? 'REQ_PLAY':'REQ_PAUSE'}); });
+                    }
                 };
                 UI.playBtn.addEventListener('click', togPlay);
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
@@ -925,8 +1007,12 @@
                         State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
                         const t = calcScrub(e.type.includes('touch') ? e.changedTouches[0] : e);
                         if(t !== undefined) {
-                            if(State.isHost) { Player.seek(t); State.conn?.send({type:'CMD_SEEK', t}); }
-                            else { State.ignoreNextSeek=true; Player.seek(t); State.conn?.send({type:'REQ_SEEK', t}); setTimeout(()=>State.ignoreNextSeek=false, 2000); }
+                            if(State.isHost) { Player.seek(t); Net.broadcastAll({type:'CMD_SEEK', t}); }
+                            else { 
+                                State.ignoreNextSeek=true; Player.seek(t); 
+                                State.connections.forEach(conn => { if(conn.open) conn.send({type:'REQ_SEEK', t}); });
+                                setTimeout(()=>State.ignoreNextSeek=false, 2000); 
+                            }
                         }
                     }
                 };
@@ -936,8 +1022,11 @@
                 const skip = (fwd) => {
                     const curr = Player.getTime(); const dur = Player.getDur() || State.syncState.duration;
                     const nt = fwd ? Math.min(dur, curr+10) : Math.max(0, curr-10);
-                    if(State.isHost) { Player.seek(nt); State.conn?.send({type:'CMD_SEEK', t:nt}); }
-                    else { State.ignoreNextSeek=true; Player.seek(nt); State.conn?.send({type:'REQ_SEEK', t:nt}); }
+                    if(State.isHost) { Player.seek(nt); Net.broadcastAll({type:'CMD_SEEK', t:nt}); }
+                    else { 
+                        State.ignoreNextSeek=true; Player.seek(nt); 
+                        State.connections.forEach(conn => { if(conn.open) conn.send({type:'REQ_SEEK', t:nt}); });
+                    }
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
@@ -971,7 +1060,10 @@
                     Ambilight(); 
                 });
                 
-                UI.reqSyncBtn.addEventListener('click', () => { Utils.toast("Requested sync...", "info"); State.conn?.send({type:'REQ_PLAY'}); });
+                UI.reqSyncBtn.addEventListener('click', () => { 
+                    Utils.toast("Requested sync...", "info"); 
+                    State.connections.forEach(conn => { if(conn.open) conn.send({type:'REQ_PLAY'}); });
+                });
 
                 // Improved Fade Logic - Doesn't fade if interacting with sidebar
                 const resetFade = () => {
@@ -985,22 +1077,12 @@
                 // Typing in chat keeps UI alive
                 UI.chatIn.addEventListener('focus', resetFade);
 
-                const loop = () => {
-                    if(!State.isScrubbing) {
-                        const p = Player.isPaused();
-                        p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
-                        
-                        if(State.playMode !== 'idle') {
-                            const c = Player.getTime(), d = Player.getDur();
-                            if(d > 0) {
-                                UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                                UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
-                            }
-                        }
-                    }
-                    requestAnimationFrame(loop);
-                };
-                requestAnimationFrame(loop);
+                // Replaced continuous requestAnimationFrame loop with event listeners for native media
+                // We keep a separate loop for YouTube via startYTLoop because the API doesn't provide timeupdate events
+                UI.video.addEventListener('timeupdate', App.updateUI);
+                UI.video.addEventListener('play', App.updateUI);
+                UI.video.addEventListener('pause', App.updateUI);
+                UI.video.addEventListener('durationchange', App.updateUI);
             }
         };
 
