@@ -1227,7 +1227,7 @@
         };
 
         const Mic = {
-            init: async () => { try { State.localVoiceStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); State.localVoiceStream.getAudioTracks()[0].enabled = false; Mic.upd(); } catch(e){} },
+            init: async () => { try { State.localVoiceStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); State.localVoiceStream.getAudioTracks()[0].enabled = false; Mic.upd(); } catch(e){ console.warn("Mic access denied or unavailable:", e); Utils.toast("Mic access denied.", "error"); } },
             toggle: () => { if(!State.localVoiceStream) return Utils.toast("Mic offline.", "error"); const t = State.localVoiceStream.getAudioTracks()[0]; t.enabled = !t.enabled; Mic.upd(); },
             upd: () => {
                 const en = State.localVoiceStream.getAudioTracks()[0].enabled;
