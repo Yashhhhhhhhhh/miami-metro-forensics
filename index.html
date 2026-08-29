@@ -1091,12 +1091,23 @@
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
 
+                // ⚡ Bolt: Cache DOM properties for timeupdate to prevent layout thrashing
+                let lastTimeStr = '', lastScrubPct = '';
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
                     if(d > 0) {
-                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                        const newTimeStr = `${Utils.time(c)} / ${Utils.time(d)}`;
+                        if (newTimeStr !== lastTimeStr) {
+                            UI.time.textContent = newTimeStr;
+                            lastTimeStr = newTimeStr;
+                        }
+                        const pctStr = `${(c/d)*100}%`;
+                        if (pctStr !== lastScrubPct) {
+                            UI.scrubFill.style.width = pctStr;
+                            UI.scrubThumb.style.left = pctStr;
+                            lastScrubPct = pctStr;
+                        }
                     }
                 });
                 const syncPlayStateUI = () => {

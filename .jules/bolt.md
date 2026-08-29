@@ -4,3 +4,7 @@
 ## 2024-05-24 - Hardware-Accelerated Animations
 **Learning:** Using `transition: all` is a common anti-pattern that can lead to significant performance drops (jank) because it forces the browser to recalculate and transition properties that might trigger expensive layout changes or repaints, even if only visually lightweight properties like opacity or transform were intended to change.
 **Action:** Always specify exact transition properties, prioritizing GPU-accelerated ones like `transform`, `opacity`, `color`, and `background-color`. Replaced `transition: all` across multiple core UI elements (`.controls-pill`, `.top-bar`, `.btn-icon`, `#lobbyScreen`) with specific hardware-friendly properties.
+
+## 2026-08-29 - DOM caching for timeupdate
+**Learning:** High-frequency events like timeupdate can cause layout thrashing if DOM string and style properties are reassigned identically on every frame.
+**Action:** Use a local variable to cache the last updated value and only reassign the DOM node property if the new calculated string differs from the cached one.
