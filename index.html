@@ -961,8 +961,7 @@
                             State.lastSyncReqTime = Date.now();
                             Utils.toast(`${d.from} requested a fresh sync frame.`, 'info');
                             State.syncState = { time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now() };
-                            if (c && c.open) c.send({type: 'STATE', s: State.syncState});
-                            else Net.broadcastAll({type: 'STATE', s: State.syncState});
+                            Net.broadcastAll({type: 'STATE', s: State.syncState});
                         }
                         break;
                         
@@ -1212,7 +1211,16 @@
                     return pos * dur;
                 };
                 const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
-                const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
+                let lastScrubTime = 0;
+                const sMove = (e) => {
+                    if(State.isScrubbing) {
+                        const now = Date.now();
+                        if (now - lastScrubTime > 16) {
+                            calcScrub(e);
+                            lastScrubTime = now;
+                        }
+                    }
+                };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
                         State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
