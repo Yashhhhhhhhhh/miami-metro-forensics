@@ -7,3 +7,6 @@
 ## 2026-08-29 - Multi-Peer Audio Element Robustness
 **Learning:** Autoplay policies and varying browser support (like Safari needing `webkitAudioContext` and `playsInline`) can break dynamically created audio elements for incoming streams without throwing clear application-level errors unless explicitly handled.
 **Action:** Always wrap `.play()` calls in a `.catch()` block when handling streams and instantiate `AudioContext` using the fallback `(window.AudioContext || window.webkitAudioContext)` to ensure maximum compatibility.
+## 2026-08-29 - Throttling Video timeupdate UI Events
+**Learning:** The `timeupdate` event on HTMLVideoElement fires continuously during playback (usually 4 to 66 times per second depending on the browser), causing severe layout thrashing and main-thread congestion if UI elements (like text contents or progress bars) are updated synchronously inside it.
+**Action:** Throttle the `timeupdate` event handler's DOM updates by wrapping them in `requestAnimationFrame`. Maintain a state reference to the pending animation frame and `cancelAnimationFrame` before dispatching a new one to prevent stacking rendering tasks.

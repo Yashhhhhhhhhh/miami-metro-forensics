@@ -436,7 +436,7 @@
             
             syncState: { time: 0, duration: 0, paused: true },
             isScrubbing: false, ignoreNextSeek: false, syncTimeout: null,
-            hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null,
+            hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null, rAFTimeUpdate: null,
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
             lastVol: 1, // Fix 3: Memory for mute amnesia
@@ -1097,11 +1097,14 @@
 
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
-                    const c = UI.video.currentTime, d = UI.video.duration;
-                    if(d > 0) {
-                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
-                    }
+                    if(State.rAFTimeUpdate) cancelAnimationFrame(State.rAFTimeUpdate);
+                    State.rAFTimeUpdate = requestAnimationFrame(() => {
+                        const c = UI.video.currentTime, d = UI.video.duration;
+                        if(d > 0) {
+                            UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                        }
+                    });
                 });
                 const syncPlayStateUI = () => {
                     const p = UI.video.paused;
