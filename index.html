@@ -177,7 +177,23 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #fff; margin-top: -5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}         
         
         .spinner { border: 2px solid rgba(255,255,255,0.1); border-left-color: #ef4444; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }         
-        @keyframes spin { 100% { transform: rotate(360deg); } }     
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .reaction-bubble {
+            position: absolute;
+            bottom: 80px;
+            right: 40px;
+            font-size: 2rem;
+            z-index: 45;
+            pointer-events: none;
+            animation: floatUp 3s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            10% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+            20% { transform: translateY(-40px) scale(1); opacity: 1; }
+            100% { transform: translateY(-200px) scale(1); opacity: 0; }
+        }
     </style> 
 </head> 
 <body class="w-screen h-screen flex flex-col selection:bg-accent-500 selection:text-white ambient-grid">         
@@ -263,6 +279,13 @@
                 </div>
             </div>
 
+            <!-- Overlays -->
+            <div id="reactionBar" class="absolute right-4 bottom-28 z-40 flex flex-col gap-2 glass-panel p-2 rounded-full opacity-0 pointer-events-none transition-all duration-300 transform translate-x-10 group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto">
+                <button class="btn-icon react-btn" data-emoji="❤️">❤️</button>
+                <button class="btn-icon react-btn" data-emoji="😂">😂</button>
+                <button class="btn-icon react-btn" data-emoji="😲">😲</button>
+                <button class="btn-icon react-btn" data-emoji="🍿">🍿</button>
+            </div>
             <!-- Overlays -->
             <div id="emptyState" class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-500">
                 <div class="w-24 h-24 rounded-full glass-panel flex items-center justify-center mb-6 shadow-glow">                     
@@ -447,6 +470,17 @@
                 </div>
             </div>
 
+            <!-- Queue Deck -->
+            <div id="queueDeck" class="p-6 border-b border-white/5 bg-black/40 overflow-y-auto hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Up Next</h3>
+                    <button id="addQueueBtn" class="text-[9px] font-bold text-accent-400 bg-accent-400/10 px-2 py-1 rounded-md uppercase tracking-wider hidden hover:bg-accent-400 hover:text-white transition-colors">Add Media</button>
+                </div>
+                <div id="queueList" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                    <div class="text-xs text-zinc-500 text-center py-4" id="emptyQueueMsg">Queue is empty.</div>
+                </div>
+            </div>
+
             <!-- Chat Area -->
             <div class="flex-1 flex flex-col min-h-0 bg-black/10">
                 <div id="chatMessages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
@@ -470,6 +504,7 @@
             isHost: false, roomId: '', myName: 'Viewer',
             playMode: 'idle', // idle, local_sync, local_stream, url, youtube, screenshare
             mediaTitle: '', mediaUrl: '', fileSize: 0,
+            queue: [], // Array of {title, url, mode}
             
             syncState: { time: 0, duration: 0, paused: true },
             isScrubbing: false, ignoreNextSeek: false, syncTimeout: null,
@@ -521,6 +556,7 @@
             
             sidebar: document.getElementById('sidebar'), toggleSideBtn: document.getElementById('toggleSidebarBtn'), closeSideBtn: document.getElementById('closeSidebarBtn'),
             hostDeck: document.getElementById('hostDeck'), guestDeck: document.getElementById('guestDeck'),
+            queueDeck: document.getElementById('queueDeck'), queueList: document.getElementById('queueList'), addQueueBtn: document.getElementById('addQueueBtn'), emptyQueueMsg: document.getElementById('emptyQueueMsg'),
             chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
             fileSync: document.getElementById('fileSyncInput'), guestFileSync: document.getElementById('guestFileSyncInput'),
@@ -699,7 +735,15 @@
                     else {
                         ytPlayer = new YT.Player('ytPlayerDiv', {
                             videoId: id, playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'origin': window.location.origin },
-                            events: { 'onReady': e => { e.target.playVideo(); App.startYTLoop(); } }
+                            events: {
+                                'onReady': e => { e.target.playVideo(); App.startYTLoop(); },
+                                'onStateChange': e => {
+                                    if(e.data === YT.PlayerState.ENDED && State.isHost) {
+                                        Player.pause(); Net.broadcastAll({type: 'CMD_PAUSE'});
+                                        App.playNextInQueue();
+                                    }
+                                }
+                            }
                         });
                     }
                 };
@@ -760,7 +804,7 @@
 
                 State.peer.on('open', () => {
                     UI.codeDisp.textContent = State.roomId; App.enter();
-                    UI.roleInd.textContent = "Host"; UI.hostDeck.classList.remove('hidden');
+                    UI.roleInd.textContent = "Host"; UI.hostDeck.classList.remove('hidden'); UI.queueDeck.classList.remove('hidden'); UI.addQueueBtn.classList.remove('hidden');
                     Utils.toast("Session live. Awaiting viewers.", "success");
                     Sync.startHost(); Mic.init();
                 });
@@ -846,6 +890,7 @@
                         UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase";
                         UI.reqSyncBtn.classList.remove('hidden'); // Expose the sync request button
                         UI.guestDeck.classList.remove('hidden'); // Fix 1: Expose guest mount deck
+                        UI.queueDeck.classList.remove('hidden');
                     }
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                     
@@ -916,6 +961,15 @@
             },
             handle: (d) => {
                 switch(d.type) {
+                    case 'REACTION':
+                        App.spawnReaction(d.emoji);
+                        if(State.isHost && !d.isRelay) {
+                            Net.broadcastAll({type: 'REACTION', emoji: d.emoji, isRelay: true});
+                        }
+                        break;
+                    case 'QUEUE_SYNC':
+                        State.queue = d.q; App.renderQueue();
+                        break;
                     case 'INFO': 
                         Utils.log('System', `${d.name} joined.`, true); 
                         break;
@@ -1017,6 +1071,73 @@
         };
 
         const App = {
+            spawnReaction: (emoji) => {
+                const b = document.createElement('div');
+                b.className = 'reaction-bubble';
+                b.textContent = emoji;
+                // Add slight random horizontal offset
+                b.style.right = `${40 + (Math.random() * 40 - 20)}px`;
+                UI.viewport.appendChild(b);
+                setTimeout(() => b.remove(), 3000);
+            },
+            renderQueue: () => {
+                UI.queueList.innerHTML = '';
+                if (State.queue.length === 0) {
+                    UI.emptyQueueMsg.classList.remove('hidden');
+                    UI.queueList.appendChild(UI.emptyQueueMsg);
+                    return;
+                }
+                UI.emptyQueueMsg.classList.add('hidden');
+                State.queue.forEach((item, index) => {
+                    const el = document.createElement('div');
+                    el.className = 'flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 group';
+                    el.innerHTML = `
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-[10px] font-bold text-zinc-500 w-4">${index + 1}.</span>
+                            <span class="text-xs text-white truncate max-w-[150px] font-medium">${item.title}</span>
+                            <span class="text-[8px] bg-white/10 px-1 rounded uppercase tracking-wider text-zinc-400">${item.mode === 'youtube' ? 'YT' : 'URL'}</span>
+                        </div>
+                        ${State.isHost ? `<button class="p-1 text-zinc-500 hover:text-accent-400 opacity-0 group-hover:opacity-100 transition-opacity" data-index="${index}"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
+                    `;
+                    if (State.isHost) {
+                        el.querySelector('button').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            State.queue.splice(index, 1);
+                            App.renderQueue();
+                            Net.broadcastAll({type: 'QUEUE_SYNC', q: State.queue});
+                        });
+                        el.addEventListener('click', () => {
+                            const qItem = State.queue.splice(index, 1)[0];
+                            App.renderQueue();
+                            Net.broadcastAll({type: 'QUEUE_SYNC', q: State.queue});
+                            State.mediaUrl = qItem.url;
+                            if (qItem.mode === 'youtube') {
+                                Player.loadYT(qItem.url, qItem.title);
+                            } else {
+                                App.loadUrl(qItem.url, qItem.title, false);
+                            }
+                            Net.broadcastAll({type: 'MASTER_STATE', payload: {mode: qItem.mode, url: qItem.url, title: qItem.title, size: 0, time: 0}});
+                        });
+                    }
+                    UI.queueList.appendChild(el);
+                });
+            },
+            playNextInQueue: () => {
+                if (!State.isHost || State.queue.length === 0) return;
+                const next = State.queue.shift();
+                App.renderQueue();
+                Net.broadcastAll({type: 'QUEUE_SYNC', q: State.queue});
+
+                Utils.toast(`Playing next in queue: ${next.title}`, "info");
+                State.mediaUrl = next.url;
+
+                if (next.mode === 'youtube') {
+                    Player.loadYT(next.url, next.title);
+                } else {
+                    App.loadUrl(next.url, next.title, false);
+                }
+                Net.broadcastAll({type: 'MASTER_STATE', payload: {mode: next.mode, url: next.url, title: next.title, size: 0, time: 0}});
+            },
             enter: () => { UI.lobby.style.opacity = '0'; setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700); },
             loadUrl: (url, title = "Remote Feed", broadcast = true) => {
                 if(broadcast && State.isHost) Net.broadcastAll({type:'URL', url, title});
@@ -1063,6 +1184,18 @@
                 UI.copyBtn.addEventListener('click', () => Utils.copyToClipboard(State.roomId));
                 
                 UI.toggleSideBtn.addEventListener('click', () => App.toggleSidebar());
+
+                document.querySelectorAll('.react-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const emoji = btn.dataset.emoji;
+                        App.spawnReaction(emoji);
+                        if(State.isHost) {
+                            Net.broadcastAll({type: 'REACTION', emoji: emoji});
+                        } else if(State.connections.has('host')) {
+                            State.connections.get('host').send({type: 'REACTION', emoji: emoji});
+                        }
+                    });
+                });
                 UI.closeSideBtn.addEventListener('click', () => App.toggleSidebar(false));
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && State.sidebarOpen) App.toggleSidebar(false);
@@ -1172,7 +1305,29 @@
                     if(State.isHost) {
                         Player.pause(); Net.broadcastAll({type: 'CMD_PAUSE'});
                         Utils.log('System', 'Media playback finished.', true);
+                        App.playNextInQueue();
                     }
+                });
+
+                UI.addQueueBtn.addEventListener('click', () => {
+                    const u = prompt("Enter Media URL (YouTube, MP4, HLS, DASH) to add to Queue:");
+                    if (!u) return;
+
+                    let mode = 'url';
+                    let title = "Queued Media";
+
+                    const ytMatch = u.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                    if (ytMatch) {
+                        mode = 'youtube';
+                        title = "Queued YouTube Feed";
+                        State.queue.push({mode: mode, url: ytMatch[1], title: title});
+                    } else {
+                        State.queue.push({mode: mode, url: u, title: title});
+                    }
+
+                    App.renderQueue();
+                    Net.broadcastAll({type: 'QUEUE_SYNC', q: State.queue});
+                    Utils.toast("Added to queue.", "success");
                 });
 
                 const togPlay = () => {
