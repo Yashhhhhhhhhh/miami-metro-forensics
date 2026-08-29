@@ -614,10 +614,11 @@
                 }
             },
             setVolume: (val) => {
+                val = parseFloat(val);
                 // Fix 5: Bridge YouTube specific Volume API seamlessly
                 if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.setVolume === 'function') {
                     ytPlayer.setVolume(val * 100);
-                    if (val == 0) ytPlayer.mute(); else ytPlayer.unMute();
+                    if (val === 0) ytPlayer.mute(); else ytPlayer.unMute();
                 } else {
                     if(AudioGraph.gain) AudioGraph.gain.gain.value = val;
                     else UI.video.volume = val;
