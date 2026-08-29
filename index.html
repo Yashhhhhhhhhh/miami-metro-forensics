@@ -675,6 +675,7 @@
         };
 
         let ambLoop = null;
+        let lastAmbTime = 0;
         const Ambilight = () => {
             if(!State.ambilight || State.playMode === 'youtube' || State.playMode === 'idle' || UI.video.paused) {
                 UI.canvas.classList.remove('active');
@@ -684,17 +685,23 @@
             const ctx = UI.canvas.getContext('2d', {alpha: false});
             if(UI.canvas.width !== 160) { UI.canvas.width = 160; UI.canvas.height = 90; }
 
-            const draw = () => {
+            const draw = (timestamp) => {
                 if(!State.ambilight || UI.video.paused || UI.video.readyState < 2) { 
                     UI.canvas.classList.remove('active');
                     ambLoop = null; 
                     return; 
                 }
-                try { ctx.drawImage(UI.video, 0, 0, 160, 90); UI.canvas.classList.add('active'); } 
-                catch(e) { UI.canvas.classList.remove('active'); return; }
+
+                // ⚡ Bolt: Throttle to ~30fps (33ms) for performance since >30fps is visually indistinguishable with a 90px blur
+                if (timestamp - lastAmbTime > 33) {
+                    try { ctx.drawImage(UI.video, 0, 0, 160, 90); UI.canvas.classList.add('active'); }
+                    catch(e) { UI.canvas.classList.remove('active'); return; }
+                    lastAmbTime = timestamp;
+                }
+
                 ambLoop = requestAnimationFrame(draw);
             };
-            if(!ambLoop) draw();
+            if(!ambLoop) draw(performance.now());
         };
 
         const Net = {
@@ -1201,12 +1208,18 @@
                 document.addEventListener('click', unlockAudio);
                 document.addEventListener('touchstart', unlockAudio, {passive: true});
 
+                let lastFadeTime = 0;
                 const resetFade = () => {
-                    UI.viewport.classList.add('active-ui'); clearTimeout(State.uiTimeout);
-                    State.uiTimeout = setTimeout(() => {
-                        if(Player.isPaused() || State.isScrubbing || document.querySelector('.controls-pill:hover') || document.activeElement === UI.chatIn) return;
-                        UI.viewport.classList.remove('active-ui');
-                    }, 3500);
+                    // ⚡ Bolt: Throttle to execute at most once per 100ms to prevent main-thread blocking on continuous mousemove
+                    const now = Date.now();
+                    if (now - lastFadeTime > 100) {
+                        UI.viewport.classList.add('active-ui'); clearTimeout(State.uiTimeout);
+                        State.uiTimeout = setTimeout(() => {
+                            if(Player.isPaused() || State.isScrubbing || document.querySelector('.controls-pill:hover') || document.activeElement === UI.chatIn) return;
+                            UI.viewport.classList.remove('active-ui');
+                        }, 3500);
+                        lastFadeTime = now;
+                    }
                 };
                 UI.viewport.addEventListener('mousemove', resetFade); UI.viewport.addEventListener('touchstart', resetFade, {passive:true});
                 UI.chatIn.addEventListener('focus', resetFade);
