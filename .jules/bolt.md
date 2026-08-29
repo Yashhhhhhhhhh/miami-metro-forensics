@@ -16,3 +16,6 @@
 ## 2024-05-24 - Empty State Micro-Interactions
 **Learning:** Empty states (like waiting for media to load) can feel broken or dead if completely static. Adding extremely subtle, slow, hardware-accelerated resting animations (like a 3-second breathing pulse on a logo) communicates that the application is alive and waiting, significantly improving perceived UI quality without taxing the main thread.
 **Action:** Added a custom Tailwind keyframe `pulseSlow` (animating scale and opacity) and applied it to the empty state logo icon container to create a subtle "breathing" effect.
+## 2024-05-24 - Predictive GPU Layering (`will-change`) & Input Focus
+**Learning:** Adding the `will-change` CSS property to complex, frequently animated components (like sliding sidebars or fading control overlays) allows the browser to pre-allocate GPU layers and optimize rendering pathways *before* the animation occurs, eliminating the brief stutter often seen at the beginning of an animation. Additionally, custom focus states (like glowing rings) elevate the premium feel of inputs compared to default browser outlines.
+**Action:** Applied `will-change: transform` to the sidebar, `will-change: transform, opacity` to the control pill, and `will-change: opacity` to the heavy ambilight canvas. Upgraded text inputs with Tailwind `focus:ring-2` styling.

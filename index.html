@@ -66,7 +66,8 @@
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 4px; height: 4px; } 
         ::-webkit-scrollbar-track { background: transparent; } 
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }                 
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; transition: background 0.3s; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
         /* Dynamic Grid Background */
         .ambient-grid {             
@@ -82,7 +83,7 @@
             position: absolute; inset: -10%; z-index: 0; width: 120%; height: 120%; 
             object-fit: cover; filter: blur(90px) saturate(200%) brightness(0.6); 
             opacity: 0; transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1); 
-            pointer-events: none; transform: translateZ(0); 
+            pointer-events: none; transform: translateZ(0); will-change: opacity;
         }         
         #ambilightCanvas.active { opacity: 0.8; }                 
 
@@ -127,6 +128,7 @@
             background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(30px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 24px 28px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            will-change: transform, opacity;
         }
         .player-viewport.active-ui .controls-pill {
             opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto;
@@ -161,6 +163,7 @@
             z-index: 50; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
             border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            will-change: transform;
         }
         .sidebar-container.open { transform: translateX(0); }
 
@@ -209,7 +212,7 @@
                 <div class="space-y-8 relative z-10">                     
                     <div class="space-y-2">                         
                         <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest" for="nameInput">Your Alias</label>                         
-                        <input type="text" id="nameInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-base focus:border-accent-500 focus:bg-black/60 transition-colors duration-300 outline-none text-white" placeholder="e.g. Director" value="">
+                        <input type="text" id="nameInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-base focus:border-accent-500 focus:bg-black/60 focus:ring-2 focus:ring-accent-500/50 transition-colors duration-300 outline-none text-white" placeholder="e.g. Director" value="">
                     </div>                     
                     
                     <button id="hostBtn" class="w-full bg-accent-600 hover:bg-accent-500 text-white font-bold rounded-xl px-4 py-4 flex items-center justify-center gap-3 text-base shadow-glow transition-colors duration-300">
@@ -224,7 +227,7 @@
                     </div>                                         
                     
                     <div class="flex gap-3">                         
-                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-lg focus:border-white/30 transition-colors duration-300 outline-none text-white" placeholder="CODE" maxlength="6">
+                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-lg focus:border-white/30 focus:ring-2 focus:ring-white/20 transition-colors duration-300 outline-none text-white" placeholder="CODE" maxlength="6">
                         <button id="joinBtn" class="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl px-8 py-4 transition-colors duration-300 border border-white/10 disabled:opacity-50">Join</button>
                     </div>                 
                 </div>             
