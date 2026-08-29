@@ -84,7 +84,7 @@
         .player-viewport { 
             position: absolute; inset: 0; z-index: 10; display: flex; 
             align-items: center; justify-content: center; background: #000; 
-            transition: all 0.5s ease;
+            transition: background-color 0.5s ease, border-color 0.5s ease;
         }         
         .player-viewport.drag-over { border: 2px dashed #ef4444; background: rgba(239, 68, 68, 0.05); }
         
@@ -204,10 +204,10 @@
                 <div class="space-y-8 relative z-10">                     
                     <div class="space-y-2">                         
                         <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest" for="nameInput">Your Alias</label>                         
-                        <input type="text" id="nameInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-base focus:border-accent-500 focus:bg-black/60 transition-all outline-none text-white" placeholder="e.g. Director" value="">                     
+                        <input type="text" id="nameInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-base focus:border-accent-500 focus:bg-black/60 transition-colors outline-none text-white" placeholder="e.g. Director" value="">
                     </div>                     
                     
-                    <button id="hostBtn" class="w-full bg-accent-600 hover:bg-accent-500 text-white font-bold rounded-xl px-4 py-4 flex items-center justify-center gap-3 text-base shadow-glow transition-all">                             
+                    <button id="hostBtn" class="w-full bg-accent-600 hover:bg-accent-500 text-white font-bold rounded-xl px-4 py-4 flex items-center justify-center gap-3 text-base shadow-glow transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>                             
                         Host New Session                         
                     </button>                     
@@ -219,8 +219,8 @@
                     </div>                                         
                     
                     <div class="flex gap-3">                         
-                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-lg focus:border-white/30 transition-all outline-none text-white" placeholder="CODE" maxlength="6">                         
-                        <button id="joinBtn" class="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl px-8 py-4 transition-all border border-white/10 disabled:opacity-50">Join</button>                     
+                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-lg focus:border-white/30 transition-colors outline-none text-white" placeholder="CODE" maxlength="6">
+                        <button id="joinBtn" class="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl px-8 py-4 transition-colors border border-white/10 disabled:opacity-50">Join</button>
                     </div>                 
                 </div>             
             </div>         
@@ -257,7 +257,7 @@
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>                             
                         <span id="syncText">Awaiting Network...</span>
                     </div>
-                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all">
+                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                 </div>
@@ -312,7 +312,7 @@
                                 <svg id="iconVol" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                                 <svg id="iconVolMuted" class="w-6 h-6 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                             </button>
-                            <div class="absolute left-full top-1/2 -translate-y-1/2 w-0 overflow-hidden group-hover/vol:w-28 transition-all duration-300 py-4 px-2 z-10 flex items-center">
+                            <div class="absolute left-full top-1/2 -translate-y-1/2 w-0 overflow-hidden group-hover/vol:w-28 transition-[width] duration-300 py-4 px-2 z-10 flex items-center">
                                 <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1">
                             </div>
                         </div>
@@ -352,8 +352,8 @@
                     </button>
                 </div>
                 <div class="flex gap-2 mb-4">
-                    <button id="eqSpeakerBtn" class="flex-1 py-2 bg-accent-600 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white shadow-glow transition-all">Laptop</button>
-                    <button id="eqEarphoneBtn" class="flex-1 py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">IEMs</button>
+                    <button id="eqSpeakerBtn" class="flex-1 py-2 bg-accent-600 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white shadow-glow transition-colors">Laptop</button>
+                    <button id="eqEarphoneBtn" class="flex-1 py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-colors">IEMs</button>
                 </div>
                 <div class="flex items-center gap-3">
                     <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
@@ -509,7 +509,7 @@
                 const t = document.createElement('div');
                 const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : 
                               (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
-                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
+                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-[transform,opacity] duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
                 t.innerHTML = msg;
                 document.getElementById('toastContainer').appendChild(t);
                 
@@ -524,13 +524,13 @@
             // Action Approval Request UI
             toastAction: (msg, onApprove, onDeny) => {
                 const t = document.createElement('div');
-                t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
+                t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-[transform,opacity] duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
                 
                 const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white'; txt.textContent = msg;
                 const btnRow = document.createElement('div'); btnRow.className = 'flex gap-2 w-full';
                 
-                const btnApp = document.createElement('button'); btnApp.className = 'flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold transition hover:bg-emerald-500'; btnApp.textContent = 'Approve';
-                const btnDen = document.createElement('button'); btnDen.className = 'flex-1 py-1.5 rounded-lg bg-white/10 text-white text-xs font-bold transition hover:bg-white/20'; btnDen.textContent = 'Deny';
+                const btnApp = document.createElement('button'); btnApp.className = 'flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold transition-colors hover:bg-emerald-500'; btnApp.textContent = 'Approve';
+                const btnDen = document.createElement('button'); btnDen.className = 'flex-1 py-1.5 rounded-lg bg-white/10 text-white text-xs font-bold transition-colors hover:bg-white/20'; btnDen.textContent = 'Deny';
                 
                 btnRow.appendChild(btnDen); btnRow.appendChild(btnApp);
                 t.appendChild(txt); t.appendChild(btnRow);
