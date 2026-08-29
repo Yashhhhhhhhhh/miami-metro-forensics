@@ -669,7 +669,7 @@
             getTime: () => { if(State.playMode === 'youtube' && ytPlayer && ytPlayer.getCurrentTime) return ytPlayer.getCurrentTime(); return UI.video.currentTime || 0; },
             getDur: () => { if(State.playMode === 'youtube' && ytPlayer && ytPlayer.getDuration) return ytPlayer.getDuration(); return UI.video.duration || 0; },
             isPaused: () => { if(State.playMode === 'youtube' && ytPlayer && ytPlayer.getPlayerState) return ytPlayer.getPlayerState() !== 1; return UI.video.paused; },
-            play: () => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.playVideo(); else UI.video.play().catch(()=>{}); },
+            play: () => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.playVideo(); else UI.video.play().catch(e => console.warn("Playback failed:", e)); },
             pause: () => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.pauseVideo(); else UI.video.pause(); },
             seek: (t) => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.seekTo(t, true); else UI.video.currentTime = t; }
         };
@@ -795,7 +795,7 @@
                     
                     const pc = mediaConn.peerConnection;
                     if(pc) {
-                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(()=>{}); } }); };
+                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(e => console.warn("Failed to set encodings:", e)); } }); };
                         hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
                     }
                 }
@@ -1065,7 +1065,7 @@
                     try {
                         State.activeWebRTCStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:60}, audio:true});
                         Player.purge(); UI.emptyState.style.opacity = '0';
-                        UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(()=>{});
+                        UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(e => console.warn("Screen share playback failed:", e));
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
                         Net.broadcastMediaAll("Screen Share", 'screenshare');
                     } catch(e) {
