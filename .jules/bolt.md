@@ -4,3 +4,7 @@
 ## 2024-05-24 - Hardware-Accelerated Animations
 **Learning:** Using `transition: all` is a common anti-pattern that can lead to significant performance drops (jank) because it forces the browser to recalculate and transition properties that might trigger expensive layout changes or repaints, even if only visually lightweight properties like opacity or transform were intended to change.
 **Action:** Always specify exact transition properties, prioritizing GPU-accelerated ones like `transform`, `opacity`, `color`, and `background-color`. Replaced `transition: all` across multiple core UI elements (`.controls-pill`, `.top-bar`, `.btn-icon`, `#lobbyScreen`) with specific hardware-friendly properties.
+
+## 2026-08-29 - Seamless mute toggle memory
+**Learning:** In continuous control inputs like volume sliders, tracking previous states must happen actively on the `input` event (if value > 0) to ensure external toggles (like a mute button) can correctly revert to the last meaningful interaction, rather than getting stuck at 0.
+**Action:** When implementing mute toggles paired with sliders, always bind the state tracking and UI element visibility updates directly to the slider's `input` event to capture intermediate values reliably before reaching zero.

@@ -1155,7 +1155,16 @@
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
-                UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(e.target.value));
+                UI.volSlider.addEventListener('input', e => {
+                    const val = parseFloat(e.target.value);
+                    if (val > 0) State.lastVol = val;
+                    AudioGraph.setVolume(val);
+                    if (val === 0) {
+                        UI.volIco.classList.add('hidden'); UI.volMut.classList.remove('hidden');
+                    } else {
+                        UI.volMut.classList.add('hidden'); UI.volIco.classList.remove('hidden');
+                    }
+                });
                 
                 // Fix 3: Seamless mute toggle with pre-mute state memory
                 UI.volBtn.addEventListener('click', () => {
