@@ -340,6 +340,28 @@
                 </button>
             </div>
 
+            <!-- Display Settings -->
+            <div class="p-6 border-b border-white/5 bg-black/20">
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Display EQ
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold text-zinc-400 w-16">Bright</span>
+                        <input type="range" id="eqBrightness" min="0" max="200" value="100" class="flex-1">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold text-zinc-400 w-16">Contrast</span>
+                        <input type="range" id="eqContrast" min="0" max="200" value="100" class="flex-1">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold text-zinc-400 w-16">Color</span>
+                        <input type="range" id="eqSaturation" min="0" max="200" value="100" class="flex-1">
+                    </div>
+                </div>
+            </div>
+
             <!-- Voice Panel -->
             <div class="p-6 border-b border-white/5 bg-black/20">
                 <div class="flex items-center justify-between mb-4">
@@ -374,6 +396,14 @@
                         <input type="file" id="fileSyncInput" class="hidden" accept="video/mp4,video/webm">
                     </label>
 
+                    <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 bg-blue-500/20 rounded-md text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
+                            <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Attach .vtt subtitles locally</p></div>
+                        </div>
+                        <input type="file" id="subInputHost" class="hidden" accept=".vtt">
+                    </label>
+
                     <label class="flex items-center justify-between w-full bg-accent-600/20 hover:bg-accent-600 border border-accent-500/30 rounded-xl px-4 py-3 cursor-pointer transition-colors group">
                         <div class="flex items-center gap-3">
                             <div class="p-1.5 bg-accent-500 rounded-md text-white group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
@@ -406,6 +436,13 @@
                             <div class="text-left"><p class="text-sm font-bold text-white">Mount Sync File</p><p class="text-[10px] text-zinc-400">Select file requested by host</p></div>
                         </div>
                         <input type="file" id="guestFileSyncInput" class="hidden" accept="video/mp4,video/webm">
+                    </label>
+                    <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer transition-colors group mt-3">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 bg-blue-500/20 rounded-md text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
+                            <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Attach .vtt subtitles locally</p></div>
+                        </div>
+                        <input type="file" id="subInputGuest" class="hidden" accept=".vtt">
                     </label>
                 </div>
             </div>
@@ -488,6 +525,7 @@
             chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
             fileSync: document.getElementById('fileSyncInput'), guestFileSync: document.getElementById('guestFileSyncInput'),
+            subInputHost: document.getElementById('subInputHost'), subInputGuest: document.getElementById('subInputGuest'),
             fileStream: document.getElementById('fileStreamInput'), screenBtn: document.getElementById('shareScreenBtn'), 
             urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
             
@@ -496,7 +534,8 @@
             
             syncDot: document.getElementById('syncDot'), syncTxt: document.getElementById('syncText'), roleInd: document.getElementById('roleIndicator'), codeDisp: document.getElementById('roomCodeDisplay'), copyBtn: document.getElementById('copyCodeBtn'),
             
-            eqSpk: document.getElementById('eqSpeakerBtn'), eqIem: document.getElementById('eqEarphoneBtn')
+            eqSpk: document.getElementById('eqSpeakerBtn'), eqIem: document.getElementById('eqEarphoneBtn'),
+            eqBright: document.getElementById('eqBrightness'), eqCont: document.getElementById('eqContrast'), eqSat: document.getElementById('eqSaturation')
         };
 
         const Utils = {
@@ -811,7 +850,9 @@
                         UI.codeDisp.textContent = State.roomId; App.enter();
                         UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase";
                         UI.reqSyncBtn.classList.remove('hidden'); // Expose the sync request button
-                        UI.guestDeck.classList.remove('hidden'); // Fix 1: Expose guest mount deck
+
+                        // Fix 1: Expose guest mount deck
+                        UI.guestDeck.classList.remove('hidden');
                     }
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                     
@@ -833,6 +874,7 @@
                     State.connections.delete(c.peer);
                     if(!State.isHost) {
                         UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Host Disconnected"; Utils.toast("Host closed session.", "error"); 
+                        UI.guestDeck.classList.add('hidden');
                     }
                 });
             },
@@ -1053,6 +1095,24 @@
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(!State.isHost && State.connections.has('host')) State.connections.get('host').send({type:'FILE_MOUNTED'});
                 });
+
+                const loadSubtitles = (e) => {
+                    const f = e.target.files[0]; if(!f) return;
+                    const url = URL.createObjectURL(f);
+                    const tracks = UI.video.querySelectorAll('track');
+                    tracks.forEach(t => t.remove());
+                    const track = document.createElement('track');
+                    track.kind = 'subtitles';
+                    track.label = 'English';
+                    track.srclang = 'en';
+                    track.src = url;
+                    track.default = true;
+                    UI.video.appendChild(track);
+                    Utils.toast(`Loaded subtitles: ${f.name}`, "success");
+                    e.target.value = '';
+                };
+                UI.subInputHost.addEventListener('change', loadSubtitles);
+                UI.subInputGuest.addEventListener('change', loadSubtitles);
                 
                 UI.fileStream.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
@@ -1099,6 +1159,13 @@
                 
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
+
+                const updateFilters = () => {
+                    UI.video.style.filter = `brightness(${UI.eqBright.value}%) contrast(${UI.eqCont.value}%) saturate(${UI.eqSat.value}%)`;
+                };
+                UI.eqBright.addEventListener('input', updateFilters);
+                UI.eqCont.addEventListener('input', updateFilters);
+                UI.eqSat.addEventListener('input', updateFilters);
 
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
