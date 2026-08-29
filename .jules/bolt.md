@@ -10,3 +10,6 @@
 ## 2026-08-29 - Implement Rate Limiting for Redundant Network Sync Requests
 **Learning:** Preventing redundant broadcast loops or multi-peer request spam can often be achieved with simple timestamp-based debouncing or rate-limiting within event handlers.
 **Action:** When working on networking or WebRTC event handling, actively look for request handlers that trigger 'broadcastAll' actions and ensure they have rate-limits to protect against spam.
+## 2026-08-29 - Clean up workspace scripts
+**Learning:** Do not commit temporary throwaway workspace scripts (like python fix scripts) into the main production codebase repository.
+**Action:** Always use `git status` or `git diff --cached` before committing to ensure no unintended files are included, and manually remove temporary artifacts.
