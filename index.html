@@ -845,7 +845,7 @@
                         const aud = new Audio(); 
                         aud.autoplay = true; 
                         aud.srcObject = s; 
-                        aud.volume = UI.voiceVol.value;
+                        aud.volume = parseFloat(UI.voiceVol.value);
                         UI.voiceCont.appendChild(aud);
                         State.voiceConns.set(call.peer, {call, aud});
                     });
@@ -1090,7 +1090,8 @@
                 UI.micBtn.addEventListener('click', Mic.toggle);
                 // Fix 2 & 5: Ensure voice volume correctly targets dynamically created Voice elements
                 UI.voiceVol.addEventListener('input', e => {
-                    State.voiceConns.forEach(v => { v.aud.volume = e.target.value; });
+                    const vol = parseFloat(e.target.value);
+                    State.voiceConns.forEach(v => { if(v.aud) v.aud.volume = vol; });
                 });
                 
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
