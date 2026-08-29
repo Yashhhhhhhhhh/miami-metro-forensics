@@ -440,6 +440,7 @@
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
             lastVol: 1, // Fix 3: Memory for mute amnesia
+            lastSyncReqTime: 0, // Fix 4: Redundant Sync request explicitly processed
             
             peer: null, 
             connections: new Map(), // Multi-peer Network Engine
@@ -910,6 +911,8 @@
                     // Fix 4: Redundant Sync request explicitly processed
                     case 'REQ_SYNC':
                         if (State.isHost) {
+                            if (Date.now() - State.lastSyncReqTime < 2000) return;
+                            State.lastSyncReqTime = Date.now();
                             Utils.toast(`${d.from} requested a fresh sync frame.`, 'info');
                             State.syncState = { time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now() };
                             Net.broadcastAll({type: 'STATE', s: State.syncState});
