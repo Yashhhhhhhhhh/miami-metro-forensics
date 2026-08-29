@@ -1137,7 +1137,14 @@
                     return pos * dur;
                 };
                 const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
-                const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
+
+                let scrubRaf = null;
+                const sMove = (e) => {
+                    if(State.isScrubbing) {
+                        if (scrubRaf) cancelAnimationFrame(scrubRaf);
+                        scrubRaf = requestAnimationFrame(() => { calcScrub(e); scrubRaf = null; });
+                    }
+                };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
                         State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');

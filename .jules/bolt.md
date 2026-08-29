@@ -7,3 +7,6 @@
 ## 2024-05-24 - [Safe Third-Party API Calls]
 **Learning:** Calling methods on third-party integration objects (like `ytPlayer` for YouTube) without checking if those methods exist can lead to runtime errors, particularly during initialization phases or if the API changes.
 **Action:** Always verify that a function exists (`typeof obj.method === 'function'`) before calling it on any external or dynamically loaded object. Applied this to YouTube player volume controls (`mute` and `unMute`).
+## 2024-05-24 - [Throttle UI Event Handlers]
+**Learning:** Continuous high-frequency events like `mousemove` and `touchmove` can cause severe main-thread locking and layout thrashing if the callback performs complex layout calculations or UI state modifications.
+**Action:** Wrapped timeline scrubbing movement logic in `requestAnimationFrame` to decouple event firing rate from rendering calculations, optimizing CPU load.
