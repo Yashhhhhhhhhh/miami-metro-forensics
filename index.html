@@ -486,7 +486,7 @@
             hostDeck: document.getElementById('hostDeck'), guestDeck: document.getElementById('guestDeck'),
             chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
-            fileSync: document.getElementById('fileSyncInput'), guestFileSync: document.getElementById('guestFileSyncInput'),
+            fileSync: document.getElementById('fileSyncInput'), guestFileSyncInput: document.getElementById('guestFileSyncInput'),
             fileStream: document.getElementById('fileStreamInput'), screenBtn: document.getElementById('shareScreenBtn'), 
             urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
             
@@ -1040,7 +1040,7 @@
                     if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
                 });
                 // Fix 1: Guest Sync Action Explicit Link
-                UI.guestFileSync.addEventListener('change', e => {
+                UI.guestFileSyncInput.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(!State.isHost && State.connections.has('host')) State.connections.get('host').send({type:'FILE_MOUNTED'});
