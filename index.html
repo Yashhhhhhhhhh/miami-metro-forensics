@@ -257,7 +257,7 @@
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>                             
                         <span id="syncText">Awaiting Network...</span>
                     </div>
-                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all">
+                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-colors duration-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                 </div>
@@ -352,8 +352,8 @@
                     </button>
                 </div>
                 <div class="flex gap-2 mb-4">
-                    <button id="eqSpeakerBtn" class="flex-1 py-2 bg-accent-600 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white shadow-glow transition-all">Laptop</button>
-                    <button id="eqEarphoneBtn" class="flex-1 py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">IEMs</button>
+                    <button id="eqSpeakerBtn" class="flex-1 py-2 bg-accent-600 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white shadow-glow transition-colors duration-300">Laptop</button>
+                    <button id="eqEarphoneBtn" class="flex-1 py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-colors duration-300">IEMs</button>
                 </div>
                 <div class="flex items-center gap-3">
                     <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
@@ -509,7 +509,7 @@
                 const t = document.createElement('div');
                 const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : 
                               (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
-                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
+                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-[opacity,transform] duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
                 t.innerHTML = msg;
                 document.getElementById('toastContainer').appendChild(t);
                 
@@ -524,7 +524,7 @@
             // Action Approval Request UI
             toastAction: (msg, onApprove, onDeny) => {
                 const t = document.createElement('div');
-                t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
+                t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-[opacity,transform] duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
                 
                 const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white'; txt.textContent = msg;
                 const btnRow = document.createElement('div'); btnRow.className = 'flex gap-2 w-full';
