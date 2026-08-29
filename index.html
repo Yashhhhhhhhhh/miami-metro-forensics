@@ -834,15 +834,17 @@
             handleCall: (call) => {
                 // Fix 2: Dynamically create Audio elements for Multi-Peer Voice
                 if(call.metadata?.type === 'voice') {
-                    if(!State.localVoiceStream) { try{ const c = new AudioContext(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){} }
+                    if(!State.localVoiceStream) { try{ const c = new (window.AudioContext || window.webkitAudioContext)(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){} }
                     call.answer(State.localVoiceStream); 
                     
                     call.on('stream', s => {
                         const aud = new Audio(); 
                         aud.autoplay = true; 
+                        aud.playsInline = true;
                         aud.srcObject = s; 
                         aud.volume = UI.voiceVol.value;
                         UI.voiceCont.appendChild(aud);
+                        aud.play().catch(e => console.warn("Audio autoplay blocked:", e));
                         State.voiceConns.set(call.peer, {call, aud});
                     });
                     
