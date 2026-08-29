@@ -318,8 +318,6 @@
                     </div>
 
                     <div class="flex items-center gap-1 md:gap-2">
-                        <button id="requestSyncBtn" class="hidden btn-icon text-accent-400 bg-accent-400/10 hover:bg-accent-400 hover:text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider mr-2 border border-accent-400/20">Sync</button>
-                        
                         <button id="aspectBtn" class="btn-icon !w-10 !h-10 text-[10px] font-bold tracking-wider uppercase">FIT</button>
                         <button id="pipBtn" class="btn-icon" title="Picture in Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
                         <button id="ambilightBtn" class="btn-icon active" title="Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
@@ -421,11 +419,15 @@
             
             syncState: { time: 0, duration: 0, paused: true },
             isScrubbing: false, ignoreNextSeek: false, syncTimeout: null,
-            hostBeat: null, telemetryBeat: null, uiTimeout: null,
+            hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null,
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
             
-            peer: null, connections: new Map(), mediaConns: new Map(), voiceConns: new Map(), // Updated to Maps for multi-peer support
+            peer: null, 
+            connections: new Map(), // Multi-peer support Map
+            mediaConns: new Map(), 
+            voiceConns: new Map(),
+            
             localVoiceStream: null, activeWebRTCStream: null,
             hls: null, dash: null
         };
@@ -458,7 +460,7 @@
             skipB: document.getElementById('skipBackBtn'), skipF: document.getElementById('skipFwdBtn'),
             volBtn: document.getElementById('muteBtn'), volIco: document.getElementById('iconVol'), volMut: document.getElementById('iconVolMuted'), volSlider: document.getElementById('volSlider'),
             
-            reqSyncBtn: document.getElementById('requestSyncBtn'), aspectBtn: document.getElementById('aspectBtn'),
+            aspectBtn: document.getElementById('aspectBtn'),
             pipBtn: document.getElementById('pipBtn'), ambilightBtn: document.getElementById('ambilightBtn'), fsBtn: document.getElementById('fullscreenBtn'),
             
             sidebar: document.getElementById('sidebar'), toggleSideBtn: document.getElementById('toggleSidebarBtn'), closeSideBtn: document.getElementById('closeSidebarBtn'),
@@ -491,9 +493,7 @@
                 t.innerHTML = msg;
                 document.getElementById('toastContainer').appendChild(t);
                 
-                // Force a browser reflow to ensure the CSS transition triggers properly
-                t.offsetHeight; 
-                
+                t.offsetHeight; // Force reflow
                 t.classList.remove('translate-y-4', 'opacity-0');
                 
                 setTimeout(() => { 
@@ -501,23 +501,49 @@
                     setTimeout(() => t.remove(), 300); 
                 }, 3500);
             },
+            // Action Approval Request UI
+            toastAction: (msg, onApprove, onDeny) => {
+                const t = document.createElement('div');
+                t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
+                
+                const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white'; txt.textContent = msg;
+                const btnRow = document.createElement('div'); btnRow.className = 'flex gap-2 w-full';
+                
+                const btnApp = document.createElement('button'); btnApp.className = 'flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold transition hover:bg-emerald-500'; btnApp.textContent = 'Approve';
+                const btnDen = document.createElement('button'); btnDen.className = 'flex-1 py-1.5 rounded-lg bg-white/10 text-white text-xs font-bold transition hover:bg-white/20'; btnDen.textContent = 'Deny';
+                
+                btnRow.appendChild(btnDen); btnRow.appendChild(btnApp);
+                t.appendChild(txt); t.appendChild(btnRow);
+                
+                document.getElementById('toastContainer').appendChild(t);
+                t.offsetHeight; 
+                t.classList.remove('translate-y-4', 'opacity-0');
+
+                const cleanup = () => { t.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); };
+                
+                btnApp.onclick = () => { cleanup(); if(onApprove) onApprove(); };
+                btnDen.onclick = () => { cleanup(); if(onDeny) onDeny(); };
+                
+                // Auto-deny after 8 seconds
+                setTimeout(() => { if(t.parentElement) cleanup(); }, 8000);
+            },
             log: (sender, txt, sys = false) => {
                 const d = document.createElement('div');
                 d.className = 'animate-slide-in';
                 if(sys) {
                     d.className += " text-center text-[10px] text-accent-400 font-bold uppercase tracking-wider py-1 opacity-80";
-                    d.textContent = txt;
+                    d.textContent = txt; // Security enhancement (textContent instead of innerHTML for user data)
                 } else {
                     const me = sender === State.myName;
                     d.className += ` flex flex-col ${me ? 'items-end' : 'items-start'}`;
                     
                     const senderSpan = document.createElement('span');
-                    senderSpan.className = 'text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1';
+                    senderSpan.className = "text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1";
                     senderSpan.textContent = sender;
 
                     const msgDiv = document.createElement('div');
                     msgDiv.className = `px-4 py-2.5 max-w-[85%] text-sm rounded-2xl ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 border border-white/5 text-zinc-200 rounded-tl-sm'}`;
-                    msgDiv.textContent = txt; // Replaced innerHTML with textContent for XSS protection
+                    msgDiv.textContent = txt; // XSS Mitigation - Browser securely encodes content
 
                     d.appendChild(senderSpan);
                     d.appendChild(msgDiv);
@@ -581,6 +607,8 @@
             },
             purge: () => {
                 Player.loading(false); UI.emptyState.style.opacity = '1';
+                UI.pipBtn.classList.remove('hidden'); UI.aspectBtn.classList.remove('hidden'); // Restore UI
+                if(State.ytLoop) clearInterval(State.ytLoop);
                 State.playMode = 'idle'; UI.title.textContent = "No Media Loaded";
                 UI.video.pause(); UI.video.removeAttribute('src'); UI.video.srcObject = null; UI.video.load();
                 if(State.hls) { State.hls.destroy(); State.hls = null; }
@@ -595,19 +623,19 @@
                 UI.video.crossOrigin = isUrl ? "anonymous" : null;
                 if(isUrl) UI.video.src = srcObj; else UI.video.src = URL.createObjectURL(srcObj);
                 UI.video.play().catch(e => { if(e.name === 'NotAllowedError') UI.gate.classList.add('active'); });
-                App.updateUI(); // Initial UI update
             },
             loadYT: (id, title = "YouTube Stream") => {
                 Player.purge(); UI.emptyState.style.opacity = '0';
+                UI.pipBtn.classList.add('hidden'); UI.aspectBtn.classList.add('hidden'); // Iframes cannot PIP
                 State.playMode = 'youtube'; State.mediaTitle = title; UI.title.textContent = title;
                 UI.video.classList.add('hidden'); UI.ytCont.classList.remove('hidden');
                 const init = () => {
                     if(!ytReady) return setTimeout(init, 200);
-                    if(ytPlayer) ytPlayer.loadVideoById(id);
+                    if(ytPlayer) { ytPlayer.loadVideoById(id); App.startYTLoop(); }
                     else {
                         ytPlayer = new YT.Player('ytPlayerDiv', {
                             videoId: id, playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'origin': window.location.origin },
-                            events: { 'onReady': e => { e.target.playVideo(); App.startYTLoop(); }, 'onStateChange': App.updateUI }
+                            events: { 'onReady': e => { e.target.playVideo(); App.startYTLoop(); } }
                         });
                     }
                 };
@@ -623,7 +651,7 @@
 
         let ambLoop = null;
         const Ambilight = () => {
-            if(!State.ambilight || State.playMode === 'youtube' || State.playMode === 'idle') {
+            if(!State.ambilight || State.playMode === 'youtube' || State.playMode === 'idle' || UI.video.paused) {
                 UI.canvas.classList.remove('active');
                 if(ambLoop) cancelAnimationFrame(ambLoop);
                 return;
@@ -632,15 +660,18 @@
             if(UI.canvas.width !== 160) { UI.canvas.width = 160; UI.canvas.height = 90; }
 
             const draw = () => {
-                if(!State.ambilight || UI.video.paused || UI.video.readyState < 2) { ambLoop = requestAnimationFrame(draw); return; }
+                if(!State.ambilight || UI.video.paused || UI.video.readyState < 2) { 
+                    UI.canvas.classList.remove('active');
+                    ambLoop = null; // CPU Optimization: Allow the loop to die when paused
+                    return; 
+                }
                 try { ctx.drawImage(UI.video, 0, 0, 160, 90); UI.canvas.classList.add('active'); } 
                 catch(e) { UI.canvas.classList.remove('active'); return; }
                 ambLoop = requestAnimationFrame(draw);
             };
-            if(ambLoop) cancelAnimationFrame(ambLoop);
-            draw();
+            if(!ambLoop) draw();
         };
-        // --- 8. WEBRTC NETWORK ENGINE ---
+
         const Net = {
             cfg: { config: { iceServers: [{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}] } },
             
@@ -650,6 +681,13 @@
                 UI.hostBtn.disabled = true; UI.hostBtn.innerHTML = `<div class="spinner"></div>`;
                 
                 State.peer = new Peer(`lum-${State.roomId}`, Net.cfg);
+                
+                // Auto-reconnect if the signaling server drops the connection during a long movie
+                State.peer.on('disconnected', () => {
+                    Utils.log("System", "Signaling server connection lost. Reconnecting...", true);
+                    if (!State.peer.destroyed) State.peer.reconnect();
+                });
+
                 State.peer.on('open', () => {
                     UI.codeDisp.textContent = State.roomId; App.enter();
                     UI.roleInd.textContent = "Host"; UI.hostDeck.classList.remove('hidden');
@@ -657,15 +695,15 @@
                     Sync.startHost(); Mic.init();
                 });
                 
-                // Enhanced error handling for host
                 State.peer.on('error', (err) => {
                     console.error("PeerJS Error:", err);
                     Utils.toast(`Connection error: ${err.type}`, "error");
                     UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Host New Session`;
                 });
 
+                // Multi-Peer Tracking
                 State.peer.on('connection', c => { 
-                    State.connections.set(c.peer, c); // Add to map
+                    State.connections.set(c.peer, c); 
                     Net.setupData(c); 
                 });
                 State.peer.on('call', Net.handleCall);
@@ -678,6 +716,12 @@
 
                 State.peer = new Peer(Net.cfg);
                 
+                // Auto-reconnect for guests as well
+                State.peer.on('disconnected', () => {
+                    Utils.log("System", "Signaling server connection lost. Reconnecting...", true);
+                    if (!State.peer.destroyed) State.peer.reconnect();
+                });
+                
                 State.peer.on('error', (err) => {
                     console.error("PeerJS Guest Error:", err);
                     Utils.toast(err.type === 'peer-unavailable' ? "Host unreachable or invalid code." : `Network issue: ${err.type}`, "error");
@@ -685,9 +729,8 @@
                 });
 
                 State.peer.on('open', () => {
-                    // Add a strict timeout for connections that hang
                     let connTimeout = setTimeout(() => {
-                        if(State.connections.size === 0) {
+                        if(!State.connections.has('host') || !State.connections.get('host').open) {
                             Utils.toast("Connection timed out. Host might be offline.", "error");
                             UI.joinBtn.disabled = false; UI.joinBtn.textContent = "Join";
                             if(State.peer) State.peer.destroy();
@@ -695,30 +738,45 @@
                     }, 8000);
 
                     const conn = State.peer.connect(`lum-${code}`);
-                    
                     conn.on('open', () => {
                         clearTimeout(connTimeout); 
-                        State.connections.set(conn.peer, conn); // Keep track as guest too, even if it's just the host
+                        State.connections.set('host', conn);
                         Net.setupData(conn);
                         
-                        // Initialize mic AFTER successful connection so it doesn't block entering the room
                         Mic.init().then(() => {
                             if(State.localVoiceStream) {
                                 const c = State.peer.call(`lum-${code}`, State.localVoiceStream, {metadata:{type:'voice'}});
                                 c.on('stream', s => UI.remoteAud.srcObject = s);
-                                State.voiceConns.set(c.peer, c);
                             }
                         });
                     });
                 });
                 State.peer.on('call', Net.handleCall);
             },
+            // Multi-Peer Broadcast Helper
+            broadcastAll: (data) => {
+                for (let c of State.connections.values()) {
+                    if (c.open) c.send(data);
+                }
+            },
+            broadcastMediaAll: (title, mode) => {
+                if(!State.activeWebRTCStream || !State.isHost) return;
+                for (let peerId of State.connections.keys()) {
+                    const mediaConn = State.peer.call(peerId, State.activeWebRTCStream, {metadata:{type: mode, name: title}});
+                    State.mediaConns.set(peerId, mediaConn);
+                    
+                    const pc = mediaConn.peerConnection;
+                    if(pc) {
+                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(()=>{}); } }); };
+                        hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
+                    }
+                }
+            },
             setupData: (c) => {
                 const onOpen = () => {
                     if(!State.isHost) {
                         UI.codeDisp.textContent = State.roomId; App.enter();
                         UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase";
-                        UI.reqSyncBtn.classList.remove('hidden');
                     }
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                     
@@ -727,66 +785,42 @@
                     if(State.isHost && State.playMode !== 'idle') {
                         c.send({ type: 'MASTER_STATE', payload: { mode: State.playMode, title: State.mediaTitle, url: State.mediaUrl, size: State.fileSize, time: Player.getTime() } });
                         if((State.playMode === 'local_stream' || State.playMode === 'screenshare') && State.activeWebRTCStream) {
-                            setTimeout(() => Net.broadcastToPeer(c.peer, State.mediaTitle, State.playMode), 1000);
+                            // Specifically target this new peer for media rather than rebroadcasting to all
+                            setTimeout(() => {
+                                const mConn = State.peer.call(c.peer, State.activeWebRTCStream, {metadata:{type: State.playMode, name: State.mediaTitle}});
+                                State.mediaConns.set(c.peer, mConn);
+                            }, 1000);
                         }
                     }
                 };
                 c.on('open', onOpen); if(c.open) onOpen();
-                c.on('data', (d) => Sync.handle(d, c.peer)); // Pass peer ID to handle for routing if needed
+                c.on('data', Sync.handle);
                 c.on('close', () => { 
                     State.connections.delete(c.peer);
-                    if(!State.isHost || State.connections.size === 0) {
-                        UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Link Severed"; 
-                        Utils.toast(State.isHost ? "All partners disconnected" : "Host disconnected", "error"); 
-                    } else {
-                        Utils.toast("A viewer disconnected", "info");
+                    if(!State.isHost) {
+                        UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Host Disconnected"; Utils.toast("Host closed session.", "error"); 
                     }
                 });
-            },
-            broadcastAll: (msg) => {
-                State.connections.forEach(conn => {
-                    if(conn.open) conn.send(msg);
-                });
-            },
-            broadcastMediaAll: (title, mode) => {
-                 if(!State.activeWebRTCStream) return;
-                 State.connections.forEach(conn => {
-                     Net.broadcastToPeer(conn.peer, title, mode);
-                 });
-            },
-            broadcastToPeer: (peerId, title, mode) => {
-                if(!State.activeWebRTCStream) return;
-                const mediaConn = State.peer.call(peerId, State.activeWebRTCStream, {metadata:{type: mode, name: title}});
-                State.mediaConns.set(peerId, mediaConn);
-
-                const pc = mediaConn.peerConnection;
-                if(pc) {
-                    const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(()=>{}); } }); };
-                    hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
-                }
             },
             handleCall: (call) => {
                 if(call.metadata?.type === 'voice') {
                     if(!State.localVoiceStream) { try{ const c = new AudioContext(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){} }
-                    call.answer(State.localVoiceStream); 
-                    call.on('stream', s => UI.remoteAud.srcObject = s);
+                    call.answer(State.localVoiceStream); call.on('stream', s => UI.remoteAud.srcObject = s);
                     State.voiceConns.set(call.peer, call);
                 } else {
                     call.answer(); AudioGraph.init();
                     call.on('stream', s => {
                         Player.purge(); UI.emptyState.style.opacity = '0';
-                        UI.video.srcObject = s; 
-                        State.mediaConns.set(call.peer, call); // Track media connection
+                        UI.video.srcObject = s; State.mediaConns.set('host', call);
                         State.playMode = call.metadata?.type; State.mediaTitle = call.metadata?.name || "Live Broadcast";
                         UI.title.textContent = State.mediaTitle;
                         UI.video.play().catch(e => { if(e.name === 'NotAllowedError') UI.gate.classList.add('active'); });
                         Ambilight();
-                        App.updateUI(); // Initial UI update
                     });
                 }
             }
         };
-        // --- 9. SYNC ENGINE (NTP LATENCY COMPENSATED) ---
+
         const Sync = {
             startHost: () => {
                 if(State.hostBeat) clearInterval(State.hostBeat);
@@ -796,20 +830,17 @@
                     Net.broadcastAll({type: 'STATE', s: State.syncState});
                 }, 500);
             },
-            handle: (d, senderId) => {
+            handle: (d) => {
                 switch(d.type) {
                     case 'INFO': 
                         Utils.log('System', `${d.name} joined.`, true); 
-                        // Automatically push the current media state to late joiners handled in setupData now
                         break;
                     case 'CHAT': 
-                        // If host, relay chat to other viewers
-                        if(State.isHost) {
-                            State.connections.forEach(conn => {
-                                if(conn.peer !== senderId && conn.open) conn.send(d);
-                            });
+                        Utils.log(d.sender, d.text); 
+                        if(State.isHost && !d.isRelay) {
+                            // Relay chat to all other viewers
+                            Net.broadcastAll({type: 'CHAT', text: d.text, sender: d.sender, isRelay: true});
                         }
-                        Utils.log(d.senderName || (State.isHost?'Viewer':'Host'), d.text); 
                         break;
                     case 'MASTER_STATE':
                         const p = d.payload;
@@ -822,11 +853,8 @@
                     case 'FILE_MOUNTED': 
                         if(State.isHost) { 
                             Utils.toast("Guest mounted file.", "success"); 
-                            const conn = State.connections.get(senderId);
-                            if(conn && conn.open) {
-                                conn.send({type:'CMD_SEEK', t: Player.getTime()}); 
-                                setTimeout(()=>{ Player.play(); conn.send({type:'CMD_PLAY'}); }, 200); 
-                            }
+                            Net.broadcastAll({type:'CMD_SEEK', t: Player.getTime()}); 
+                            setTimeout(()=>{ Player.play(); Net.broadcastAll({type:'CMD_PLAY'}); }, 200); 
                         }
                         break;
                     case 'URL': App.loadUrl(d.url, d.title, false); break;
@@ -834,9 +862,27 @@
                     case 'CMD_PLAY': if(!State.isHost) Player.play(); break;
                     case 'CMD_PAUSE': if(!State.isHost) Player.pause(); break;
                     case 'CMD_SEEK': if(!State.isHost) { State.ignoreNextSeek=true; Player.seek(d.t); setTimeout(()=>State.ignoreNextSeek=false, 2000); } break;
-                    case 'REQ_PLAY': if(State.isHost) { Player.play(); Net.broadcastAll({type:'CMD_PLAY'}); } break;
-                    case 'REQ_PAUSE': if(State.isHost) { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); } break;
-                    case 'REQ_SEEK': if(State.isHost) { Player.seek(d.t); Net.broadcastAll({type:'CMD_SEEK', t: d.t}); } break;
+                    
+                    // Host Action Approval Gateway
+                    case 'REQ_ACTION':
+                        if (State.isHost) {
+                            let actionText = d.action === 'PLAY' ? "toggle playback" : `seek to ${Utils.time(d.t)}`;
+                            Utils.toastAction(`${d.from} wants to ${actionText}.`, () => {
+                                // Approved
+                                if (d.action === 'PLAY') {
+                                    const p = Player.isPaused();
+                                    p ? Player.play() : Player.pause();
+                                    Net.broadcastAll({ type: p ? 'CMD_PLAY' : 'CMD_PAUSE' });
+                                } else if (d.action === 'SEEK') {
+                                    Player.seek(d.t);
+                                    Net.broadcastAll({ type: 'CMD_SEEK', t: d.t });
+                                }
+                            }, () => {
+                                // Denied (optional logging)
+                                Utils.log('System', `Denied request from ${d.from}.`, true);
+                            });
+                        }
+                        break;
                 }
             },
             enforce: (h) => {
@@ -866,6 +912,12 @@
 
                 if(State.playMode === 'youtube') {
                     if(absDrift > 2.0 && !h.paused) Player.seek(targetTime);
+                    // YouTube specific API for micro-latency syncing
+                    else if(absDrift > 0.3 && !h.paused && typeof ytPlayer.setPlaybackRate === 'function') {
+                        ytPlayer.setPlaybackRate(drift > 0 ? 0.95 : 1.05);
+                    } else if (typeof ytPlayer.setPlaybackRate === 'function') {
+                        ytPlayer.setPlaybackRate(1.0);
+                    }
                 } else {
                     if(absDrift > 2.0 && !h.paused) { Player.seek(targetTime); } 
                     else if (absDrift > 0.2 && !h.paused) { UI.video.playbackRate = drift > 0 ? 0.95 : 1.05; } 
@@ -876,7 +928,6 @@
         };
 
         const App = {
-            ytLoopInterval: null, // Track youtube loop
             enter: () => { UI.lobby.style.opacity = '0'; setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700); },
             loadUrl: (url, title = "Remote Feed", broadcast = true) => {
                 if(broadcast && State.isHost) Net.broadcastAll({type:'URL', url, title});
@@ -884,7 +935,11 @@
                 if(ytMatch) { Player.loadYT(ytMatch[1], title); return; }
 
                 Player.loadNative(url, true, title);
-                if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) { State.hls = new Hls(); State.hls.loadSource(url); State.hls.attachMedia(UI.video); } 
+                if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) { 
+                    State.hls = new Hls(); 
+                    State.hls.attachMedia(UI.video); // Strict ordering required for HLS engine stability
+                    State.hls.on(Hls.Events.MEDIA_ATTACHED, () => { State.hls.loadSource(url); });
+                } 
                 else if(url.includes('.mpd') && typeof dashjs !== 'undefined') { State.dash = dashjs.MediaPlayer().create(); State.dash.initialize(UI.video, url, true); }
                 Ambilight();
             },
@@ -898,36 +953,28 @@
                     UI.toggleSideBtn.classList.remove('active');
                 }
             },
-            updateUI: () => {
-                if(State.isScrubbing) return;
-                const p = Player.isPaused();
-                p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
-                
-                if(State.playMode !== 'idle' && State.playMode !== 'screenshare' && State.playMode !== 'local_stream') {
-                    const c = Player.getTime(), d = Player.getDur();
-                    if(d > 0) {
-                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
-                    }
-                }
-                // Ambilight handled in its own loop if active, but we can trigger a frame here if paused
-                if(State.ambilight && p) Ambilight(); 
-            },
+            
+            // Replaces the infinite requestAnimationFrame to save battery on Youtube
             startYTLoop: () => {
-                if(App.ytLoopInterval) clearInterval(App.ytLoopInterval);
-                // Need a loop for YT because it doesn't emit timeupdate events
-                App.ytLoopInterval = setInterval(() => {
-                    if(State.playMode === 'youtube' && !State.isScrubbing && !Player.isPaused()) {
-                         App.updateUI();
+                if(State.ytLoop) clearInterval(State.ytLoop);
+                State.ytLoop = setInterval(() => {
+                    if(!State.isScrubbing && State.playMode === 'youtube') {
+                        const p = Player.isPaused();
+                        p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                        const c = Player.getTime(), d = Player.getDur();
+                        if(d > 0) {
+                            UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                        }
                     }
-                }, 1000 / 30); // 30fps is enough for UI updates
+                }, 250);
             },
+
             bind: () => {
                 const sN = localStorage.getItem('lumAlias'); if(sN) UI.nameIn.value = sN;
                 UI.hostBtn.addEventListener('click', Net.host); UI.joinBtn.addEventListener('click', Net.guest);
                 UI.copyBtn.addEventListener('click', () => Utils.copyToClipboard(State.roomId));
                 
-                // Sidebar UI enhancements
                 UI.toggleSideBtn.addEventListener('click', () => App.toggleSidebar());
                 UI.closeSideBtn.addEventListener('click', () => App.toggleSidebar(false));
                 document.addEventListener('keydown', (e) => {
@@ -941,25 +988,25 @@
                     const f = e.target.files[0]; if(!f) return;
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
-                    else if(!State.isHost) {
-                         // Send to host
-                         State.connections.forEach(conn => { if(conn.open) conn.send({type:'FILE_MOUNTED'}); });
-                    }
+                    else if(!State.isHost && State.connections.has('host')) State.connections.get('host').send({type:'FILE_MOUNTED'});
                 });
+                
                 UI.fileStream.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
                     Player.loadNative(f, false, f.name); Ambilight();
                     UI.video.onplaying = () => {
                         if(State.activeWebRTCStream) return;
                         try {
-                            const vs = UI.video.captureStream(60);
-                            const tracks = [vs.getVideoTracks()[0]];
+                            // Support Firefox's non-standard mozCaptureStream implementation
+                            const stream = UI.video.captureStream ? UI.video.captureStream(60) : UI.video.mozCaptureStream(60);
+                            const tracks = [stream.getVideoTracks()[0]];
                             if(AudioGraph.dest) tracks.push(AudioGraph.dest.stream.getAudioTracks()[0]);
                             State.activeWebRTCStream = new MediaStream(tracks);
                             Net.broadcastMediaAll(f.name, 'local_stream');
                         } catch(err) { Utils.toast("DRM Blocked Capture", "error"); }
                     };
                 });
+                
                 UI.screenBtn.addEventListener('click', async () => {
                     try {
                         State.activeWebRTCStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:60}, audio:true});
@@ -973,7 +1020,8 @@
                 UI.chatForm.addEventListener('submit', e => {
                     e.preventDefault(); const t = UI.chatIn.value.trim(); if(!t) return;
                     Utils.log(State.myName, t); 
-                    Net.broadcastAll({type:'CHAT', text: t, senderName: State.myName}); 
+                    if(State.isHost) Net.broadcastAll({type:'CHAT', text: t, sender: State.myName}); 
+                    else if(State.connections.has('host')) State.connections.get('host').send({type:'CHAT', text: t, sender: State.myName});
                     UI.chatIn.value = '';
                 });
                 UI.micBtn.addEventListener('click', Mic.toggle);
@@ -981,12 +1029,41 @@
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
 
+                // Event-Driven Native Media UI Updates
+                UI.video.addEventListener('timeupdate', () => {
+                    if(State.isScrubbing || State.playMode === 'youtube') return;
+                    const c = UI.video.currentTime, d = UI.video.duration;
+                    if(d > 0) {
+                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
+                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                    }
+                });
+                const syncPlayStateUI = () => {
+                    const p = UI.video.paused;
+                    p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                    Ambilight(); // Restart loop if needed
+                };
+                UI.video.addEventListener('play', syncPlayStateUI);
+                UI.video.addEventListener('pause', syncPlayStateUI);
+                
+                // End of media graceful shutdown
+                UI.video.addEventListener('ended', () => {
+                    if(State.isHost) {
+                        Player.pause();
+                        Net.broadcastAll({type: 'CMD_PAUSE'});
+                        Utils.log('System', 'Media playback finished.', true);
+                    }
+                });
+
+                // Playback Control System
                 const togPlay = () => {
                     if(State.playMode === 'idle' || (!State.isHost && State.playMode.includes('stream'))) return;
-                    const p = Player.isPaused();
-                    if(State.isHost) { p ? Player.play() : Player.pause(); Net.broadcastAll({type: p ? 'CMD_PLAY':'CMD_PAUSE'}); }
-                    else { 
-                        State.connections.forEach(conn => { if(conn.open) conn.send({type: p ? 'REQ_PLAY':'REQ_PAUSE'}); });
+                    if(State.isHost) { 
+                        const p = Player.isPaused();
+                        p ? Player.play() : Player.pause(); 
+                        Net.broadcastAll({type: p ? 'CMD_PLAY':'CMD_PAUSE'}); 
+                    } else if (State.connections.has('host')) { 
+                        State.connections.get('host').send({type: 'REQ_ACTION', action: 'PLAY', from: State.myName}); 
                     }
                 };
                 UI.playBtn.addEventListener('click', togPlay);
@@ -1008,11 +1085,7 @@
                         const t = calcScrub(e.type.includes('touch') ? e.changedTouches[0] : e);
                         if(t !== undefined) {
                             if(State.isHost) { Player.seek(t); Net.broadcastAll({type:'CMD_SEEK', t}); }
-                            else { 
-                                State.ignoreNextSeek=true; Player.seek(t); 
-                                State.connections.forEach(conn => { if(conn.open) conn.send({type:'REQ_SEEK', t}); });
-                                setTimeout(()=>State.ignoreNextSeek=false, 2000); 
-                            }
+                            else if(State.connections.has('host')) { State.connections.get('host').send({type:'REQ_ACTION', action: 'SEEK', t: t, from: State.myName}); }
                         }
                     }
                 };
@@ -1023,10 +1096,7 @@
                     const curr = Player.getTime(); const dur = Player.getDur() || State.syncState.duration;
                     const nt = fwd ? Math.min(dur, curr+10) : Math.max(0, curr-10);
                     if(State.isHost) { Player.seek(nt); Net.broadcastAll({type:'CMD_SEEK', t:nt}); }
-                    else { 
-                        State.ignoreNextSeek=true; Player.seek(nt); 
-                        State.connections.forEach(conn => { if(conn.open) conn.send({type:'REQ_SEEK', t:nt}); });
-                    }
+                    else if(State.connections.has('host')) { State.connections.get('host').send({type:'REQ_ACTION', action: 'SEEK', t: nt, from: State.myName}); }
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
@@ -1044,7 +1114,6 @@
                 });
                 UI.fsBtn.addEventListener('click', () => {
                     if(!document.fullscreenElement && !document.webkitFullscreenElement) {
-                        // Crucial: Request fullscreen on the theater container, which holds the sidebar
                         if(UI.theater.requestFullscreen) UI.theater.requestFullscreen();
                         else if(UI.theater.webkitRequestFullscreen) UI.theater.webkitRequestFullscreen();
                     } else {
@@ -1060,10 +1129,14 @@
                     Ambilight(); 
                 });
                 
-                UI.reqSyncBtn.addEventListener('click', () => { 
-                    Utils.toast("Requested sync...", "info"); 
-                    State.connections.forEach(conn => { if(conn.open) conn.send({type:'REQ_PLAY'}); });
-                });
+                // Universal interaction unlock for strict browsers (Safari/iOS AudioContext Lock)
+                const unlockAudio = () => {
+                    AudioGraph.resume();
+                    document.removeEventListener('click', unlockAudio);
+                    document.removeEventListener('touchstart', unlockAudio);
+                };
+                document.addEventListener('click', unlockAudio);
+                document.addEventListener('touchstart', unlockAudio, {passive: true});
 
                 // Improved Fade Logic - Doesn't fade if interacting with sidebar
                 const resetFade = () => {
@@ -1074,15 +1147,7 @@
                     }, 3500);
                 };
                 UI.viewport.addEventListener('mousemove', resetFade); UI.viewport.addEventListener('touchstart', resetFade, {passive:true});
-                // Typing in chat keeps UI alive
                 UI.chatIn.addEventListener('focus', resetFade);
-
-                // Replaced continuous requestAnimationFrame loop with event listeners for native media
-                // We keep a separate loop for YouTube via startYTLoop because the API doesn't provide timeupdate events
-                UI.video.addEventListener('timeupdate', App.updateUI);
-                UI.video.addEventListener('play', App.updateUI);
-                UI.video.addEventListener('pause', App.updateUI);
-                UI.video.addEventListener('durationchange', App.updateUI);
             }
         };
 
