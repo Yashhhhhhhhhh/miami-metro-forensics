@@ -1016,8 +1016,13 @@
                         p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
                         const c = Player.getTime(), d = Player.getDur();
                         if(d > 0) {
-                            UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                            UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                            const tStr = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            if (UI.time.textContent !== tStr) UI.time.textContent = tStr;
+                            const pct = `${(c/d)*100}%`;
+                            if (UI.scrubFill.style.width !== pct) {
+                                UI.scrubFill.style.width = pct;
+                                UI.scrubThumb.style.left = pct;
+                            }
                         }
                     }
                 }, 250);
@@ -1101,8 +1106,13 @@
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
                     if(d > 0) {
-                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                        const tStr = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            if (UI.time.textContent !== tStr) UI.time.textContent = tStr;
+                        const pct = `${(c/d)*100}%`;
+                            if (UI.scrubFill.style.width !== pct) {
+                                UI.scrubFill.style.width = pct;
+                                UI.scrubThumb.style.left = pct;
+                            }
                     }
                 });
                 const syncPlayStateUI = () => {

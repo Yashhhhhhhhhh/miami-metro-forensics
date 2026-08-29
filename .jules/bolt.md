@@ -4,13 +4,14 @@
 ## 2024-05-24 - Hardware-Accelerated Animations
 **Learning:** Using `transition: all` is a common anti-pattern that can lead to significant performance drops (jank) because it forces the browser to recalculate and transition properties that might trigger expensive layout changes or repaints, even if only visually lightweight properties like opacity or transform were intended to change.
 **Action:** Always specify exact transition properties, prioritizing GPU-accelerated ones like `transform`, `opacity`, `color`, and `background-color`. Replaced `transition: all` across multiple core UI elements (`.controls-pill`, `.top-bar`, `.btn-icon`, `#lobbyScreen`) with specific hardware-friendly properties.
-<<<<<<< HEAD
 
 ## 2026-08-29 - Seamless mute toggle memory
 **Learning:** In continuous control inputs like volume sliders, tracking previous states must happen actively on the `input` event (if value > 0) to ensure external toggles (like a mute button) can correctly revert to the last meaningful interaction, rather than getting stuck at 0.
 **Action:** When implementing mute toggles paired with sliders, always bind the state tracking and UI element visibility updates directly to the slider's `input` event to capture intermediate values reliably before reaching zero.
-=======
 ## 2024-05-24 - [Safe Third-Party API Calls]
 **Learning:** Calling methods on third-party integration objects (like `ytPlayer` for YouTube) without checking if those methods exist can lead to runtime errors, particularly during initialization phases or if the API changes.
 **Action:** Always verify that a function exists (`typeof obj.method === 'function'`) before calling it on any external or dynamically loaded object. Applied this to YouTube player volume controls (`mute` and `unMute`).
->>>>>>> origin/main
+
+## 2026-08-29 - DOM Update Caching in High Frequency Events
+**Learning:** In `setInterval` and `timeupdate` events, re-assigning strings and styles like `textContent` and `style.width` forces the browser to evaluate whether a repaint is needed, even if the value string hasn't changed.
+**Action:** When updating the UI during high-frequency media loops, always cache and compare the new value against the DOM's current value (e.g. `if (UI.time.textContent !== tStr)`) to prevent unnecessary style recalculations and potential layout thrashing.
