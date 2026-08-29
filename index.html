@@ -280,6 +280,8 @@
             </div>
 
             <!-- Overlays -->
+            <canvas id="telestratorCanvas" class="absolute inset-0 w-full h-full z-[15] pointer-events-none opacity-0 transition-opacity"></canvas>
+
             <div id="reactionBar" class="absolute right-4 bottom-28 z-40 flex flex-col gap-2 glass-panel p-2 rounded-full opacity-0 pointer-events-none transition-all duration-300 transform translate-x-10 group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto">
                 <button class="btn-icon react-btn" data-emoji="❤️">❤️</button>
                 <button class="btn-icon react-btn" data-emoji="😂">😂</button>
@@ -426,6 +428,12 @@
                         </div>
                         <input type="file" id="subInputHost" class="hidden" accept=".vtt">
                     </label>
+                    <button id="drawModeBtn" class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 bg-pink-500/20 rounded-md text-pink-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></div>
+                            <div class="text-left"><p class="text-sm font-bold text-white">Telestrator Draw</p><p class="text-[10px] text-zinc-400">Live screen drawing overlay</p></div>
+                        </div>
+                    </button>
 
                     <label class="flex items-center justify-between w-full bg-accent-600/20 hover:bg-accent-600 border border-accent-500/30 rounded-xl px-4 py-3 cursor-pointer transition-colors group">
                         <div class="flex items-center gap-3">
@@ -470,6 +478,18 @@
                 </div>
             </div>
 
+            <!-- IPTV Deck -->
+            <div id="iptvDeck" class="p-6 border-b border-white/5 bg-black/40 overflow-y-auto hidden">
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">IPTV / Live Channels</h3>
+                <div class="flex gap-2 pt-2 mb-4">
+                    <input type="text" id="iptvUrl" class="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white focus:border-accent-500 outline-none" placeholder="Paste .m3u URL (e.g. iptv-org)...">
+                    <button id="iptvLoadBtn" class="bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg px-4 font-bold text-xs transition-colors text-white">Load</button>
+                </div>
+                <div id="iptvList" class="space-y-2 max-h-64 overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div class="text-xs text-zinc-500 text-center py-4 col-span-full" id="iptvEmpty">Load a playlist to see channels.</div>
+                </div>
+            </div>
+
             <!-- Queue Deck -->
             <div id="queueDeck" class="p-6 border-b border-white/5 bg-black/40 overflow-y-auto hidden">
                 <div class="flex items-center justify-between mb-4">
@@ -504,6 +524,7 @@
             isHost: false, roomId: '', myName: 'Viewer',
             playMode: 'idle', // idle, local_sync, local_stream, url, youtube, screenshare
             mediaTitle: '', mediaUrl: '', fileSize: 0,
+            isDrawingMode: false, isDrawing: false, lastDrawX: 0, lastDrawY: 0,
             queue: [], // Array of {title, url, mode}
             
             syncState: { time: 0, duration: 0, paused: true },
@@ -557,10 +578,12 @@
             sidebar: document.getElementById('sidebar'), toggleSideBtn: document.getElementById('toggleSidebarBtn'), closeSideBtn: document.getElementById('closeSidebarBtn'),
             hostDeck: document.getElementById('hostDeck'), guestDeck: document.getElementById('guestDeck'),
             queueDeck: document.getElementById('queueDeck'), queueList: document.getElementById('queueList'), addQueueBtn: document.getElementById('addQueueBtn'), emptyQueueMsg: document.getElementById('emptyQueueMsg'),
+            iptvDeck: document.getElementById('iptvDeck'), iptvUrl: document.getElementById('iptvUrl'), iptvLoadBtn: document.getElementById('iptvLoadBtn'), iptvList: document.getElementById('iptvList'), iptvEmpty: document.getElementById('iptvEmpty'),
             chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
             fileSync: document.getElementById('fileSyncInput'), guestFileSync: document.getElementById('guestFileSyncInput'),
             subInputHost: document.getElementById('subInputHost'), subInputGuest: document.getElementById('subInputGuest'),
+            drawBtn: document.getElementById('drawModeBtn'), drawCanvas: document.getElementById('telestratorCanvas'),
             fileStream: document.getElementById('fileStreamInput'), screenBtn: document.getElementById('shareScreenBtn'), 
             urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
             
@@ -804,7 +827,7 @@
 
                 State.peer.on('open', () => {
                     UI.codeDisp.textContent = State.roomId; App.enter();
-                    UI.roleInd.textContent = "Host"; UI.hostDeck.classList.remove('hidden'); UI.queueDeck.classList.remove('hidden'); UI.addQueueBtn.classList.remove('hidden');
+                    UI.roleInd.textContent = "Host"; UI.hostDeck.classList.remove('hidden'); UI.queueDeck.classList.remove('hidden'); UI.addQueueBtn.classList.remove('hidden'); UI.iptvDeck.classList.remove('hidden');
                     Utils.toast("Session live. Awaiting viewers.", "success");
                     Sync.startHost(); Mic.init();
                 });
@@ -891,6 +914,7 @@
                         UI.reqSyncBtn.classList.remove('hidden'); // Expose the sync request button
                         UI.guestDeck.classList.remove('hidden'); // Fix 1: Expose guest mount deck
                         UI.queueDeck.classList.remove('hidden');
+                        UI.iptvDeck.classList.remove('hidden');
                     }
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                     
@@ -961,6 +985,12 @@
             },
             handle: (d) => {
                 switch(d.type) {
+                    case 'DRAW':
+                        App.drawRemoteLine(d.x0, d.y0, d.x1, d.y1, d.color);
+                        if(State.isHost && !d.isRelay) {
+                            Net.broadcastAll({type: 'DRAW', x0: d.x0, y0: d.y0, x1: d.x1, y1: d.y1, color: d.color, isRelay: true});
+                        }
+                        break;
                     case 'REACTION':
                         App.spawnReaction(d.emoji);
                         if(State.isHost && !d.isRelay) {
@@ -1071,6 +1101,182 @@
         };
 
         const App = {
+            parseM3U: async (url) => {
+                try {
+                    UI.iptvLoadBtn.textContent = '...';
+                    const res = await fetch(url);
+                    const text = await res.text();
+
+                    const lines = text.split('\n');
+                    const channels = [];
+                    let currentChannel = {};
+
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('#EXTINF:')) {
+                            // Extract title
+                            const titleMatch = line.split(',');
+                            currentChannel.title = titleMatch.length > 1 ? titleMatch.slice(1).join(',').trim() : 'Unknown Channel';
+
+                            // Extract logo
+                            const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                            if (logoMatch) currentChannel.logo = logoMatch[1];
+                        } else if (line && !line.startsWith('#')) {
+                            currentChannel.url = line;
+                            channels.push({...currentChannel});
+                            currentChannel = {};
+                        }
+                    }
+
+                    UI.iptvList.innerHTML = '';
+                    if (channels.length === 0) {
+                        UI.iptvList.innerHTML = '<div class="text-xs text-zinc-500 text-center py-4 col-span-full">No valid channels found.</div>';
+                    } else {
+                        // Render up to 50 channels to prevent lag
+                        channels.slice(0, 50).forEach(ch => {
+                            const btn = document.createElement('button');
+                            btn.className = 'flex items-center gap-3 p-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left group transition-all h-14';
+
+                            if (ch.logo) {
+                                const img = document.createElement('img');
+                                img.src = ch.logo;
+                                img.className = 'w-10 h-10 object-contain rounded bg-white/10';
+                                img.onerror = function() { this.style.display='none'; };
+                                btn.appendChild(img);
+                            } else {
+                                const placeholder = document.createElement('div');
+                                placeholder.className = 'w-10 h-10 bg-white/10 rounded flex items-center justify-center text-xs';
+                                placeholder.textContent = 'TV';
+                                btn.appendChild(placeholder);
+                            }
+                            const titleSpan = document.createElement('span');
+                            titleSpan.className = 'text-xs font-bold text-white truncate flex-1';
+                            titleSpan.textContent = ch.title;
+                            btn.appendChild(titleSpan);
+                            btn.onclick = () => {
+                                if (State.isHost) {
+                                    State.mediaUrl = ch.url;
+                                    App.loadUrl(ch.url, ch.title, false);
+                                    Net.broadcastAll({type: 'MASTER_STATE', payload: {mode: 'url', url: ch.url, title: ch.title, size: 0, time: 0}});
+                                    App.toggleSidebar(false);
+                                } else if (State.connections.has('host')) {
+                                    Utils.toast("Requested host to play channel.", "info");
+                                    // Send suggestion to host
+                                }
+                            };
+                            UI.iptvList.appendChild(btn);
+                        });
+                    }
+                    UI.iptvLoadBtn.textContent = 'Load';
+                    Utils.toast(`Loaded ${channels.length} channels.`, "success");
+                } catch (e) {
+                    console.error(e);
+                    UI.iptvLoadBtn.textContent = 'Load';
+                    Utils.toast("Failed to parse IPTV list.", "error");
+                }
+            },
+
+            initDraw: () => {
+                const cvs = UI.drawCanvas;
+                const ctx = cvs.getContext('2d');
+
+                // Resize canvas to match viewport
+                const resize = () => {
+                    cvs.width = UI.viewport.clientWidth;
+                    cvs.height = UI.viewport.clientHeight;
+                };
+                window.addEventListener('resize', resize);
+                resize();
+
+                const drawColor = State.isHost ? '#ef4444' : '#3b82f6';
+
+                const getCoords = (e) => {
+                    const rect = cvs.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    // Return normalized coordinates (0.0 to 1.0) to handle different screen sizes
+                    return { x: (clientX - rect.left) / cvs.width, y: (clientY - rect.top) / cvs.height };
+                };
+
+                const startDraw = (e) => {
+                    if (!State.isDrawingMode) return;
+                    State.isDrawing = true;
+                    const coords = getCoords(e);
+                    State.lastDrawX = coords.x;
+                    State.lastDrawY = coords.y;
+                };
+
+                const draw = (e) => {
+                    if (!State.isDrawing || !State.isDrawingMode) return;
+                    const coords = getCoords(e);
+
+                    App.drawRemoteLine(State.lastDrawX, State.lastDrawY, coords.x, coords.y, drawColor);
+
+                    if(State.isHost) {
+                        Net.broadcastAll({type: 'DRAW', x0: State.lastDrawX, y0: State.lastDrawY, x1: coords.x, y1: coords.y, color: drawColor});
+                    } else if (State.connections.has('host')) {
+                        State.connections.get('host').send({type: 'DRAW', x0: State.lastDrawX, y0: State.lastDrawY, x1: coords.x, y1: coords.y, color: drawColor});
+                    }
+
+                    State.lastDrawX = coords.x;
+                    State.lastDrawY = coords.y;
+                };
+
+                const stopDraw = () => { State.isDrawing = false; };
+
+                cvs.addEventListener('mousedown', startDraw);
+                cvs.addEventListener('mousemove', draw);
+                cvs.addEventListener('mouseup', stopDraw);
+                cvs.addEventListener('mouseout', stopDraw);
+
+                cvs.addEventListener('touchstart', startDraw, {passive: true});
+                cvs.addEventListener('touchmove', draw, {passive: true});
+                cvs.addEventListener('touchend', stopDraw);
+            },
+
+            drawRemoteLine: (x0, y0, x1, y1, color) => {
+                const cvs = UI.drawCanvas;
+                const ctx = cvs.getContext('2d');
+
+                // Convert normalized back to absolute for rendering
+                const ax0 = x0 * cvs.width;
+                const ay0 = y0 * cvs.height;
+                const ax1 = x1 * cvs.width;
+                const ay1 = y1 * cvs.height;
+
+                ctx.beginPath();
+                ctx.moveTo(ax0, ay0);
+                ctx.lineTo(ax1, ay1);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = color;
+                ctx.stroke();
+                ctx.closePath();
+
+                // Ephemeral fading: fade out the entire canvas slightly every frame if not already fading
+                if (!App.fadeLoopActive) {
+                    App.fadeLoopActive = true;
+                    const fade = () => {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // 5% fade per frame
+                        ctx.globalCompositeOperation = 'destination-out';
+                        ctx.fillRect(0, 0, cvs.width, cvs.height);
+                        ctx.globalCompositeOperation = 'source-over';
+
+                        // Replace expensive getImageData with simple timeout threshold
+                        App.fadeCounter = (App.fadeCounter || 0) + 1;
+                        if (App.fadeCounter < 60) { // Approx 1 second of fading
+                            requestAnimationFrame(fade);
+                        } else {
+                            App.fadeLoopActive = false;
+                            App.fadeCounter = 0;
+                            ctx.clearRect(0, 0, cvs.width, cvs.height);
+                        }
+                    };
+                    requestAnimationFrame(fade);
+                }
+            },
             spawnReaction: (emoji) => {
                 const b = document.createElement('div');
                 b.className = 'reaction-bubble';
@@ -1094,7 +1300,7 @@
                     el.innerHTML = `
                         <div class="flex items-center gap-2 min-w-0">
                             <span class="text-[10px] font-bold text-zinc-500 w-4">${index + 1}.</span>
-                            <span class="text-xs text-white truncate max-w-[150px] font-medium">${item.title}</span>
+                            <span class="text-xs text-white truncate max-w-[150px] font-medium queue-title-span"></span>
                             <span class="text-[8px] bg-white/10 px-1 rounded uppercase tracking-wider text-zinc-400">${item.mode === 'youtube' ? 'YT' : 'URL'}</span>
                         </div>
                         ${State.isHost ? `<button class="p-1 text-zinc-500 hover:text-accent-400 opacity-0 group-hover:opacity-100 transition-opacity" data-index="${index}"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
@@ -1119,6 +1325,7 @@
                             Net.broadcastAll({type: 'MASTER_STATE', payload: {mode: qItem.mode, url: qItem.url, title: qItem.title, size: 0, time: 0}});
                         });
                     }
+                    el.querySelector('.queue-title-span').textContent = item.title;
                     UI.queueList.appendChild(el);
                 });
             },
@@ -1184,6 +1391,31 @@
                 UI.copyBtn.addEventListener('click', () => Utils.copyToClipboard(State.roomId));
                 
                 UI.toggleSideBtn.addEventListener('click', () => App.toggleSidebar());
+                UI.iptvLoadBtn.addEventListener('click', () => {
+                    const url = UI.iptvUrl.value.trim();
+                    if(url) App.parseM3U(url);
+                });
+
+                App.initDraw();
+                if(UI.drawBtn) {
+                    UI.drawBtn.addEventListener('click', () => {
+                        State.isDrawingMode = !State.isDrawingMode;
+                        if(State.isDrawingMode) {
+                            UI.drawCanvas.classList.remove('opacity-0');
+                            UI.drawCanvas.classList.add('pointer-events-auto');
+                            UI.drawCanvas.classList.remove('pointer-events-none');
+                            UI.drawBtn.classList.replace('bg-white/5', 'bg-pink-600/30');
+                            UI.drawBtn.classList.replace('border-white/10', 'border-pink-500/50');
+                            Utils.toast("Draw Mode ON. Draw on video.", "success");
+                        } else {
+                            UI.drawCanvas.classList.add('opacity-0');
+                            UI.drawCanvas.classList.add('pointer-events-none');
+                            UI.drawCanvas.classList.remove('pointer-events-auto');
+                            UI.drawBtn.classList.replace('bg-pink-600/30', 'bg-white/5');
+                            UI.drawBtn.classList.replace('border-pink-500/50', 'border-white/10');
+                        }
+                    });
+                }
 
                 document.querySelectorAll('.react-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
