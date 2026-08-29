@@ -150,7 +150,7 @@
         }         
         .scrubber-track:hover .scrubber-thumb, .scrubber-track.scrubbing .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }                 
 
-        /* Improved Sidebar - darker bg for better contrast in fullscreen */
+        /* Improved Sidebar */
         .sidebar-container {
             position: absolute; right: 0; top: 0; bottom: 0; width: 400px; max-width: 90vw;
             z-index: 50; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -182,7 +182,8 @@
 </head> 
 <body class="w-screen h-screen flex flex-col selection:bg-accent-500 selection:text-white ambient-grid">         
     
-    <audio id="remoteAudio" autoplay></audio>     
+    <!-- Fix 2: Container for Multi-Peer Voice Elements -->
+    <div id="voiceContainer" class="hidden"></div>
     <div id="toastContainer" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-11/12 max-w-sm items-center text-center"></div>
 
     <!-- Lobby Screen -->
@@ -318,6 +319,9 @@
                     </div>
 
                     <div class="flex items-center gap-1 md:gap-2">
+                        <!-- Fix 4: True Sync Request Button -->
+                        <button id="requestSyncBtn" class="hidden btn-icon text-accent-400 bg-accent-400/10 hover:bg-accent-400 hover:text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider mr-2 border border-accent-400/20">Req Sync</button>
+                        
                         <button id="aspectBtn" class="btn-icon !w-10 !h-10 text-[10px] font-bold tracking-wider uppercase">FIT</button>
                         <button id="pipBtn" class="btn-icon" title="Picture in Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
                         <button id="ambilightBtn" class="btn-icon active" title="Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
@@ -329,7 +333,6 @@
 
         <div id="sidebar" class="sidebar-container flex flex-col">
             
-            <!-- Sidebar Header -->
             <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/20">
                 <h2 class="text-xs font-bold tracking-widest text-zinc-300 uppercase">Control Center</h2>
                 <button id="closeSidebarBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10" title="Close Panel (Esc)">
@@ -393,6 +396,20 @@
                 </div>
             </div>
 
+            <!-- Fix 1: Guest Stream Deck (Mount Sync File) -->
+            <div id="guestDeck" class="p-6 border-b border-white/5 bg-black/40 overflow-y-auto hidden">
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Viewer Deck</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 bg-emerald-500/20 rounded-md text-emerald-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
+                            <div class="text-left"><p class="text-sm font-bold text-white">Mount Sync File</p><p class="text-[10px] text-zinc-400">Select file requested by host</p></div>
+                        </div>
+                        <input type="file" id="guestFileSyncInput" class="hidden" accept="video/mp4,video/webm">
+                    </label>
+                </div>
+            </div>
+
             <!-- Chat Area -->
             <div class="flex-1 flex flex-col min-h-0 bg-black/10">
                 <div id="chatMessages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
@@ -422,11 +439,12 @@
             hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null,
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
+            lastVol: 1, // Fix 3: Memory for mute amnesia
             
             peer: null, 
-            connections: new Map(), // Multi-peer support Map
+            connections: new Map(), // Multi-peer Network Engine
             mediaConns: new Map(), 
-            voiceConns: new Map(),
+            voiceConns: new Map(), // Fix 2: Multi-peer Voice
             
             localVoiceStream: null, activeWebRTCStream: null,
             hls: null, dash: null
@@ -460,18 +478,20 @@
             skipB: document.getElementById('skipBackBtn'), skipF: document.getElementById('skipFwdBtn'),
             volBtn: document.getElementById('muteBtn'), volIco: document.getElementById('iconVol'), volMut: document.getElementById('iconVolMuted'), volSlider: document.getElementById('volSlider'),
             
+            reqSyncBtn: document.getElementById('requestSyncBtn'),
             aspectBtn: document.getElementById('aspectBtn'),
             pipBtn: document.getElementById('pipBtn'), ambilightBtn: document.getElementById('ambilightBtn'), fsBtn: document.getElementById('fullscreenBtn'),
             
             sidebar: document.getElementById('sidebar'), toggleSideBtn: document.getElementById('toggleSidebarBtn'), closeSideBtn: document.getElementById('closeSidebarBtn'),
-            hostDeck: document.getElementById('hostDeck'), chatMsgs: document.getElementById('chatMessages'),
-            chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
+            hostDeck: document.getElementById('hostDeck'), guestDeck: document.getElementById('guestDeck'),
+            chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
-            fileSync: document.getElementById('fileSyncInput'), fileStream: document.getElementById('fileStreamInput'),
-            screenBtn: document.getElementById('shareScreenBtn'), urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
+            fileSync: document.getElementById('fileSyncInput'), guestFileSync: document.getElementById('guestFileSyncInput'),
+            fileStream: document.getElementById('fileStreamInput'), screenBtn: document.getElementById('shareScreenBtn'), 
+            urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
             
             micBtn: document.getElementById('micBtn'), micIco: document.getElementById('iconMic'), micMut: document.getElementById('iconMicMuted'),
-            voiceVol: document.getElementById('voiceVolSlider'), remoteAud: document.getElementById('remoteAudio'), voiceDot: document.getElementById('voiceDot'),
+            voiceVol: document.getElementById('voiceVolSlider'), voiceCont: document.getElementById('voiceContainer'), voiceDot: document.getElementById('voiceDot'),
             
             syncDot: document.getElementById('syncDot'), syncTxt: document.getElementById('syncText'), roleInd: document.getElementById('roleIndicator'), codeDisp: document.getElementById('roomCodeDisplay'), copyBtn: document.getElementById('copyCodeBtn'),
             
@@ -524,7 +544,6 @@
                 btnApp.onclick = () => { cleanup(); if(onApprove) onApprove(); };
                 btnDen.onclick = () => { cleanup(); if(onDeny) onDeny(); };
                 
-                // Auto-deny after 8 seconds
                 setTimeout(() => { if(t.parentElement) cleanup(); }, 8000);
             },
             log: (sender, txt, sys = false) => {
@@ -532,7 +551,7 @@
                 d.className = 'animate-slide-in';
                 if(sys) {
                     d.className += " text-center text-[10px] text-accent-400 font-bold uppercase tracking-wider py-1 opacity-80";
-                    d.textContent = txt; // Security enhancement (textContent instead of innerHTML for user data)
+                    d.textContent = txt; 
                 } else {
                     const me = sender === State.myName;
                     d.className += ` flex flex-col ${me ? 'items-end' : 'items-start'}`;
@@ -543,7 +562,7 @@
 
                     const msgDiv = document.createElement('div');
                     msgDiv.className = `px-4 py-2.5 max-w-[85%] text-sm rounded-2xl ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 border border-white/5 text-zinc-200 rounded-tl-sm'}`;
-                    msgDiv.textContent = txt; // XSS Mitigation - Browser securely encodes content
+                    msgDiv.textContent = txt;
 
                     d.appendChild(senderSpan);
                     d.appendChild(msgDiv);
@@ -595,8 +614,14 @@
                 }
             },
             setVolume: (val) => {
-                if(AudioGraph.gain) AudioGraph.gain.gain.value = val;
-                else UI.video.volume = val;
+                // Fix 5: Bridge YouTube specific Volume API seamlessly
+                if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.setVolume === 'function') {
+                    ytPlayer.setVolume(val * 100);
+                    if (val == 0) ytPlayer.mute(); else ytPlayer.unMute();
+                } else {
+                    if(AudioGraph.gain) AudioGraph.gain.gain.value = val;
+                    else UI.video.volume = val;
+                }
             }
         };
 
@@ -607,7 +632,7 @@
             },
             purge: () => {
                 Player.loading(false); UI.emptyState.style.opacity = '1';
-                UI.pipBtn.classList.remove('hidden'); UI.aspectBtn.classList.remove('hidden'); // Restore UI
+                UI.pipBtn.classList.remove('hidden'); UI.aspectBtn.classList.remove('hidden'); 
                 if(State.ytLoop) clearInterval(State.ytLoop);
                 State.playMode = 'idle'; UI.title.textContent = "No Media Loaded";
                 UI.video.pause(); UI.video.removeAttribute('src'); UI.video.srcObject = null; UI.video.load();
@@ -626,7 +651,7 @@
             },
             loadYT: (id, title = "YouTube Stream") => {
                 Player.purge(); UI.emptyState.style.opacity = '0';
-                UI.pipBtn.classList.add('hidden'); UI.aspectBtn.classList.add('hidden'); // Iframes cannot PIP
+                UI.pipBtn.classList.add('hidden'); UI.aspectBtn.classList.add('hidden'); 
                 State.playMode = 'youtube'; State.mediaTitle = title; UI.title.textContent = title;
                 UI.video.classList.add('hidden'); UI.ytCont.classList.remove('hidden');
                 const init = () => {
@@ -662,7 +687,7 @@
             const draw = () => {
                 if(!State.ambilight || UI.video.paused || UI.video.readyState < 2) { 
                     UI.canvas.classList.remove('active');
-                    ambLoop = null; // CPU Optimization: Allow the loop to die when paused
+                    ambLoop = null; 
                     return; 
                 }
                 try { ctx.drawImage(UI.video, 0, 0, 160, 90); UI.canvas.classList.add('active'); } 
@@ -682,7 +707,6 @@
                 
                 State.peer = new Peer(`lum-${State.roomId}`, Net.cfg);
                 
-                // Auto-reconnect if the signaling server drops the connection during a long movie
                 State.peer.on('disconnected', () => {
                     Utils.log("System", "Signaling server connection lost. Reconnecting...", true);
                     if (!State.peer.destroyed) State.peer.reconnect();
@@ -701,7 +725,6 @@
                     UI.hostBtn.disabled = false; UI.hostBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Host New Session`;
                 });
 
-                // Multi-Peer Tracking
                 State.peer.on('connection', c => { 
                     State.connections.set(c.peer, c); 
                     Net.setupData(c); 
@@ -716,7 +739,6 @@
 
                 State.peer = new Peer(Net.cfg);
                 
-                // Auto-reconnect for guests as well
                 State.peer.on('disconnected', () => {
                     Utils.log("System", "Signaling server connection lost. Reconnecting...", true);
                     if (!State.peer.destroyed) State.peer.reconnect();
@@ -746,14 +768,13 @@
                         Mic.init().then(() => {
                             if(State.localVoiceStream) {
                                 const c = State.peer.call(`lum-${code}`, State.localVoiceStream, {metadata:{type:'voice'}});
-                                c.on('stream', s => UI.remoteAud.srcObject = s);
+                                // Fallback setup if host connects early
                             }
                         });
                     });
                 });
                 State.peer.on('call', Net.handleCall);
             },
-            // Multi-Peer Broadcast Helper
             broadcastAll: (data) => {
                 for (let c of State.connections.values()) {
                     if (c.open) c.send(data);
@@ -777,6 +798,8 @@
                     if(!State.isHost) {
                         UI.codeDisp.textContent = State.roomId; App.enter();
                         UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase";
+                        UI.reqSyncBtn.classList.remove('hidden'); // Expose the sync request button
+                        UI.guestDeck.classList.remove('hidden'); // Fix 1: Expose guest mount deck
                     }
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                     
@@ -785,7 +808,6 @@
                     if(State.isHost && State.playMode !== 'idle') {
                         c.send({ type: 'MASTER_STATE', payload: { mode: State.playMode, title: State.mediaTitle, url: State.mediaUrl, size: State.fileSize, time: Player.getTime() } });
                         if((State.playMode === 'local_stream' || State.playMode === 'screenshare') && State.activeWebRTCStream) {
-                            // Specifically target this new peer for media rather than rebroadcasting to all
                             setTimeout(() => {
                                 const mConn = State.peer.call(c.peer, State.activeWebRTCStream, {metadata:{type: State.playMode, name: State.mediaTitle}});
                                 State.mediaConns.set(c.peer, mConn);
@@ -803,10 +825,26 @@
                 });
             },
             handleCall: (call) => {
+                // Fix 2: Dynamically create Audio elements for Multi-Peer Voice
                 if(call.metadata?.type === 'voice') {
                     if(!State.localVoiceStream) { try{ const c = new AudioContext(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){} }
-                    call.answer(State.localVoiceStream); call.on('stream', s => UI.remoteAud.srcObject = s);
-                    State.voiceConns.set(call.peer, call);
+                    call.answer(State.localVoiceStream); 
+                    
+                    call.on('stream', s => {
+                        const aud = new Audio(); 
+                        aud.autoplay = true; 
+                        aud.srcObject = s; 
+                        aud.volume = UI.voiceVol.value;
+                        UI.voiceCont.appendChild(aud);
+                        State.voiceConns.set(call.peer, {call, aud});
+                    });
+                    
+                    call.on('close', () => {
+                        if(State.voiceConns.has(call.peer)) {
+                            State.voiceConns.get(call.peer).aud.remove();
+                            State.voiceConns.delete(call.peer);
+                        }
+                    });
                 } else {
                     call.answer(); AudioGraph.init();
                     call.on('stream', s => {
@@ -838,7 +876,6 @@
                     case 'CHAT': 
                         Utils.log(d.sender, d.text); 
                         if(State.isHost && !d.isRelay) {
-                            // Relay chat to all other viewers
                             Net.broadcastAll({type: 'CHAT', text: d.text, sender: d.sender, isRelay: true});
                         }
                         break;
@@ -863,12 +900,20 @@
                     case 'CMD_PAUSE': if(!State.isHost) Player.pause(); break;
                     case 'CMD_SEEK': if(!State.isHost) { State.ignoreNextSeek=true; Player.seek(d.t); setTimeout(()=>State.ignoreNextSeek=false, 2000); } break;
                     
+                    // Fix 4: Redundant Sync request explicitly processed
+                    case 'REQ_SYNC':
+                        if (State.isHost) {
+                            Utils.toast(`${d.from} requested a fresh sync frame.`, 'info');
+                            State.syncState = { time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now() };
+                            Net.broadcastAll({type: 'STATE', s: State.syncState});
+                        }
+                        break;
+                        
                     // Host Action Approval Gateway
                     case 'REQ_ACTION':
                         if (State.isHost) {
                             let actionText = d.action === 'PLAY' ? "toggle playback" : `seek to ${Utils.time(d.t)}`;
                             Utils.toastAction(`${d.from} wants to ${actionText}.`, () => {
-                                // Approved
                                 if (d.action === 'PLAY') {
                                     const p = Player.isPaused();
                                     p ? Player.play() : Player.pause();
@@ -878,7 +923,6 @@
                                     Net.broadcastAll({ type: 'CMD_SEEK', t: d.t });
                                 }
                             }, () => {
-                                // Denied (optional logging)
                                 Utils.log('System', `Denied request from ${d.from}.`, true);
                             });
                         }
@@ -912,7 +956,6 @@
 
                 if(State.playMode === 'youtube') {
                     if(absDrift > 2.0 && !h.paused) Player.seek(targetTime);
-                    // YouTube specific API for micro-latency syncing
                     else if(absDrift > 0.3 && !h.paused && typeof ytPlayer.setPlaybackRate === 'function') {
                         ytPlayer.setPlaybackRate(drift > 0 ? 0.95 : 1.05);
                     } else if (typeof ytPlayer.setPlaybackRate === 'function') {
@@ -937,7 +980,7 @@
                 Player.loadNative(url, true, title);
                 if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) { 
                     State.hls = new Hls(); 
-                    State.hls.attachMedia(UI.video); // Strict ordering required for HLS engine stability
+                    State.hls.attachMedia(UI.video); 
                     State.hls.on(Hls.Events.MEDIA_ATTACHED, () => { State.hls.loadSource(url); });
                 } 
                 else if(url.includes('.mpd') && typeof dashjs !== 'undefined') { State.dash = dashjs.MediaPlayer().create(); State.dash.initialize(UI.video, url, true); }
@@ -953,8 +996,6 @@
                     UI.toggleSideBtn.classList.remove('active');
                 }
             },
-            
-            // Replaces the infinite requestAnimationFrame to save battery on Youtube
             startYTLoop: () => {
                 if(State.ytLoop) clearInterval(State.ytLoop);
                 State.ytLoop = setInterval(() => {
@@ -984,11 +1025,18 @@
                 UI.gateBtn.addEventListener('click', () => { AudioGraph.resume(); Player.play(); UI.gate.classList.remove('active'); });
 
                 UI.urlBtn.addEventListener('click', () => { const u = UI.urlIn.value.trim(); if(u) { State.mediaUrl = u; App.loadUrl(u, "Host URL Feed"); UI.urlIn.value=''; } });
+                
+                // Host Sync Action
                 UI.fileSync.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
-                    else if(!State.isHost && State.connections.has('host')) State.connections.get('host').send({type:'FILE_MOUNTED'});
+                });
+                // Fix 1: Guest Sync Action Explicit Link
+                UI.guestFileSync.addEventListener('change', e => {
+                    const f = e.target.files[0]; if(!f) return;
+                    State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
+                    if(!State.isHost && State.connections.has('host')) State.connections.get('host').send({type:'FILE_MOUNTED'});
                 });
                 
                 UI.fileStream.addEventListener('change', e => {
@@ -997,7 +1045,6 @@
                     UI.video.onplaying = () => {
                         if(State.activeWebRTCStream) return;
                         try {
-                            // Support Firefox's non-standard mozCaptureStream implementation
                             const stream = UI.video.captureStream ? UI.video.captureStream(60) : UI.video.mozCaptureStream(60);
                             const tracks = [stream.getVideoTracks()[0]];
                             if(AudioGraph.dest) tracks.push(AudioGraph.dest.stream.getAudioTracks()[0]);
@@ -1024,12 +1071,16 @@
                     else if(State.connections.has('host')) State.connections.get('host').send({type:'CHAT', text: t, sender: State.myName});
                     UI.chatIn.value = '';
                 });
+                
                 UI.micBtn.addEventListener('click', Mic.toggle);
-                UI.voiceVol.addEventListener('input', e => UI.remoteAud.volume = e.target.value);
+                // Fix 2 & 5: Ensure voice volume correctly targets dynamically created Voice elements
+                UI.voiceVol.addEventListener('input', e => {
+                    State.voiceConns.forEach(v => { v.aud.volume = e.target.value; });
+                });
+                
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
 
-                // Event-Driven Native Media UI Updates
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
@@ -1041,21 +1092,18 @@
                 const syncPlayStateUI = () => {
                     const p = UI.video.paused;
                     p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
-                    Ambilight(); // Restart loop if needed
+                    Ambilight(); 
                 };
                 UI.video.addEventListener('play', syncPlayStateUI);
                 UI.video.addEventListener('pause', syncPlayStateUI);
                 
-                // End of media graceful shutdown
                 UI.video.addEventListener('ended', () => {
                     if(State.isHost) {
-                        Player.pause();
-                        Net.broadcastAll({type: 'CMD_PAUSE'});
+                        Player.pause(); Net.broadcastAll({type: 'CMD_PAUSE'});
                         Utils.log('System', 'Media playback finished.', true);
                     }
                 });
 
-                // Playback Control System
                 const togPlay = () => {
                     if(State.playMode === 'idle' || (!State.isHost && State.playMode.includes('stream'))) return;
                     if(State.isHost) { 
@@ -1101,10 +1149,20 @@
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
                 UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(e.target.value));
+                
+                // Fix 3: Seamless mute toggle with pre-mute state memory
                 UI.volBtn.addEventListener('click', () => {
-                    const v = UI.volSlider.value > 0 ? 0 : 1;
-                    UI.volSlider.value = v; AudioGraph.setVolume(v);
-                    v > 0 ? (UI.volMut.classList.add('hidden'), UI.volIco.classList.remove('hidden')) : (UI.volIco.classList.add('hidden'), UI.volMut.classList.remove('hidden'));
+                    if (UI.volSlider.value > 0) {
+                        State.lastVol = UI.volSlider.value;
+                        UI.volSlider.value = 0;
+                        AudioGraph.setVolume(0);
+                        UI.volIco.classList.add('hidden'); UI.volMut.classList.remove('hidden');
+                    } else {
+                        const v = State.lastVol > 0 ? State.lastVol : 1;
+                        UI.volSlider.value = v; 
+                        AudioGraph.setVolume(v);
+                        UI.volMut.classList.add('hidden'); UI.volIco.classList.remove('hidden');
+                    }
                 });
 
                 UI.aspectBtn.addEventListener('click', () => {
@@ -1129,7 +1187,12 @@
                     Ambilight(); 
                 });
                 
-                // Universal interaction unlock for strict browsers (Safari/iOS AudioContext Lock)
+                // Fix 4: Decoupled true sync request instead of redundant 'REQ_PLAY'
+                UI.reqSyncBtn.addEventListener('click', () => { 
+                    Utils.toast("Requested sync frame...", "info"); 
+                    if(State.connections.has('host')) State.connections.get('host').send({type:'REQ_SYNC', from: State.myName}); 
+                });
+
                 const unlockAudio = () => {
                     AudioGraph.resume();
                     document.removeEventListener('click', unlockAudio);
@@ -1138,7 +1201,6 @@
                 document.addEventListener('click', unlockAudio);
                 document.addEventListener('touchstart', unlockAudio, {passive: true});
 
-                // Improved Fade Logic - Doesn't fade if interacting with sidebar
                 const resetFade = () => {
                     UI.viewport.classList.add('active-ui'); clearTimeout(State.uiTimeout);
                     State.uiTimeout = setTimeout(() => {
