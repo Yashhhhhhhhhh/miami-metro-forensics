@@ -810,7 +810,9 @@
                         UI.codeDisp.textContent = State.roomId; App.enter();
                         UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase";
                         UI.reqSyncBtn.classList.remove('hidden'); // Expose the sync request button
-                        UI.guestDeck.classList.remove('hidden'); // Fix 1: Expose guest mount deck
+
+                        // Fix 1: Expose guest mount deck
+                        UI.guestDeck.classList.remove('hidden');
                     }
                     UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                     
@@ -832,6 +834,7 @@
                     State.connections.delete(c.peer);
                     if(!State.isHost) {
                         UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Host Disconnected"; Utils.toast("Host closed session.", "error"); 
+                        UI.guestDeck.classList.add('hidden');
                     }
                 });
             },
