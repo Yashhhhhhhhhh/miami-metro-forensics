@@ -8,3 +8,7 @@
 ## 2026-08-29 - DOM caching for timeupdate
 **Learning:** High-frequency events like timeupdate can cause layout thrashing if DOM string and style properties are reassigned identically on every frame.
 **Action:** Use a local variable to cache the last updated value and only reassign the DOM node property if the new calculated string differs from the cached one.
+
+## 2026-08-29 - Throttling high-frequency mouse events
+**Learning:** Mouse and touch events (like mousemove) can fire much faster than the display's refresh rate. Executing heavy DOM calculations like getBoundingClientRect or updating inline styles on every event trigger leads to dropped frames and sluggish UI.
+**Action:** Throttle the DOM update logic using requestAnimationFrame, and cache heavy calculations (like bounding client rects) on the mousedown event if they won't change during the drag.

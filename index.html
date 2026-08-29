@@ -1138,16 +1138,24 @@
                 UI.playBtn.addEventListener('click', togPlay);
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
 
+                // ⚡ Bolt: Cache rect on mousedown to avoid layout thrashing during mousemove, and throttle with rAF
+                let scrubRect = null;
+                let scrubRAF = null;
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
-                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    if(!scrubRect) scrubRect = UI.scrubTrack.getBoundingClientRect();
                     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    const pos = Math.max(0, Math.min(1, (clientX - scrubRect.left) / scrubRect.width));
                     UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
                     return pos * dur;
                 };
-                const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
-                const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
+                const sStart = (e) => { State.isScrubbing = true; scrubRect = UI.scrubTrack.getBoundingClientRect(); UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
+                const sMove = (e) => {
+                    if(State.isScrubbing) {
+                        if(scrubRAF) cancelAnimationFrame(scrubRAF);
+                        scrubRAF = requestAnimationFrame(() => calcScrub(e));
+                    }
+                };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
                         State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
