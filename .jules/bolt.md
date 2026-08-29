@@ -13,3 +13,6 @@
 ## 2024-05-24 - Premium UI Polish (Spacing & Typography)
 **Learning:** Subtle increases in padding (giving elements "breathing room"), slightly heavier font weights for primary titles, and deeper background blurs (e.g., `blur(20px)` vs `blur(10px)`) significantly elevate the "premium" feel of media interfaces. These adjustments often have zero impact on performance but drastically improve user perception.
 **Action:** Increased padding inside `.controls-pill`, bumped `nowPlayingTitle` to `font-semibold` and `text-base`, deepened the `.interaction-gate` blur, and slightly widened the `.sidebar-container` for better content fit.
+## 2024-05-24 - Empty State Micro-Interactions
+**Learning:** Empty states (like waiting for media to load) can feel broken or dead if completely static. Adding extremely subtle, slow, hardware-accelerated resting animations (like a 3-second breathing pulse on a logo) communicates that the application is alive and waiting, significantly improving perceived UI quality without taxing the main thread.
+**Action:** Added a custom Tailwind keyframe `pulseSlow` (animating scale and opacity) and applied it to the empty state logo icon container to create a subtle "breathing" effect.
