@@ -866,6 +866,7 @@
             }
         };
 
+        let lastSyncTimeStr = "";
         const Sync = {
             startHost: () => {
                 if(State.hostBeat) clearInterval(State.hostBeat);
@@ -941,9 +942,17 @@
                 State.syncState = h;
                 
                 if(h.duration > 0) {
-                    const pct = (h.time / h.duration) * 100;
-                    UI.scrubFill.style.width = `${pct}%`; UI.scrubThumb.style.left = `${pct}%`;
-                    UI.time.textContent = `${Utils.time(h.time)} / ${Utils.time(h.duration)}`;
+                    const pctStr = `${(h.time / h.duration) * 100}%`;
+                    if (UI.scrubFill.style.width !== pctStr) {
+                        UI.scrubFill.style.width = pctStr;
+                        UI.scrubThumb.style.left = pctStr;
+                    }
+                    // ⚡ Bolt: Cache textContent to avoid redundant text layout recalculations
+                    const newTimeStr = `${Utils.time(h.time)} / ${Utils.time(h.duration)}`;
+                    if (newTimeStr !== lastSyncTimeStr) {
+                        UI.time.textContent = newTimeStr;
+                        lastSyncTimeStr = newTimeStr;
+                    }
                 }
 
                 if(State.playMode === 'local_stream' || State.playMode === 'screenshare') {
@@ -1005,14 +1014,30 @@
             },
             startYTLoop: () => {
                 if(State.ytLoop) clearInterval(State.ytLoop);
+                let lastTimeStr = "";
+                let lastPlayState = null;
                 State.ytLoop = setInterval(() => {
                     if(!State.isScrubbing && State.playMode === 'youtube') {
+                        // ⚡ Bolt: Cache DOM play state to prevent layout thrashing
                         const p = Player.isPaused();
-                        p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                        if (p !== lastPlayState) {
+                            p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                            lastPlayState = p;
+                        }
                         const c = Player.getTime(), d = Player.getDur();
                         if(d > 0) {
-                            UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                            UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                            // ⚡ Bolt: Cache textContent to avoid redundant text layout recalculations
+                            const newTimeStr = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            if (newTimeStr !== lastTimeStr) {
+                                UI.time.textContent = newTimeStr;
+                                lastTimeStr = newTimeStr;
+                            }
+                            // ⚡ Bolt: Cache style updates to avoid layout recalculations
+                            const newScrubPct = `${(c/d)*100}%`;
+                            if (UI.scrubFill.style.width !== newScrubPct) {
+                                UI.scrubFill.style.width = newScrubPct;
+                                UI.scrubThumb.style.left = newScrubPct;
+                            }
                         }
                     }
                 }, 250);
@@ -1088,12 +1113,22 @@
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
 
+                let lastTimeStrNative = "";
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
                     if(d > 0) {
-                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                        // ⚡ Bolt: Cache textContent to avoid redundant text layout recalculations
+                        const newTimeStr = `${Utils.time(c)} / ${Utils.time(d)}`;
+                        if (newTimeStr !== lastTimeStrNative) {
+                            UI.time.textContent = newTimeStr;
+                            lastTimeStrNative = newTimeStr;
+                        }
+                        const newScrubPct = `${(c/d)*100}%`;
+                        if (UI.scrubFill.style.width !== newScrubPct) {
+                            UI.scrubFill.style.width = newScrubPct;
+                            UI.scrubThumb.style.left = newScrubPct;
+                        }
                     }
                 });
                 const syncPlayStateUI = () => {
@@ -1129,11 +1164,21 @@
                     const rect = UI.scrubTrack.getBoundingClientRect();
                     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
                     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
+                    const pctStr = `${pos*100}%`;
+                    if (UI.scrubFill.style.width !== pctStr) {
+                        UI.scrubFill.style.width = pctStr;
+                        UI.scrubThumb.style.left = pctStr;
+                    }
                     return pos * dur;
                 };
+                let scrubRAF = null;
                 const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
-                const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
+                const sMove = (e) => {
+                    if(State.isScrubbing) {
+                        if (scrubRAF) cancelAnimationFrame(scrubRAF);
+                        scrubRAF = requestAnimationFrame(() => calcScrub(e));
+                    }
+                };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
                         State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
@@ -1208,18 +1253,23 @@
                 document.addEventListener('click', unlockAudio);
                 document.addEventListener('touchstart', unlockAudio, {passive: true});
 
-                let lastFadeTime = 0;
+                let fadeRAF = null;
+                let isUiActive = true;
                 const resetFade = () => {
-                    // ⚡ Bolt: Throttle to execute at most once per 100ms to prevent main-thread blocking on continuous mousemove
-                    const now = Date.now();
-                    if (now - lastFadeTime > 100) {
-                        UI.viewport.classList.add('active-ui'); clearTimeout(State.uiTimeout);
+                    if (fadeRAF) cancelAnimationFrame(fadeRAF);
+                    fadeRAF = requestAnimationFrame(() => {
+                        // ⚡ Bolt: Cache class state to avoid unconditional layout evaluation
+                        if (!isUiActive) {
+                            UI.viewport.classList.add('active-ui');
+                            isUiActive = true;
+                        }
+                        clearTimeout(State.uiTimeout);
                         State.uiTimeout = setTimeout(() => {
                             if(Player.isPaused() || State.isScrubbing || document.querySelector('.controls-pill:hover') || document.activeElement === UI.chatIn) return;
                             UI.viewport.classList.remove('active-ui');
+                            isUiActive = false;
                         }, 3500);
-                        lastFadeTime = now;
-                    }
+                    });
                 };
                 UI.viewport.addEventListener('mousemove', resetFade); UI.viewport.addEventListener('touchstart', resetFade, {passive:true});
                 UI.chatIn.addEventListener('focus', resetFade);
