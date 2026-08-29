@@ -436,7 +436,7 @@
             
             syncState: { time: 0, duration: 0, paused: true },
             isScrubbing: false, ignoreNextSeek: false, syncTimeout: null,
-            hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null, rAFTimeUpdate: null,
+            hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null, rAFTimeUpdate: null, rAFYTLoop: null, lastYTPaused: null,
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
             lastVol: 1, // Fix 3: Memory for mute amnesia
@@ -633,7 +633,7 @@
             purge: () => {
                 Player.loading(false); UI.emptyState.style.opacity = '1';
                 UI.pipBtn.classList.remove('hidden'); UI.aspectBtn.classList.remove('hidden'); 
-                if(State.ytLoop) clearInterval(State.ytLoop);
+                if(State.rAFYTLoop) cancelAnimationFrame(State.rAFYTLoop);
                 State.playMode = 'idle'; UI.title.textContent = "No Media Loaded";
                 UI.video.pause(); UI.video.removeAttribute('src'); UI.video.srcObject = null; UI.video.load();
                 if(State.hls) { State.hls.destroy(); State.hls = null; }
@@ -1008,18 +1008,26 @@
                 }
             },
             startYTLoop: () => {
-                if(State.ytLoop) clearInterval(State.ytLoop);
-                State.ytLoop = setInterval(() => {
+                if(State.rAFYTLoop) cancelAnimationFrame(State.rAFYTLoop);
+
+                const loop = () => {
                     if(!State.isScrubbing && State.playMode === 'youtube') {
                         const p = Player.isPaused();
-                        p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                        if(p !== State.lastYTPaused) {
+                            p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                            State.lastYTPaused = p;
+                        }
+
                         const c = Player.getTime(), d = Player.getDur();
                         if(d > 0) {
                             UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
                             UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
                         }
                     }
-                }, 250);
+                    if(State.playMode === 'youtube') State.rAFYTLoop = requestAnimationFrame(loop);
+                };
+
+                State.rAFYTLoop = requestAnimationFrame(loop);
             },
 
             bind: () => {

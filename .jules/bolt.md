@@ -10,3 +10,6 @@
 ## 2026-08-29 - Throttling Video timeupdate UI Events
 **Learning:** The `timeupdate` event on HTMLVideoElement fires continuously during playback (usually 4 to 66 times per second depending on the browser), causing severe layout thrashing and main-thread congestion if UI elements (like text contents or progress bars) are updated synchronously inside it.
 **Action:** Throttle the `timeupdate` event handler's DOM updates by wrapping them in `requestAnimationFrame`. Maintain a state reference to the pending animation frame and `cancelAnimationFrame` before dispatching a new one to prevent stacking rendering tasks.
+## 2026-08-29 - Throttling YouTube Sync Intervals
+**Learning:** Using `setInterval` for high-frequency DOM updates (like YouTube player syncing) forces updates completely independent of the browser's render cycle, leading to layout thrashing and poor perceived performance, especially when manipulating DOM classes and styles.
+**Action:** Replace `setInterval` with recursive `requestAnimationFrame` loops for visual synchronization tasks. Combine this with State Caching (e.g. `lastYTPaused`) so that DOM properties (`classList.add`/`remove`) are only modified when the underlying state strictly changes, preventing redundant layouts.
