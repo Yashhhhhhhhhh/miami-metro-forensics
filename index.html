@@ -913,6 +913,7 @@
         };
 
         let lastSyncTimeStr = "";
+        let lastSyncScrubPct = "";
         const Sync = {
             startHost: () => {
                 if(State.hostBeat) clearInterval(State.hostBeat);
@@ -990,9 +991,10 @@
                 
                 if(h.duration > 0) {
                     const pctStr = `${(h.time / h.duration) * 100}%`;
-                    if (UI.scrubFill.style.width !== pctStr) {
+                    if (pctStr !== lastSyncScrubPct) {
                         UI.scrubFill.style.width = pctStr;
                         UI.scrubThumb.style.left = pctStr;
+                        lastSyncScrubPct = pctStr;
                     }
                     // ⚡ Bolt: Cache textContent to avoid redundant text layout recalculations
                     const newTimeStr = `${Utils.time(h.time)} / ${Utils.time(h.duration)}`;
@@ -1183,8 +1185,6 @@
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
 
 
-                let lastTimeStrNative = "";
-
                 const updateFilters = () => {
                     UI.video.style.filter = `brightness(${UI.eqBright.value}%) contrast(${UI.eqCont.value}%) saturate(${UI.eqSat.value}%)`;
                 };
@@ -1192,7 +1192,8 @@
                 UI.eqCont.addEventListener('input', updateFilters);
                 UI.eqSat.addEventListener('input', updateFilters);
 
-
+                let lastTimeStrNative = "";
+                let lastScrubPctNative = "";
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
@@ -1204,9 +1205,10 @@
                             lastTimeStrNative = newTimeStr;
                         }
                         const newScrubPct = `${(c/d)*100}%`;
-                        if (UI.scrubFill.style.width !== newScrubPct) {
+                        if (newScrubPct !== lastScrubPctNative) {
                             UI.scrubFill.style.width = newScrubPct;
                             UI.scrubThumb.style.left = newScrubPct;
+                            lastScrubPctNative = newScrubPct;
                         }
                     }
                 });
@@ -1238,15 +1240,17 @@
                 UI.playBtn.addEventListener('click', togPlay);
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
 
+                let lastMouseScrubPct = "";
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
                     const rect = UI.scrubTrack.getBoundingClientRect();
                     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
                     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                     const pctStr = `${pos*100}%`;
-                    if (UI.scrubFill.style.width !== pctStr) {
+                    if (pctStr !== lastMouseScrubPct) {
                         UI.scrubFill.style.width = pctStr;
                         UI.scrubThumb.style.left = pctStr;
+                        lastMouseScrubPct = pctStr;
                     }
                     return pos * dur;
                 };
