@@ -985,12 +985,12 @@
                 if(ytMatch) { Player.loadYT(ytMatch[1], title); return; }
 
                 Player.loadNative(url, true, title);
-                if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) { 
+                if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls && Hls.isSupported()) {
                     State.hls = new Hls(); 
                     State.hls.attachMedia(UI.video); 
                     State.hls.on(Hls.Events.MEDIA_ATTACHED, () => { State.hls.loadSource(url); });
                 } 
-                else if(url.includes('.mpd') && typeof dashjs !== 'undefined') { State.dash = dashjs.MediaPlayer().create(); State.dash.initialize(UI.video, url, true); }
+                else if(url.includes('.mpd') && typeof dashjs !== 'undefined' && dashjs) { State.dash = dashjs.MediaPlayer().create(); State.dash.initialize(UI.video, url, true); }
                 Ambilight();
             },
             toggleSidebar: (force) => {
