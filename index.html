@@ -834,7 +834,7 @@
             handleCall: (call) => {
                 // Fix 2: Dynamically create Audio elements for Multi-Peer Voice
                 if(call.metadata?.type === 'voice') {
-                    if(!State.localVoiceStream) { try{ const c = new AudioContext(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){} }
+                    if(!State.localVoiceStream) { try{ const c = new AudioContext(); State.localVoiceStream = c.createMediaStreamDestination().stream; }catch(e){ console.warn("Failed to create AudioContext:", e); } }
                     call.answer(State.localVoiceStream); 
                     
                     call.on('stream', s => {
