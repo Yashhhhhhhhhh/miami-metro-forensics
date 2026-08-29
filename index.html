@@ -823,7 +823,7 @@
                     }
                 };
                 c.on('open', onOpen); if(c.open) onOpen();
-                c.on('data', Sync.handle);
+                c.on('data', d => Sync.handle(d, c));
                 c.on('close', () => { 
                     State.connections.delete(c.peer);
                     if(!State.isHost) {
@@ -875,7 +875,7 @@
                     Net.broadcastAll({type: 'STATE', s: State.syncState});
                 }, 500);
             },
-            handle: (d) => {
+            handle: (d, c) => {
                 switch(d.type) {
                     case 'INFO': 
                         Utils.log('System', `${d.name} joined.`, true); 
@@ -912,7 +912,8 @@
                         if (State.isHost) {
                             Utils.toast(`${d.from} requested a fresh sync frame.`, 'info');
                             State.syncState = { time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now() };
-                            Net.broadcastAll({type: 'STATE', s: State.syncState});
+                            if (c && c.open) c.send({type: 'STATE', s: State.syncState});
+                            else Net.broadcastAll({type: 'STATE', s: State.syncState});
                         }
                         break;
                         
