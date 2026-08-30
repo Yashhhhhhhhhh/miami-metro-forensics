@@ -3,6 +3,10 @@
 <head>     
     <meta charset="UTF-8">     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">     
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTHVtacOocmUgU3R1ZGlvIFYzIiwic2hvcnRfbmFtZSI6Ikx1bWnDqHJlIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzA5MDkwYiIsInRoZW1lX2NvbG9yIjoiIzA5MDkwYiJ9">
     <title>Lumière Studio V3 | Definitive Cinema</title>         
 
     <link rel="preconnect" href="https://fonts.googleapis.com">     
@@ -116,7 +120,7 @@
                 <div class="space-y-8 relative z-10">                     
                     <div class="space-y-2">                         
                         <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest" for="nameInput">Your Alias</label>                         
-                        <input type="text" id="nameInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-base focus:border-accent-500 focus:bg-black/60 transition-all outline-none text-white" placeholder="e.g. Director" value="">                     
+                        <input type="text" id="nameInput" class="w-full px-5 py-4 bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-xl text-base focus:border-accent-500 focus:bg-black/60 transition-all outline-none text-white" placeholder="e.g. Director" value="">
                     </div>                     
                     
                     <button id="hostBtn" class="w-full bg-accent-600 hover:bg-accent-500 text-white font-bold rounded-xl px-4 py-4 flex items-center justify-center gap-3 text-base shadow-glow transition-all">                             
@@ -131,7 +135,7 @@
                     </div>                                         
                     
                     <div class="flex gap-3">                         
-                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-lg focus:border-white/30 transition-all outline-none text-white" placeholder="CODE" maxlength="6">                         
+                        <input type="text" id="joinCodeInput" class="w-full px-5 py-4 bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-xl text-center uppercase tracking-[0.2em] font-mono text-lg focus:border-white/30 transition-all outline-none text-white" placeholder="CODE" maxlength="6">
                         <button id="joinBtn" class="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl px-8 py-4 transition-all border border-white/10 disabled:opacity-50">Join</button>                     
                     </div>                 
                 </div>             
@@ -201,10 +205,11 @@
                     <span id="timeDisplay" class="text-zinc-400 font-mono text-xs tracking-wider">00:00 / 00:00</span>
                 </div>
 
-                <div id="scrubber" class="scrubber-track group/scrub">
+                <div id="scrubber" class="scrubber-track group/scrub relative">
                     <div id="scrubberBuffer" class="scrubber-buffer w-0"></div>
                     <div id="scrubberFill" class="scrubber-fill w-0"></div>
                     <div id="scrubberThumb" class="scrubber-thumb left-0"></div>
+                    <div id="scrubTooltip" class="absolute -top-8 left-0 transform -translate-x-1/2 bg-zinc-900/90 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 transition-opacity pointer-events-none z-10">00:00</div>
                 </div>
 
                 <div class="flex items-center justify-between pt-2">
@@ -264,7 +269,7 @@
                 </div>
             </div>
 
-            <div id="hostDeck" class="p-6 border-b border-white/5 bg-black/40 overflow-y-auto hidden">
+            <div id="hostDeck" class="p-6 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl overflow-y-auto hidden">
                 <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Master Media Deck</h3>
                 <div class="space-y-3">
                     <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
@@ -305,13 +310,13 @@
                 </div>
             </div>
 
-            <div id="guestDeck" class="p-6 border-b border-white/5 bg-black/40 hidden">
+            <div id="guestDeck" class="p-6 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl hidden">
                 <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Viewer Deck</h3>
                 <div class="space-y-3">
                     <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
                         <div class="flex items-center gap-3">
                             <div class="p-1.5 bg-emerald-500/20 rounded-md text-emerald-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
-                            <div class="text-left"><p class="text-sm font-bold text-white">Mount Local File</p><p class="text-[10px] text-zinc-400">Host requested a file match</p></div>
+                            <div class="text-left"><p class="text-sm font-bold text-white">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Mount Local File Match</p></div>
                         </div>
                         <input type="file" id="guestSyncInput" class="hidden" accept="video/mp4,video/webm">
                     </label>
@@ -329,7 +334,7 @@
                 <div id="chatMessages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
                     <div class="text-center text-[9px] text-emerald-500 font-bold tracking-widest py-2 uppercase opacity-70">Peer-to-Peer Encryption Active</div>
                 </div>
-                <div class="p-4 bg-black/40 border-t border-white/5 pb-8 md:pb-4">
+                <div class="p-4 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 pb-8 md:pb-4">
                     <form id="chatForm" class="relative">
                         <input type="text" id="chatInput" class="w-full bg-black/60 border border-white/10 rounded-xl pl-4 pr-10 py-3 text-sm text-white focus:border-accent-500 outline-none" placeholder="Send a message..." autocomplete="off">
                         <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-accent-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
@@ -405,6 +410,7 @@
         };
 
         const Utils = {
+            escapeHTML: (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])),
             code: () => Math.random().toString(36).substring(2, 8).toUpperCase(),
             time: (s) => {
                 if (isNaN(s) || !isFinite(s)) return "00:00";
@@ -484,12 +490,15 @@
                 }
             },
             setVolume: (val) => { 
-                if (State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.setVolume === 'function') {
+                if (State.playMode === 'youtube' && typeof ytPlayer !== 'undefined' && typeof ytPlayer.setVolume === 'function') {
                     ytPlayer.setVolume(val * 100);
-                    val === 0 ? (typeof ytPlayer.mute === 'function' && ytPlayer.mute()) : (typeof ytPlayer.unMute === 'function' && ytPlayer.unMute());
-                } else {
-                    if(AudioGraph.gain) AudioGraph.gain.gain.value = val; else UI.video.volume = val; 
+                    if (val === 0) {
+                        if (typeof ytPlayer.mute === 'function') ytPlayer.mute();
+                    } else {
+                        if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute();
+                    }
                 }
+                if(AudioGraph.gain) AudioGraph.gain.gain.value = val; else UI.video.volume = val;
             }
         };
 
@@ -509,6 +518,9 @@
                 if(State.activeWebRTCStream) { State.activeWebRTCStream.getTracks().forEach(t => t.stop()); State.activeWebRTCStream = null; }
                 if(UI.video.srcObject) { const s = UI.video.srcObject; if(s && s.getTracks) s.getTracks().forEach(t => t.stop()); UI.video.srcObject = null; }
                 
+                State.mediaConns.forEach(call => call.close());
+                State.mediaConns.clear();
+
                 UI.video.removeAttribute('src'); UI.video.innerHTML = ''; UI.video.load();
                 
                 UI.eqSpk.style.opacity = '1'; UI.eqSpk.style.pointerEvents = 'auto'; UI.eqIem.style.opacity = '1'; UI.eqIem.style.pointerEvents = 'auto';
@@ -519,13 +531,13 @@
                 if(ytPlayer && typeof ytPlayer.stopVideo === 'function') { ytPlayer.stopVideo(); }
                 if(State.ytLoop) { clearInterval(State.ytLoop); State.ytLoop = null; }
                 
+                State.aspectIdx = 0; UI.aspectBtn.textContent = 'FIT';
                 UI.ytCont.classList.add('hidden'); UI.video.classList.remove('hidden'); UI.video.className = aspectModes[State.aspectIdx];
                 UI.scrubFill.style.width = '0%'; UI.scrubThumb.style.left = '0%'; UI.time.textContent = '00:00 / 00:00';
             },
             loadNative: (srcObj, isUrl = false, title = "Local File") => {
                 Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
                 State.playMode = isUrl ? 'url' : 'local_sync'; State.mediaTitle = title; UI.title.textContent = title;
-                UI.video.crossOrigin = isUrl ? "anonymous" : null;
                 
                 if(isUrl) UI.video.src = srcObj; 
                 else { State.lastBlobUrl = URL.createObjectURL(srcObj); UI.video.src = State.lastBlobUrl; }
@@ -580,7 +592,7 @@
 
             const draw = (timestamp) => {
                 if(!State.ambilight || UI.video.paused || UI.video.readyState < 2) { 
-                    ambLoop = requestAnimationFrame(draw); 
+                    if(ambLoop) { cancelAnimationFrame(ambLoop); ambLoop = null; }
                     return; 
                 } 
                 if (timestamp - lastAmbTime > 33) {
@@ -604,7 +616,7 @@
                     State.mediaConns.set(c.peer, call);
                     const pc = call.peerConnection;
                     if(pc) {
-                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(()=>{}); } }); };
+                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; p.encodings[0].maxBitrate = 5000000; s.setParameters(p).catch(()=>{}); } }); };
                         hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
                     }
                 });
@@ -688,6 +700,10 @@
                 c.on('data', (d) => Sync.handle(d, c.peer));
                 c.on('close', () => { 
                     State.connections.delete(c.peer); updateUI();
+                    if(State.voiceConns.has(c.peer)) {
+                        State.voiceConns.get(c.peer).aud.remove();
+                        State.voiceConns.delete(c.peer);
+                    }
                     if(!State.isHost) { 
                         UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Link Severed"; Utils.toast("Host disconnected", "error"); 
                         Player.purge(); UI.guestDeck.classList.add('hidden');
@@ -729,15 +745,21 @@
                     case 'PING': if(State.isHost) State.connections.get(peerId)?.send({type: 'PONG', origT: d.t, hostT: Date.now()}); break;
                     case 'PONG': 
                         if(!State.isHost) { 
-                            const rtt = Date.now() - d.origT;
-                            State.clockDelta = d.hostT - (Date.now() - (rtt/2)); 
+                            State.rtt = Date.now() - d.origT;
+                            State.clockDelta = d.hostT - (Date.now() - (State.rtt/2));
                         } 
                         break;
                     case 'INFO': 
                         Utils.log('System', `${d.name} joined.`, true); 
                         break;
                     case 'CHAT': 
-                        Utils.log(d.name || (State.isHost?'Viewer':'Host'), d.text); 
+                        const senderName = d.name || (State.isHost ? 'Viewer' : 'Host');
+                        Utils.log(senderName, d.text);
+
+                        if (!State.sidebarOpen) {
+                            Utils.toast(`<b>${Utils.escapeHTML(senderName)}:</b> ${Utils.escapeHTML(d.text)}`);
+                        }
+
                         if(State.isHost) { State.connections.forEach((c, pid) => { if(pid !== peerId) c.send({type:'CHAT', text: d.text, name: d.name}); }); }
                         break;
                     case 'MASTER_STATE':
@@ -773,9 +795,15 @@
                                     if(d.action === 'play') { Player.play(); Net.broadcastAll({type:'CMD_PLAY'}); }
                                     else if(d.action === 'pause') { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); }
                                     else if(d.action === 'seek') { Player.seek(d.val); Net.broadcastAll({type:'CMD_SEEK', t: d.val}); }
+                                },
+                                () => {
+                                    State.connections.get(peerId)?.send({type:'REQ_DENIED', action: d.action});
                                 }
                             );
                         }
+                        break;
+                    case 'REQ_DENIED':
+                        Utils.toast(`Host denied request to ${d.action}`, "error");
                         break;
                 }
             },
@@ -799,7 +827,9 @@
                 const absDrift = Math.abs(drift);
 
                 if(State.playMode === 'youtube') {
-                    if(absDrift > 1.5 && !h.paused) Player.seek(targetTime); 
+                    if(absDrift > 1.5 && !h.paused) { Player.seek(targetTime); }
+                    else if(absDrift > 0.15 && !h.paused && typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(drift > 0 ? 0.95 : 1.05); }
+                    else if(typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(1.0); }
                 } else {
                     if(absDrift > 2.0 && !h.paused) { Player.seek(targetTime); } 
                     else if (absDrift > 0.15 && !h.paused) { UI.video.playbackRate = drift > 0 ? 0.95 : 1.05; } 
@@ -819,10 +849,20 @@
             enter: () => { UI.lobby.style.opacity = '0'; setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700); },
             
             addVoice: (stream, peerId, call) => {
-                const aud = new Audio(); aud.autoplay = true; aud.srcObject = stream; aud.volume = parseFloat(UI.voiceVol.value);
+                const aud = new Audio();
+                aud.autoplay = true;
+                aud.srcObject = stream;
+                aud.volume = parseFloat(UI.voiceVol.value);
+
                 UI.remoteAudCont.appendChild(aud);
                 State.voiceConns.set(peerId, {call, aud});
-                call.on('close', () => { if(State.voiceConns.has(peerId)) { State.voiceConns.get(peerId).aud.remove(); State.voiceConns.delete(peerId); } });
+
+                call.on('close', () => {
+                    if(State.voiceConns.has(peerId)) {
+                        State.voiceConns.get(peerId).aud.remove();
+                        State.voiceConns.delete(peerId);
+                    }
+                });
             },
 
             loadUrl: (url, title = "Remote Feed", broadcast = true) => {
@@ -830,12 +870,22 @@
                 const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                 if(ytMatch) { Player.loadYT(ytMatch[1], title); return; }
 
-                Player.loadNative(url, true, title);
                 if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) { 
-                    State.hls = new Hls(); State.hls.attachMedia(UI.video);
+                    Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
+                    State.playMode = 'url'; State.mediaTitle = title; UI.title.textContent = title;
+                    State.hls = new Hls({ enableWorker: true, maxBufferLength: 30, maxMaxBufferLength: 60 });
+                    State.hls.attachMedia(UI.video);
                     State.hls.on(Hls.Events.MEDIA_ATTACHED, () => { State.hls.loadSource(url); });
                 } 
-                else if(url.includes('.mpd') && typeof dashjs !== 'undefined') { State.dash = dashjs.MediaPlayer().create(); State.dash.initialize(UI.video, url, true); }
+                else if(url.includes('.mpd') && typeof dashjs !== 'undefined') {
+                    Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
+                    State.playMode = 'url'; State.mediaTitle = title; UI.title.textContent = title;
+                    State.dash = dashjs.MediaPlayer().create();
+                    State.dash.initialize(UI.video, url, true);
+                }
+                else {
+                    Player.loadNative(url, true, title);
+                }
                 Ambilight();
             },
             
@@ -902,17 +952,39 @@
                         UI.video.onplaying = null; if(State.activeWebRTCStream) return;
                         try {
                             const vs = UI.video.captureStream ? UI.video.captureStream(60) : UI.video.mozCaptureStream(60); 
-                            const tracks = [vs.getVideoTracks()[0]]; if(AudioGraph.dest) tracks.push(AudioGraph.dest.stream.getAudioTracks()[0]);
+                            const tracks = [];
+
+                            const videoTrack = vs.getVideoTracks()[0];
+                            if(videoTrack) tracks.push(videoTrack);
+
+                            const nativeAudioTrack = vs.getAudioTracks()[0];
+
+                            if (nativeAudioTrack) {
+                                tracks.push(nativeAudioTrack);
+                            }
+
+                            if (tracks.length === 0) {
+                                throw new Error("No media tracks could be captured from this file.");
+                            }
+
                             State.activeWebRTCStream = new MediaStream(tracks);
                             Net.broadcastMediaAll(f.name, 'local_stream');
-                        } catch(err) { Utils.toast("Capture Failed", "error"); }
+                            Utils.toast("Broadcasting stream to peers...", "success");
+
+                        } catch(err) {
+                            console.error("Capture Failed:", err);
+                            Utils.toast(`Capture Failed: ${err.message || "DRM/Codec issue"}`, "error");
+                        }
                     };
                     e.target.value = '';
                 });
 
                 UI.screenBtn.addEventListener('click', async () => {
                     try {
-                        const stream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:60}, audio:true});
+                        const stream = await navigator.mediaDevices.getDisplayMedia({
+                            video: { frameRate: 60 },
+                            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                        });
                         Player.purge(); UI.emptyState.style.opacity = '0';
                         State.activeWebRTCStream = stream;
                         
@@ -921,10 +993,14 @@
                             if(State.isHost) Net.broadcastAll({type: 'MASTER_STATE', payload: { mode: 'idle' }});
                         };
                         
+                        AudioGraph.init();
                         UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(()=>{});
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
                         Net.broadcastMediaAll("Screen Share", 'screenshare');
-                    } catch(e) {}
+                    } catch(e) {
+                        Utils.toast("Screen share canceled or not supported on this device.", "error");
+                        console.warn("Screen share failed:", e);
+                    }
                 });
 
                 UI.chatForm.addEventListener('submit', e => {
@@ -944,7 +1020,11 @@
                     const c = UI.video.currentTime, d = UI.video.duration;
                     if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
                 });
-                UI.video.addEventListener('play', () => { UI.iconPlay.classList.add('hidden'); UI.iconPause.classList.remove('hidden'); });
+                UI.video.addEventListener('play', () => {
+                    UI.iconPlay.classList.add('hidden');
+                    UI.iconPause.classList.remove('hidden');
+                    if (State.ambilight && !ambLoop) Ambilight();
+                });
                 UI.video.addEventListener('pause', () => { UI.iconPlay.classList.remove('hidden'); UI.iconPause.classList.add('hidden'); });
                 UI.video.addEventListener('waiting', () => Player.loading(true));
                 UI.video.addEventListener('playing', () => Player.loading(false));
@@ -959,15 +1039,37 @@
                 UI.playBtn.addEventListener('click', togPlay);
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
 
+                const scrubTooltip = document.getElementById('scrubTooltip');
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
                     const rect = UI.scrubTrack.getBoundingClientRect();
-                    const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : (e.changedTouches ? e.changedTouches[0].clientX : 0)); 
+
+                    let clientX;
+                    if (e.type.includes('touch')) {
+                        if (e.touches && e.touches.length > 0) {
+                            clientX = e.touches[0].clientX;
+                        } else if (e.changedTouches && e.changedTouches.length > 0) {
+                            clientX = e.changedTouches[0].clientX;
+                        } else {
+                            clientX = 0;
+                        }
+                    } else {
+                        clientX = e.clientX;
+                    }
+
                     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                     UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
+
+                    scrubTooltip.textContent = Utils.time(pos * dur);
+                    scrubTooltip.style.left = `${pos * 100}%`;
+                    scrubTooltip.style.opacity = '1';
+
                     return pos * dur;
                 };
                 const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
+                UI.scrubTrack.addEventListener('mousemove', (e) => { if(!State.isScrubbing) calcScrub(e); });
+                UI.scrubTrack.addEventListener('mouseleave', () => { if(!State.isScrubbing) scrubTooltip.style.opacity = '0'; });
+
                 const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
@@ -975,7 +1077,11 @@
                         const t = calcScrub(e);
                         if(t !== undefined) {
                             if(State.isHost) { Player.seek(t); Net.broadcastAll({type:'CMD_SEEK', t}); }
-                            else { Sync.requestAction('seek', t); }
+                            else {
+                                State.ignoreNextSeek = true;
+                                setTimeout(() => State.ignoreNextSeek = false, 2000);
+                                Sync.requestAction('seek', t);
+                            }
                         }
                     }
                 };
@@ -990,11 +1096,32 @@
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
-                UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(e.target.value));
+                UI.volSlider.addEventListener('input', e => {
+                    const val = e.target.value;
+                    AudioGraph.setVolume(val);
+                    if(val === "0") {
+                        UI.volIco.classList.add('hidden');
+                        UI.volMut.classList.remove('hidden');
+                    } else {
+                        UI.volMut.classList.add('hidden');
+                        UI.volIco.classList.remove('hidden');
+                    }
+                });
                 UI.volBtn.addEventListener('click', () => {
-                    const currentV = UI.volSlider.value;
-                    if(currentV > 0) { State.lastVolume = currentV; AudioGraph.setVolume(0); UI.volSlider.value = 0; UI.volIco.classList.add('hidden'); UI.volMut.classList.remove('hidden'); } 
-                    else { const v = State.lastVolume > 0 ? State.lastVolume : 1; AudioGraph.setVolume(v); UI.volSlider.value = v; UI.volMut.classList.add('hidden'); UI.volIco.classList.remove('hidden'); }
+                    const currentV = parseFloat(UI.volSlider.value);
+                    if(currentV > 0) {
+                        State.lastVolume = currentV;
+                        AudioGraph.setVolume(0);
+                        UI.volSlider.value = 0;
+                        UI.volIco.classList.add('hidden');
+                        UI.volMut.classList.remove('hidden');
+                    } else {
+                        const v = (State.lastVolume !== undefined && State.lastVolume > 0) ? State.lastVolume : 1;
+                        AudioGraph.setVolume(v);
+                        UI.volSlider.value = v;
+                        UI.volMut.classList.add('hidden');
+                        UI.volIco.classList.remove('hidden');
+                    }
                 });
 
                 UI.aspectBtn.addEventListener('click', () => { State.aspectIdx = (State.aspectIdx + 1) % aspectModes.length; UI.video.className = aspectModes[State.aspectIdx]; UI.aspectBtn.textContent = aspectLabels[State.aspectIdx]; });
@@ -1018,7 +1145,13 @@
                 });
                 
                 UI.ambilightBtn.addEventListener('click', () => { State.ambilight = !State.ambilight; State.ambilight ? UI.ambilightBtn.classList.add('active') : UI.ambilightBtn.classList.remove('active'); Ambilight(); });
-                UI.reqSyncBtn.addEventListener('click', () => { Utils.toast("Syncing...", "info"); State.connections.values().next().value?.send({type:'REQ_SYNC', name: State.myName}); }); 
+                let lastSyncReq = 0;
+                UI.reqSyncBtn.addEventListener('click', () => {
+                    if(Date.now() - lastSyncReq < 2000) return;
+                    lastSyncReq = Date.now();
+                    Utils.toast("Syncing...", "info");
+                    State.connections.values().next().value?.send({type:'REQ_SYNC', name: State.myName});
+                });
 
                 let lastFadeTime = 0;
                 const resetFade = () => {
