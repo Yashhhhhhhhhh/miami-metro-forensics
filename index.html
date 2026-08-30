@@ -410,6 +410,7 @@
         };
 
         const Utils = {
+            escapeHTML: (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])),
             code: () => Math.random().toString(36).substring(2, 8).toUpperCase(),
             time: (s) => {
                 if (isNaN(s) || !isFinite(s)) return "00:00";
@@ -517,6 +518,9 @@
                 if(State.activeWebRTCStream) { State.activeWebRTCStream.getTracks().forEach(t => t.stop()); State.activeWebRTCStream = null; }
                 if(UI.video.srcObject) { const s = UI.video.srcObject; if(s && s.getTracks) s.getTracks().forEach(t => t.stop()); UI.video.srcObject = null; }
                 
+                State.mediaConns.forEach(call => call.close());
+                State.mediaConns.clear();
+
                 UI.video.removeAttribute('src'); UI.video.innerHTML = ''; UI.video.load();
                 
                 UI.eqSpk.style.opacity = '1'; UI.eqSpk.style.pointerEvents = 'auto'; UI.eqIem.style.opacity = '1'; UI.eqIem.style.pointerEvents = 'auto';
@@ -527,13 +531,13 @@
                 if(ytPlayer && typeof ytPlayer.stopVideo === 'function') { ytPlayer.stopVideo(); }
                 if(State.ytLoop) { clearInterval(State.ytLoop); State.ytLoop = null; }
                 
+                State.aspectIdx = 0; UI.aspectBtn.textContent = 'FIT';
                 UI.ytCont.classList.add('hidden'); UI.video.classList.remove('hidden'); UI.video.className = aspectModes[State.aspectIdx];
                 UI.scrubFill.style.width = '0%'; UI.scrubThumb.style.left = '0%'; UI.time.textContent = '00:00 / 00:00';
             },
             loadNative: (srcObj, isUrl = false, title = "Local File") => {
                 Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
                 State.playMode = isUrl ? 'url' : 'local_sync'; State.mediaTitle = title; UI.title.textContent = title;
-                UI.video.crossOrigin = isUrl ? "anonymous" : null;
                 
                 if(isUrl) UI.video.src = srcObj; 
                 else { State.lastBlobUrl = URL.createObjectURL(srcObj); UI.video.src = State.lastBlobUrl; }
@@ -696,6 +700,10 @@
                 c.on('data', (d) => Sync.handle(d, c.peer));
                 c.on('close', () => { 
                     State.connections.delete(c.peer); updateUI();
+                    if(State.voiceConns.has(c.peer)) {
+                        State.voiceConns.get(c.peer).aud.remove();
+                        State.voiceConns.delete(c.peer);
+                    }
                     if(!State.isHost) { 
                         UI.syncDot.className = "w-2 h-2 rounded-full bg-accent-500"; UI.syncTxt.textContent = "Link Severed"; Utils.toast("Host disconnected", "error"); 
                         Player.purge(); UI.guestDeck.classList.add('hidden');
@@ -738,6 +746,7 @@
                     case 'PONG': 
                         if(!State.isHost) { 
                             State.rtt = Date.now() - d.origT;
+                            State.clockDelta = d.hostT - (Date.now() - (State.rtt/2));
                         } 
                         break;
                     case 'INFO': 
@@ -748,7 +757,7 @@
                         Utils.log(senderName, d.text);
 
                         if (!State.sidebarOpen) {
-                            Utils.toast(`<b>${senderName}:</b> ${d.text}`);
+                            Utils.toast(`<b>${Utils.escapeHTML(senderName)}:</b> ${Utils.escapeHTML(d.text)}`);
                         }
 
                         if(State.isHost) { State.connections.forEach((c, pid) => { if(pid !== peerId) c.send({type:'CHAT', text: d.text, name: d.name}); }); }
@@ -812,7 +821,7 @@
 
                 if(State.ignoreNextSeek) return;
 
-                const transitDelay = State.rtt ? (State.rtt / 2000) : 0;
+                const transitDelay = Math.max(0, (Date.now() + State.clockDelta - h.timestamp) / 1000);
                 const targetTime = h.time + (h.paused ? 0 : transitDelay);
                 const drift = Player.getTime() - targetTime;
                 const absDrift = Math.abs(drift);
@@ -937,12 +946,9 @@
                             if(videoTrack) tracks.push(videoTrack);
 
                             const nativeAudioTrack = vs.getAudioTracks()[0];
-                            const graphAudioTrack = AudioGraph.dest ? AudioGraph.dest.stream.getAudioTracks()[0] : null;
 
                             if (nativeAudioTrack) {
                                 tracks.push(nativeAudioTrack);
-                            } else if (graphAudioTrack) {
-                                tracks.push(graphAudioTrack);
                             }
 
                             if (tracks.length === 0) {
@@ -1014,39 +1020,25 @@
                 UI.playBtn.addEventListener('click', togPlay);
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
 
+                const scrubTooltip = document.getElementById('scrubTooltip');
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
                     const rect = UI.scrubTrack.getBoundingClientRect();
-                    const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : (e.changedTouches ? e.changedTouches[0].clientX : 0)); 
+                    const clientX = e.type.includes('touch') ? (e.touches.length > 0 ? e.touches[0].clientX : e.changedTouches[0].clientX) : e.clientX;
                     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                     UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
-                    return pos * dur;
-                };
-                const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
-                const scrubTooltip = document.getElementById('scrubTooltip');
-                UI.scrubTrack.addEventListener('mousemove', (e) => {
-                    const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
-                    const rect = UI.scrubTrack.getBoundingClientRect();
-                    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
                     scrubTooltip.textContent = Utils.time(pos * dur);
                     scrubTooltip.style.left = `${pos * 100}%`;
                     scrubTooltip.style.opacity = '1';
-                });
-                UI.scrubTrack.addEventListener('mouseleave', () => scrubTooltip.style.opacity = '0');
 
-                const sMove = (e) => {
-                    if(State.isScrubbing) {
-                        calcScrub(e);
-                        const dur = State.isHost ? Player.getDur() : State.syncState.duration;
-                        if(dur) {
-                            const rect = UI.scrubTrack.getBoundingClientRect();
-                            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                            scrubTooltip.textContent = Utils.time(pos * dur);
-                            scrubTooltip.style.left = `${pos * 100}%`;
-                            scrubTooltip.style.opacity = '1';
-                        }
-                    }
+                    return pos * dur;
                 };
+                const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
+                UI.scrubTrack.addEventListener('mousemove', (e) => { if(!State.isScrubbing) calcScrub(e); });
+                UI.scrubTrack.addEventListener('mouseleave', () => { if(!State.isScrubbing) scrubTooltip.style.opacity = '0'; });
+
+                const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
                 const sEnd = (e) => {
                     if(State.isScrubbing) {
                         State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
@@ -1068,7 +1060,17 @@
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
-                UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(e.target.value));
+                UI.volSlider.addEventListener('input', e => {
+                    const val = e.target.value;
+                    AudioGraph.setVolume(val);
+                    if(val === "0") {
+                        UI.volIco.classList.add('hidden');
+                        UI.volMut.classList.remove('hidden');
+                    } else {
+                        UI.volMut.classList.add('hidden');
+                        UI.volIco.classList.remove('hidden');
+                    }
+                });
                 UI.volBtn.addEventListener('click', () => {
                     const currentV = parseFloat(UI.volSlider.value);
                     if(currentV > 0) {
@@ -1107,7 +1109,13 @@
                 });
                 
                 UI.ambilightBtn.addEventListener('click', () => { State.ambilight = !State.ambilight; State.ambilight ? UI.ambilightBtn.classList.add('active') : UI.ambilightBtn.classList.remove('active'); Ambilight(); });
-                UI.reqSyncBtn.addEventListener('click', () => { Utils.toast("Syncing...", "info"); State.connections.values().next().value?.send({type:'REQ_SYNC', name: State.myName}); }); 
+                let lastSyncReq = 0;
+                UI.reqSyncBtn.addEventListener('click', () => {
+                    if(Date.now() - lastSyncReq < 2000) return;
+                    lastSyncReq = Date.now();
+                    Utils.toast("Syncing...", "info");
+                    State.connections.values().next().value?.send({type:'REQ_SYNC', name: State.myName});
+                });
 
                 let lastFadeTime = 0;
                 const resetFade = () => {
