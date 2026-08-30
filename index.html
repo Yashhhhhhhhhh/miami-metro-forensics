@@ -257,7 +257,7 @@
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>                             
                         <span id="syncText">Awaiting Network...</span>
                     </div>
-                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all">
+                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all" aria-label="Toggle Sidebar" title="Toggle Sidebar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                 </div>
@@ -299,7 +299,7 @@
 
                 <div class="flex items-center justify-between pt-2">
                     <div class="flex items-center gap-2 md:gap-4">
-                        <button id="playBtn" class="btn-icon text-white">
+                        <button id="playBtn" class="btn-icon text-white" aria-label="Toggle Playback" title="Toggle Playback">
                             <svg id="iconPlay" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                             <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         </button>
@@ -308,12 +308,12 @@
                         <button id="skipFwdBtn" class="btn-icon" title="+10s"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"></path></svg></button>
 
                         <div class="relative flex items-center group/vol ml-2">
-                            <button id="muteBtn" class="btn-icon">
+                            <button id="muteBtn" class="btn-icon" aria-label="Mute or Unmute" title="Mute/Unmute">
                                 <svg id="iconVol" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                                 <svg id="iconVolMuted" class="w-6 h-6 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                             </button>
                             <div class="absolute left-full top-1/2 -translate-y-1/2 w-0 overflow-hidden group-hover/vol:w-28 transition-all duration-300 py-4 px-2 z-10 flex items-center">
-                                <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1">
+                                <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1" aria-label="Volume">
                             </div>
                         </div>
                     </div>
@@ -325,7 +325,7 @@
                         <button id="aspectBtn" class="btn-icon !w-10 !h-10 text-[10px] font-bold tracking-wider uppercase">FIT</button>
                         <button id="pipBtn" class="btn-icon" title="Picture in Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
                         <button id="ambilightBtn" class="btn-icon active" title="Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
-                        <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
+                        <button id="fullscreenBtn" class="btn-icon" aria-label="Toggle Fullscreen" title="Toggle Fullscreen"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                     </div>
                 </div>
             </div>
@@ -368,7 +368,7 @@
                     <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-green-500 hidden" id="voiceDot"></div> Spatial Voice
                     </h3>
-                    <button id="micBtn" class="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
+                    <button id="micBtn" class="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10" aria-label="Toggle Microphone" title="Toggle Microphone">
                         <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>                         
                         <svg id="iconMicMuted" class="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                     </button>
@@ -379,7 +379,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
-                    <input type="range" id="voiceVolSlider" min="0" max="1" step="0.05" value="0.8">
+                    <input type="range" id="voiceVolSlider" min="0" max="1" step="0.05" value="0.8" aria-label="Voice Volume">
                 </div>
             </div>
 
@@ -455,7 +455,7 @@
                 <div class="p-4 bg-black/40 border-t border-white/5 pb-8 md:pb-4">
                     <form id="chatForm" class="relative">
                         <input type="text" id="chatInput" class="w-full bg-black/60 border border-white/10 rounded-xl pl-4 pr-10 py-3 text-sm text-white focus:border-accent-500 outline-none focus:bg-black/80 transition-colors" placeholder="Send a message..." autocomplete="off">
-                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-accent-400 transition-colors">
+                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-accent-400 transition-colors" aria-label="Send message" title="Send message">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                         </button>
                     </form>
