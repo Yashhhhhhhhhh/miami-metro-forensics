@@ -476,11 +476,14 @@
             hostBeat: null, telemetryBeat: null, uiTimeout: null, ytLoop: null,
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
+
             lastVol: 1, // Fix 3: Memory for mute amnesia
+            isControlsHovered: false,
             
             peer: null, 
             connections: new Map(), // Multi-peer Network Engine
             mediaConns: new Map(), 
+
             voiceConns: new Map(), // Fix 2: Multi-peer Voice
             
             localVoiceStream: null, activeWebRTCStream: null,
@@ -540,7 +543,7 @@
         const Utils = {
             code: () => Math.random().toString(36).substring(2, 8).padEnd(6, '0').toUpperCase(),
             time: (s) => {
-                if (isNaN(s) || !isFinite(s)) return "00:00";
+                if (isNaN(s) || !isFinite(s) || s < 0) return "00:00";
                 const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
                 return h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}` : `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
             },
@@ -549,7 +552,7 @@
                 const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : 
                               (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
                 t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
-                t.innerHTML = msg;
+                t.textContent = msg;
                 document.getElementById('toastContainer').appendChild(t);
                 
                 t.offsetHeight; // Force reflow
@@ -957,6 +960,7 @@
                     case 'REQ_SYNC':
                         if (State.isHost) {
                             Utils.toast(`${d.from} requested a fresh sync frame.`, 'info');
+
                             State.syncState = { time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now() };
                             if (c && c.open) c.send({type: 'STATE', s: State.syncState});
                             else Net.broadcastAll({type: 'STATE', s: State.syncState});
@@ -1088,7 +1092,9 @@
                 });
                 // Fix 1: Guest Sync Action Explicit Link
                 UI.guestFileSync.addEventListener('change', e => {
-                    const f = e.target.files[0]; if(!f) return;
+                    const f = e.target.files[0];
+                    if(!f) return;
+
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(!State.isHost && State.connections.has('host')) State.connections.get('host').send({type:'FILE_MOUNTED'});
                 });
@@ -1151,6 +1157,7 @@
                 // Fix 2 & 5: Ensure voice volume correctly targets dynamically created Voice elements
                 UI.voiceVol.addEventListener('input', e => {
                     const vol = parseFloat(e.target.value);
+
                     State.voiceConns.forEach(v => { if(v.aud) v.aud.volume = vol; });
                 });
                 
@@ -1199,6 +1206,12 @@
                 };
                 UI.playBtn.addEventListener('click', togPlay);
                 UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
+
+                const pillEl = document.querySelector('.controls-pill');
+                if (pillEl) {
+                    pillEl.addEventListener('mouseenter', () => State.isControlsHovered = true);
+                    pillEl.addEventListener('mouseleave', () => State.isControlsHovered = false);
+                }
 
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
@@ -1291,7 +1304,7 @@
                     if (now - lastFadeTime > 100) {
                         UI.viewport.classList.add('active-ui'); clearTimeout(State.uiTimeout);
                         State.uiTimeout = setTimeout(() => {
-                            if(Player.isPaused() || State.isScrubbing || document.querySelector('.controls-pill:hover') || document.activeElement === UI.chatIn) return;
+                            if(Player.isPaused() || State.isScrubbing || State.isControlsHovered || document.activeElement === UI.chatIn) return;
                             UI.viewport.classList.remove('active-ui');
                         }, 3500);
                         lastFadeTime = now;
