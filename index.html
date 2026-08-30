@@ -705,7 +705,7 @@
                 UI.video.classList.add('hidden'); UI.ytCont.classList.remove('hidden');
                 const init = () => {
                     if(!ytReady) return setTimeout(init, 200);
-                    if(ytPlayer) { ytPlayer.loadVideoById(id); App.startYTLoop(); }
+                    if(ytPlayer && typeof ytPlayer.loadVideoById === 'function') { ytPlayer.loadVideoById(id); App.startYTLoop(); }
                     else {
                         ytPlayer = new YT.Player('ytPlayerDiv', {
                             videoId: id, playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0, 'origin': window.location.origin },
@@ -718,9 +718,9 @@
             getTime: () => { if(State.playMode === 'youtube' && ytPlayer && ytPlayer.getCurrentTime) return ytPlayer.getCurrentTime(); return UI.video.currentTime || 0; },
             getDur: () => { if(State.playMode === 'youtube' && ytPlayer && ytPlayer.getDuration) return ytPlayer.getDuration(); return UI.video.duration || 0; },
             isPaused: () => { if(State.playMode === 'youtube' && ytPlayer && ytPlayer.getPlayerState) return ytPlayer.getPlayerState() !== 1; return UI.video.paused; },
-            play: () => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.playVideo(); else UI.video.play().catch((e)=>{ console.warn("Play failed", e); Utils.toast("Playback failed", "error"); }); },
-            pause: () => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.pauseVideo(); else UI.video.pause(); },
-            seek: (t) => { if(State.playMode === 'youtube' && ytPlayer) ytPlayer.seekTo(t, true); else UI.video.currentTime = t; }
+            play: () => { if(State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo(); else UI.video.play().catch((e)=>{ console.warn("Play failed", e); Utils.toast("Playback failed", "error"); }); },
+            pause: () => { if(State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo(); else UI.video.pause(); },
+            seek: (t) => { if(State.playMode === 'youtube' && ytPlayer && typeof ytPlayer.seekTo === 'function') ytPlayer.seekTo(t, true); else UI.video.currentTime = t; }
         };
 
         let ambLoop = null;
@@ -1284,12 +1284,12 @@
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
-                UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(e.target.value));
+                UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(parseFloat(e.target.value)));
                 
                 // Fix 3: Seamless mute toggle with pre-mute state memory
                 UI.volBtn.addEventListener('click', () => {
                     if (UI.volSlider.value > 0) {
-                        State.lastVol = UI.volSlider.value;
+                        State.lastVol = parseFloat(UI.volSlider.value);
                         UI.volSlider.value = 0;
                         AudioGraph.setVolume(0);
                         UI.volIco.classList.add('hidden'); UI.volMut.classList.remove('hidden');
