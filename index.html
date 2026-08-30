@@ -616,7 +616,7 @@
                     State.mediaConns.set(c.peer, call);
                     const pc = call.peerConnection;
                     if(pc) {
-                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; s.setParameters(p).catch(()=>{}); } }); };
+                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; p.encodings[0].maxBitrate = 5000000; s.setParameters(p).catch(()=>{}); } }); };
                         hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
                     }
                 });
@@ -827,7 +827,9 @@
                 const absDrift = Math.abs(drift);
 
                 if(State.playMode === 'youtube') {
-                    if(absDrift > 1.5 && !h.paused) Player.seek(targetTime); 
+                    if(absDrift > 1.5 && !h.paused) { Player.seek(targetTime); }
+                    else if(absDrift > 0.15 && !h.paused && typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(drift > 0 ? 0.95 : 1.05); }
+                    else if(typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(1.0); }
                 } else {
                     if(absDrift > 2.0 && !h.paused) { Player.seek(targetTime); } 
                     else if (absDrift > 0.15 && !h.paused) { UI.video.playbackRate = drift > 0 ? 0.95 : 1.05; } 
@@ -868,12 +870,22 @@
                 const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                 if(ytMatch) { Player.loadYT(ytMatch[1], title); return; }
 
-                Player.loadNative(url, true, title);
                 if(url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) { 
-                    State.hls = new Hls(); State.hls.attachMedia(UI.video);
+                    Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
+                    State.playMode = 'url'; State.mediaTitle = title; UI.title.textContent = title;
+                    State.hls = new Hls({ enableWorker: true, maxBufferLength: 30, maxMaxBufferLength: 60 });
+                    State.hls.attachMedia(UI.video);
                     State.hls.on(Hls.Events.MEDIA_ATTACHED, () => { State.hls.loadSource(url); });
                 } 
-                else if(url.includes('.mpd') && typeof dashjs !== 'undefined') { State.dash = dashjs.MediaPlayer().create(); State.dash.initialize(UI.video, url, true); }
+                else if(url.includes('.mpd') && typeof dashjs !== 'undefined') {
+                    Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
+                    State.playMode = 'url'; State.mediaTitle = title; UI.title.textContent = title;
+                    State.dash = dashjs.MediaPlayer().create();
+                    State.dash.initialize(UI.video, url, true);
+                }
+                else {
+                    Player.loadNative(url, true, title);
+                }
                 Ambilight();
             },
             
@@ -969,7 +981,10 @@
 
                 UI.screenBtn.addEventListener('click', async () => {
                     try {
-                        const stream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:60}, audio:true});
+                        const stream = await navigator.mediaDevices.getDisplayMedia({
+                            video: { frameRate: 60 },
+                            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                        });
                         Player.purge(); UI.emptyState.style.opacity = '0';
                         State.activeWebRTCStream = stream;
                         
@@ -978,10 +993,14 @@
                             if(State.isHost) Net.broadcastAll({type: 'MASTER_STATE', payload: { mode: 'idle' }});
                         };
                         
+                        AudioGraph.init();
                         UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(()=>{});
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
                         Net.broadcastMediaAll("Screen Share", 'screenshare');
-                    } catch(e) {}
+                    } catch(e) {
+                        Utils.toast("Screen share canceled or not supported on this device.", "error");
+                        console.warn("Screen share failed:", e);
+                    }
                 });
 
                 UI.chatForm.addEventListener('submit', e => {
@@ -1024,7 +1043,20 @@
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
                     const rect = UI.scrubTrack.getBoundingClientRect();
-                    const clientX = e.type.includes('touch') ? (e.touches.length > 0 ? e.touches[0].clientX : e.changedTouches[0].clientX) : e.clientX;
+
+                    let clientX;
+                    if (e.type.includes('touch')) {
+                        if (e.touches && e.touches.length > 0) {
+                            clientX = e.touches[0].clientX;
+                        } else if (e.changedTouches && e.changedTouches.length > 0) {
+                            clientX = e.changedTouches[0].clientX;
+                        } else {
+                            clientX = 0;
+                        }
+                    } else {
+                        clientX = e.clientX;
+                    }
+
                     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                     UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
 
@@ -1045,7 +1077,11 @@
                         const t = calcScrub(e);
                         if(t !== undefined) {
                             if(State.isHost) { Player.seek(t); Net.broadcastAll({type:'CMD_SEEK', t}); }
-                            else { Sync.requestAction('seek', t); }
+                            else {
+                                State.ignoreNextSeek = true;
+                                setTimeout(() => State.ignoreNextSeek = false, 2000);
+                                Sync.requestAction('seek', t);
+                            }
                         }
                     }
                 };
