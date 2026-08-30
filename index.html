@@ -429,6 +429,23 @@
     </div>     
 
     <script>
+        // ⚡ Bolt: Pre-allocated Object Pool for Audio elements to prevent GC spikes during Multi-Peer reconnection bursts
+        const AudioPool = {
+            pool: [],
+            get: () => {
+                if (AudioPool.pool.length > 0) return AudioPool.pool.pop();
+                const aud = new Audio();
+                aud.autoplay = true;
+                return aud;
+            },
+            release: (aud) => {
+                aud.pause();
+                aud.srcObject = null;
+                aud.remove();
+                if (AudioPool.pool.length < 10) AudioPool.pool.push(aud);
+            }
+        };
+
         const State = {
             isHost: false, roomId: '', myName: 'Viewer',
             playMode: 'idle', // idle, local_sync, local_stream, url, youtube, screenshare
@@ -459,6 +476,7 @@
         document.head.appendChild(tag);
 
         const UI = {
+            toastCont: document.getElementById('toastContainer'), // ⚡ Bolt: Cache DOM node instead of querying repeatedly
             lobby: document.getElementById('lobbyScreen'), theater: document.getElementById('theaterScreen'),
             nameIn: document.getElementById('nameInput'), hostBtn: document.getElementById('hostBtn'),
             joinIn: document.getElementById('joinCodeInput'), joinBtn: document.getElementById('joinBtn'),
@@ -511,7 +529,7 @@
                               (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
                 t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
                 t.innerHTML = msg;
-                document.getElementById('toastContainer').appendChild(t);
+                UI.toastCont.appendChild(t); // ⚡ Bolt: Use cached reference to eliminate DOM tree traversal
                 
                 // ⚡ Bolt: Prevent forced synchronous reflow by using double requestAnimationFrame
                 requestAnimationFrame(() => {
@@ -539,7 +557,7 @@
                 btnRow.appendChild(btnDen); btnRow.appendChild(btnApp);
                 t.appendChild(txt); t.appendChild(btnRow);
                 
-                document.getElementById('toastContainer').appendChild(t);
+                UI.toastCont.appendChild(t); // ⚡ Bolt: Use cached reference to eliminate DOM tree traversal
 
                 // ⚡ Bolt: Prevent forced synchronous reflow by using double requestAnimationFrame
                 requestAnimationFrame(() => {
@@ -560,18 +578,18 @@
                 d.className = 'animate-slide-in';
                 if(sys) {
                     d.className += " text-center text-[10px] text-accent-400 font-bold uppercase tracking-wider py-1 opacity-80";
-                    d.textContent = txt; 
+                    d.textContent = txt; // Safe assignment, prevents XSS
                 } else {
                     const me = sender === State.myName;
                     d.className += ` flex flex-col ${me ? 'items-end' : 'items-start'}`;
                     
                     const senderSpan = document.createElement('span');
                     senderSpan.className = "text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1";
-                    senderSpan.textContent = sender;
+                    senderSpan.textContent = sender; // Safe assignment, prevents XSS
 
                     const msgDiv = document.createElement('div');
                     msgDiv.className = `px-4 py-2.5 max-w-[85%] text-sm rounded-2xl ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 border border-white/5 text-zinc-200 rounded-tl-sm'}`;
-                    msgDiv.textContent = txt;
+                    msgDiv.textContent = txt; // Safe assignment, prevents XSS
 
                     d.appendChild(senderSpan);
                     d.appendChild(msgDiv);
@@ -851,8 +869,8 @@
                     call.answer(State.localVoiceStream); 
                     
                     call.on('stream', s => {
-                        const aud = new Audio(); 
-                        aud.autoplay = true; 
+                        // ⚡ Bolt: Use object pool instead of instantiating new Audio elements
+                        const aud = AudioPool.get();
                         aud.srcObject = s; 
                         aud.volume = UI.voiceVol.value;
                         UI.voiceCont.appendChild(aud);
@@ -861,7 +879,8 @@
                     
                     call.on('close', () => {
                         if(State.voiceConns.has(call.peer)) {
-                            State.voiceConns.get(call.peer).aud.remove();
+                            // ⚡ Bolt: Release back to pool
+                            AudioPool.release(State.voiceConns.get(call.peer).aud);
                             State.voiceConns.delete(call.peer);
                         }
                     });
