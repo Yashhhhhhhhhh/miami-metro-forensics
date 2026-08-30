@@ -16,3 +16,9 @@
 ## 2024-05-24 - [XSS Safety Over Micro-Optimizations]
 **Learning:** Replacing safe DOM text node generation with string interpolation (`insertAdjacentHTML`) to save negligible DOM creation time exposes the application to severe XSS attacks.
 **Action:** Never sacrifice security for micro-optimizations. Always use safe text assignment (`textContent`) for user-generated input.
+## 2024-05-24 - [Avoid Instantiating Functions in Event Listeners]
+**Learning:** Creating new anonymous functions inside high-frequency event listeners (like 'timeupdate' and 'mousemove') triggers unnecessary garbage collection, causing stuttering and memory bloat.
+**Action:** Extract anonymous callback functions from event listeners into standalone named functions, and reference those named functions in the event listener array.
+## 2024-05-24 - [Replace DOM Property Mutations in High Frequency Loops]
+**Learning:** `t.innerHTML = msg;` forces the browser to invoke the HTML parser and tear down child elements, which is slow if executed frequently.
+**Action:** When a DOM element only needs a text update, ALWAYS use `.textContent = msg;`. It circumvents the HTML parser entirely and executes an order of magnitude faster.

@@ -528,7 +528,7 @@
                 const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : 
                               (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
                 t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
-                t.innerHTML = msg;
+                t.textContent = msg; // ⚡ Bolt: Use textContent instead of innerHTML to bypass expensive HTML parser
                 UI.toastCont.appendChild(t); // ⚡ Bolt: Use cached reference to eliminate DOM tree traversal
                 
                 // ⚡ Bolt: Prevent forced synchronous reflow by using double requestAnimationFrame
@@ -707,9 +707,10 @@
 
         let ambLoop = null;
         let lastAmbTime = 0;
+        let isAmbActive = false; // ⚡ Bolt: Cache class state to prevent layout thrashing
         const Ambilight = () => {
             if(!State.ambilight || State.playMode === 'youtube' || State.playMode === 'idle' || UI.video.paused) {
-                UI.canvas.classList.remove('active');
+                if (isAmbActive) { UI.canvas.classList.remove('active'); isAmbActive = false; }
                 if(ambLoop) cancelAnimationFrame(ambLoop);
                 return;
             }
@@ -718,15 +719,20 @@
 
             const draw = (timestamp) => {
                 if(!State.ambilight || UI.video.paused || UI.video.readyState < 2) { 
-                    UI.canvas.classList.remove('active');
+                    if (isAmbActive) { UI.canvas.classList.remove('active'); isAmbActive = false; }
                     ambLoop = null; 
                     return; 
                 }
 
                 // ⚡ Bolt: Throttle to ~30fps (33ms) for performance since >30fps is visually indistinguishable with a 90px blur
                 if (timestamp - lastAmbTime > 33) {
-                    try { ctx.drawImage(UI.video, 0, 0, 160, 90); UI.canvas.classList.add('active'); }
-                    catch(e) { UI.canvas.classList.remove('active'); return; }
+                    try {
+                        ctx.drawImage(UI.video, 0, 0, 160, 90);
+                        if (!isAmbActive) { UI.canvas.classList.add('active'); isAmbActive = true; }
+                    } catch(e) {
+                        if (isAmbActive) { UI.canvas.classList.remove('active'); isAmbActive = false; }
+                        return;
+                    }
                     lastAmbTime = timestamp;
                 }
 
@@ -1103,19 +1109,26 @@
                     } catch(e) {}
                 });
 
-                UI.chatForm.addEventListener('submit', e => {
-                    e.preventDefault(); const t = UI.chatIn.value.trim(); if(!t) return;
+                // ⚡ Bolt: Extract anonymous function to prevent GC bloat in event listeners
+                const handleChatSubmit = (e) => {
+                    e.preventDefault();
+                    const t = UI.chatIn.value.trim();
+                    if(!t) return;
                     Utils.log(State.myName, t); 
-                    if(State.isHost) Net.broadcastAll({type:'CHAT', text: t, sender: State.myName}); 
-                    else if(State.connections.has('host')) State.connections.get('host').send({type:'CHAT', text: t, sender: State.myName});
+                    if(State.isHost) {
+                        Net.broadcastAll({type:'CHAT', text: t, sender: State.myName});
+                    } else if(State.connections.has('host')) {
+                        State.connections.get('host').send({type:'CHAT', text: t, sender: State.myName});
+                    }
                     UI.chatIn.value = '';
-                });
+                };
+                UI.chatForm.addEventListener('submit', handleChatSubmit);
                 
                 UI.micBtn.addEventListener('click', Mic.toggle);
-                // Fix 2 & 5: Ensure voice volume correctly targets dynamically created Voice elements
-                UI.voiceVol.addEventListener('input', e => {
-                    State.voiceConns.forEach(v => { v.aud.volume = e.target.value; });
-                });
+
+                // ⚡ Bolt: Extract anonymous function to prevent GC bloat in event listeners
+                const handleVoiceVol = (e) => { State.voiceConns.forEach(v => { v.aud.volume = e.target.value; }); };
+                UI.voiceVol.addEventListener('input', handleVoiceVol);
                 
                 UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
@@ -1200,7 +1213,9 @@
                 };
                 UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
-                UI.volSlider.addEventListener('input', e => AudioGraph.setVolume(e.target.value));
+                // ⚡ Bolt: Extract anonymous function to prevent GC bloat in event listeners
+                const handleVol = (e) => AudioGraph.setVolume(e.target.value);
+                UI.volSlider.addEventListener('input', handleVol);
                 
                 // Fix 3: Seamless mute toggle with pre-mute state memory
                 UI.volBtn.addEventListener('click', () => {
