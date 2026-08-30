@@ -474,7 +474,7 @@
                 const t = document.createElement('div');
                 t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
                 
-                const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white'; txt.textContent = msg;
+                const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white'; txt.innerHTML = msg;
                 const btnRow = document.createElement('div'); btnRow.className = "flex gap-2 w-full";
                 
                 const btnA = document.createElement('button'); btnA.className = "flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider btn-action-approve"; btnA.textContent = "Approve";
@@ -840,7 +840,7 @@
                     case 'REQ_ACTION': 
                         if(State.isHost) {
                             const map = { 'play': "Play Video", 'pause': "Pause Video", 'seek': `Seek to ${Utils.time(d.val)}` };
-                            Utils.toastAction(`${Utils.escapeHTML(d.name)} requests to ${map[d.action]}`,
+                            Utils.toastAction(`<b>${Utils.escapeHTML(d.name)}</b> requests to ${map[d.action]}`,
                                 () => {
                                     if(d.action === 'play') { Player.play(); Net.broadcastAll({type:'CMD_PLAY'}); }
                                     else if(d.action === 'pause') { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); }
