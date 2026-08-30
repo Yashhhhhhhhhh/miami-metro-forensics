@@ -479,6 +479,10 @@
 
             lastVol: 1, // Fix 3: Memory for mute amnesia
             isControlsHovered: false,
+
+            timeUpdateFrame: null, lastTimeText: '', lastScrubWidth: '',
+            lastYTPaused: null, lastPlayState: null,
+            scrubFrame: null,
             
             peer: null, 
             connections: new Map(), // Multi-peer Network Engine
@@ -555,8 +559,7 @@
                 t.textContent = msg;
                 document.getElementById('toastContainer').appendChild(t);
                 
-                t.offsetHeight; // Force reflow
-                t.classList.remove('translate-y-4', 'opacity-0');
+                requestAnimationFrame(() => requestAnimationFrame(() => t.classList.remove('translate-y-4', 'opacity-0')));
                 
                 setTimeout(() => { 
                     t.classList.add('translate-y-4', 'opacity-0'); 
@@ -1059,11 +1062,23 @@
                 State.ytLoop = setInterval(() => {
                     if(!State.isScrubbing && State.playMode === 'youtube') {
                         const p = Player.isPaused();
-                        p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                        if (State.lastYTPaused !== p) {
+                            p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                            State.lastYTPaused = p;
+                        }
                         const c = Player.getTime(), d = Player.getDur();
                         if(d > 0) {
-                            UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                            UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                            const newText = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            if (State.lastTimeText !== newText) {
+                                UI.time.textContent = newText;
+                                State.lastTimeText = newText;
+                            }
+                            const newWidth = `${(c/d)*100}%`;
+                            if (State.lastScrubWidth !== newWidth) {
+                                UI.scrubFill.style.width = newWidth;
+                                UI.scrubThumb.style.left = newWidth;
+                                State.lastScrubWidth = newWidth;
+                            }
                         }
                     }
                 }, 250);
@@ -1171,17 +1186,33 @@
                 UI.eqCont.addEventListener('input', updateFilters);
                 UI.eqSat.addEventListener('input', updateFilters);
 
-                UI.video.addEventListener('timeupdate', () => {
+                const handleTimeUpdate = () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
-                    const c = UI.video.currentTime, d = UI.video.duration;
-                    if(d > 0) {
-                        UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
-                        UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`;
-                    }
-                });
+                    if (State.timeUpdateFrame) cancelAnimationFrame(State.timeUpdateFrame);
+                    State.timeUpdateFrame = requestAnimationFrame(() => {
+                        const c = UI.video.currentTime, d = UI.video.duration;
+                        if(d > 0) {
+                            const newText = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            if (State.lastTimeText !== newText) {
+                                UI.time.textContent = newText;
+                                State.lastTimeText = newText;
+                            }
+                            const newWidth = `${(c/d)*100}%`;
+                            if (State.lastScrubWidth !== newWidth) {
+                                UI.scrubFill.style.width = newWidth;
+                                UI.scrubThumb.style.left = newWidth;
+                                State.lastScrubWidth = newWidth;
+                            }
+                        }
+                    });
+                };
+                UI.video.addEventListener('timeupdate', handleTimeUpdate);
                 const syncPlayStateUI = () => {
                     const p = UI.video.paused;
-                    p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                    if (State.lastPlayState !== p) {
+                        p ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
+                        State.lastPlayState = p;
+                    }
                     Ambilight(); 
                 };
                 UI.video.addEventListener('play', syncPlayStateUI);
@@ -1215,11 +1246,20 @@
 
                 const calcScrub = (e) => {
                     const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
-                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    if (State.scrubFrame) cancelAnimationFrame(State.scrubFrame);
                     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
-                    return pos * dur;
+                    State.scrubFrame = requestAnimationFrame(() => {
+                        const rect = UI.scrubTrack.getBoundingClientRect();
+                        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                        const newWidth = `${pos*100}%`;
+                        if (State.lastScrubWidth !== newWidth) {
+                            UI.scrubFill.style.width = newWidth;
+                            UI.scrubThumb.style.left = newWidth;
+                            State.lastScrubWidth = newWidth;
+                        }
+                    });
+                    const posSync = Math.max(0, Math.min(1, (clientX - UI.scrubTrack.getBoundingClientRect().left) / UI.scrubTrack.getBoundingClientRect().width));
+                    return posSync * dur;
                 };
                 const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
                 const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
