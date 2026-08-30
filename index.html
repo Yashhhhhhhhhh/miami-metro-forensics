@@ -333,7 +333,7 @@
                                     <div class="p-1.5 bg-green-500/20 rounded-md text-green-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
                                     <div class="text-left"><p class="text-sm font-bold text-white">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Zero bandwidth, exact match</p></div>
                                 </div>
-                                <input type="file" id="fileSyncInput" class="hidden" accept="video/mp4,video/webm">
+                                <input type="file" id="fileSyncInput" class="hidden" accept="video/*,.mkv,.avi">
                             </label>
 
                             <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
@@ -349,7 +349,7 @@
                                     <div class="p-1.5 bg-accent-500 rounded-md text-white group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
                                     <div class="text-left"><p class="text-sm font-bold text-white">WebRTC Stream</p><p class="text-[10px] text-zinc-300">Live transcode to peers</p></div>
                                 </div>
-                                <input type="file" id="fileStreamInput" class="hidden" accept="video/mp4,video/webm,video/ogg">
+                                <input type="file" id="fileStreamInput" class="hidden" accept="video/*,.mkv,.avi">
                             </label>
 
                             <button id="shareScreenBtn" class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 group text-left">
@@ -372,7 +372,7 @@
                                     <div class="p-1.5 bg-emerald-500/20 rounded-md text-emerald-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
                                     <div class="text-left"><p class="text-sm font-bold text-white">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Mount Local File Match</p></div>
                                 </div>
-                                <input type="file" id="guestSyncInput" class="hidden" accept="video/mp4,video/webm">
+                                <input type="file" id="guestSyncInput" class="hidden" accept="video/*,.mkv,.avi">
                             </label>
                             <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
                                 <div class="flex items-center gap-3">
@@ -859,33 +859,28 @@
             },
             enforce: (h) => {
                 if(State.isHost || State.isScrubbing) return;
-                State.syncState = h;
                 
-                if(State.playMode === 'local_stream' || State.playMode === 'screenshare') {
-                    h.paused ? (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden')) : (UI.iconPause.classList.remove('hidden'), UI.iconPlay.classList.add('hidden'));
-                    return; 
+                let hTime = h.time;
+                if(!h.paused) {
+                    const now = Date.now();
+                    const rtt = State.connections.values().next().value?.rtt || 0;
+                    const transitDelay = (rtt / 2) / 1000;
+                    hTime += transitDelay;
+                    if (State.clockDelta !== undefined) {
+                        // Math: now + State.clockDelta gives us the estimated Host's current absolute time.
+                        // Subtract h.timestamp (when the host sent the message in host time) to get elapsed time.
+                        const elapsed = ((now + State.clockDelta) - h.timestamp) / 1000;
+                        if (elapsed > 0) hTime += elapsed;
+                    }
                 }
 
-                if(h.paused && !Player.isPaused()) Player.pause();
-                if(!h.paused && Player.isPaused()) { Player.play(); UI.gate.classList.remove('active'); }
-
-                if(State.ignoreNextSeek) return;
-
-                const transitDelay = Math.max(0, (Date.now() + State.clockDelta - h.timestamp) / 1000);
-                const targetTime = h.time + (h.paused ? 0 : transitDelay);
-                const drift = Player.getTime() - targetTime;
-                const absDrift = Math.abs(drift);
-
-                if(State.playMode === 'youtube') {
-                    if(absDrift > 1.5 && !h.paused) { Player.seek(targetTime); }
-                    else if(absDrift > 0.15 && !h.paused && typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(drift > 0 ? 0.95 : 1.05); }
-                    else if(typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(1.0); }
-                } else {
-                    if(absDrift > 2.0 && !h.paused) { Player.seek(targetTime); } 
-                    else if (absDrift > 0.15 && !h.paused) { UI.video.playbackRate = drift > 0 ? 0.95 : 1.05; } 
+                const absDrift = Math.abs(Player.getTime() - hTime);
+                if(!h.paused) {
+                    if(absDrift > 2) Player.seek(hTime);
+                    else if(absDrift > 0.05) { UI.video.playbackRate = 1.0 + (Player.getTime() < hTime ? 0.05 : -0.05); }
                     else { UI.video.playbackRate = 1.0; }
                 }
-                if(h.paused && absDrift > 0.1) Player.seek(h.time);
+                if(h.paused && absDrift > 0.1) Player.seek(hTime);
             },
             requestAction: (action, val=0) => {
                 if(Date.now() - State.lastActionTime < 1500) return Utils.toast("Please wait...", "error");
