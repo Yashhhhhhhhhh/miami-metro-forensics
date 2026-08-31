@@ -175,10 +175,6 @@
                 <div id="ytPlayerDiv" class="w-full h-full"></div>                     
             </div>
 
-            <div id="subtitleLayer" class="absolute inset-0 z-[45] pointer-events-none flex items-end justify-center pb-32 px-12 transition-opacity duration-300">
-                <div id="subtitleText" class="subtitle-text text-white font-sans text-3xl md:text-4xl text-center bg-black/50 px-4 py-2 rounded-xl hidden"></div>
-            </div>
-
             <div id="reactionLayer" class="absolute inset-0 z-[48] pointer-events-none overflow-hidden"></div>
 
             <div class="top-bar flex-col md:flex-row gap-4">
@@ -199,7 +195,7 @@
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>                             
                         <span id="syncText">Awaiting Network...</span>
                     </div>
-                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all shadow-lg">
+                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all shadow-lg" aria-label="Toggle Sidebar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                 </div>
@@ -272,6 +268,7 @@
             </div>
         </div>
 
+        <div id="sidebarOverlay" class="absolute inset-0 bg-black/50 z-[55] hidden backdrop-blur-sm transition-opacity opacity-0"></div>
         <div id="sidebar" class="sidebar-container">
             <div class="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-zinc-950/40">
                 <div class="flex gap-5" id="sidebarTabs">
@@ -279,8 +276,8 @@
                     <button class="text-[11px] font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors" id="tabRosterBtn">Roster</button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="settingsBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10 border border-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-                    <button id="closeSidebarBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10 border border-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    <button id="settingsBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10 border border-white/5" aria-label="Settings"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+                    <button id="closeSidebarBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10 border border-white/5" aria-label="Close Sidebar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                 </div>
             </div>
 
@@ -434,14 +431,14 @@
             
             title: document.getElementById('nowPlayingTitle'), time: document.getElementById('timeDisplay'),
             playBtn: document.getElementById('playBtn'), iconPlay: document.getElementById('iconPlay'), iconPause: document.getElementById('iconPause'),
-            scrubTrack: document.getElementById('scrubber'), scrubBuf: document.getElementById('scrubberBuffer'), scrubFill: document.getElementById('scrubberFill'), scrubThumb: document.getElementById('scrubberThumb'),
+            scrubTrack: document.getElementById('scrubber'), scrubBuf: document.getElementById('scrubberBuffer'), scrubFill: document.getElementById('scrubberFill'), scrubThumb: document.getElementById('scrubberThumb'), scrubTooltip: document.getElementById('scrubTooltip'),
             skipB: document.getElementById('skipBackBtn'), skipF: document.getElementById('skipFwdBtn'),
             volBtn: document.getElementById('muteBtn'), volIco: document.getElementById('iconVol'), volMut: document.getElementById('iconVolMuted'), volSlider: document.getElementById('volSlider'),
             
             reqSyncBtn: document.getElementById('requestSyncBtn'), aspectBtn: document.getElementById('aspectBtn'),
             pipBtn: document.getElementById('pipBtn'), ambilightBtn: document.getElementById('ambilightBtn'), fsBtn: document.getElementById('fullscreenBtn'),
             
-            sidebar: document.getElementById('sidebar'), toggleSideBtn: document.getElementById('toggleSidebarBtn'), closeSideBtn: document.getElementById('closeSidebarBtn'),
+            sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebarOverlay'), toggleSideBtn: document.getElementById('toggleSidebarBtn'), closeSideBtn: document.getElementById('closeSidebarBtn'),
             hostDeck: document.getElementById('hostDeck'), guestDeck: document.getElementById('guestDeck'),
             chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
@@ -530,7 +527,7 @@
         };
 
         const AudioGraph = {
-            ctx: null, source: null, eq: null, gain: null, comp: null, dest: null, isProfileSpeaker: true,
+            ctx: null, source: null, eq: null, gain: null, comp: null, dest: null, localGain: null, isProfileSpeaker: true,
             init: () => {
                 if(AudioGraph.ctx) return;
                 try {
@@ -538,12 +535,14 @@
                     AudioGraph.source = AudioGraph.ctx.createMediaElementSource(UI.video);
                     AudioGraph.eq = AudioGraph.ctx.createBiquadFilter(); AudioGraph.gain = AudioGraph.ctx.createGain(); AudioGraph.comp = AudioGraph.ctx.createDynamicsCompressor();
                     AudioGraph.dest = AudioGraph.ctx.createMediaStreamDestination(); 
+                    AudioGraph.localGain = AudioGraph.ctx.createGain();
                     
                     AudioGraph.source.connect(AudioGraph.eq); 
                     AudioGraph.eq.connect(AudioGraph.gain); 
                     AudioGraph.gain.connect(AudioGraph.comp);
                     
-                    AudioGraph.comp.connect(AudioGraph.ctx.destination); // Play locally
+                    AudioGraph.comp.connect(AudioGraph.localGain);
+                    AudioGraph.localGain.connect(AudioGraph.ctx.destination); // Play locally
                     AudioGraph.comp.connect(AudioGraph.dest); // Route to WebRTC stream 
                     
                     AudioGraph.applyProfile();
@@ -596,6 +595,7 @@
                 State.mediaConns.clear();
                 
                 UI.video.removeAttribute('src'); UI.video.innerHTML = ''; UI.video.load();
+                if (AudioGraph.localGain) AudioGraph.localGain.gain.value = 1;
                 
                 UI.eqSpk.style.opacity = '1'; UI.eqSpk.style.pointerEvents = 'auto'; UI.eqIem.style.opacity = '1'; UI.eqIem.style.pointerEvents = 'auto';
                 UI.pipBtn.style.display = 'flex'; UI.aspectBtn.style.display = 'flex';
@@ -603,7 +603,7 @@
                 if(State.hls) { State.hls.destroy(); State.hls = null; }
                 if(State.dash) { State.dash.reset(); State.dash = null; }
                 if(ytPlayer && typeof ytPlayer.stopVideo === 'function') { ytPlayer.stopVideo(); }
-                if(State.ytLoop) { clearInterval(State.ytLoop); State.ytLoop = null; }
+                if(State.ytLoop) { cancelAnimationFrame(State.ytLoop); State.ytLoop = null; }
                 
                 State.aspectIdx = 0; UI.aspectBtn.textContent = 'FIT';
                 UI.ytCont.classList.add('hidden'); UI.video.classList.remove('hidden'); UI.video.className = aspectModes[State.aspectIdx];
@@ -814,6 +814,7 @@
                 } else {
                     call.answer(); AudioGraph.init();
                     call.on('stream', s => {
+                        if (call.streamFired) return; call.streamFired = true;
                         Player.purge(); UI.emptyState.style.opacity = '0';
                         UI.video.srcObject = s; 
                         
@@ -885,6 +886,13 @@
                             Utils.toast(`${d.name} requested sync frame.`, 'info');
                             State.connections.get(peerId)?.send({type:'STATE', s: {time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now()}}); 
                         } 
+                        break;
+                    case 'REQ_ACTION':
+                        if (State.isHost) {
+                            if (d.action === 'play') { Player.play(); Net.broadcastAll({type: 'CMD_PLAY'}); }
+                            else if (d.action === 'pause') { Player.pause(); Net.broadcastAll({type: 'CMD_PAUSE'}); }
+                            else if (d.action === 'seek') { Player.seek(d.val); Net.broadcastAll({type: 'CMD_SEEK', t: d.val}); }
+                        }
                         break;
                 }
             },
@@ -995,10 +1003,33 @@
                 Ambilight();
             },
             
+            startYTLoop: () => {
+                if(State.ytLoop) cancelAnimationFrame(State.ytLoop);
+                const loop = () => {
+                    if (State.playMode !== 'youtube' || !ytPlayer || !ytPlayer.getCurrentTime) return;
+                    if (!State.isScrubbing) {
+                        const c = ytPlayer.getCurrentTime(), d = ytPlayer.getDuration();
+                        if (d > 0) {
+                            UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`;
+                            UI.scrubFill.style.width = `${(c/d)*100}%`;
+                            UI.scrubThumb.style.left = `${(c/d)*100}%`;
+                        }
+                    }
+                    State.ytLoop = requestAnimationFrame(loop);
+                };
+                State.ytLoop = requestAnimationFrame(loop);
+            },
+
             toggleSidebar: (force) => {
                 State.sidebarOpen = force !== undefined ? force : !State.sidebarOpen;
-                if (State.sidebarOpen) { UI.sidebar.classList.add('open'); UI.toggleSideBtn.classList.add('active'); } 
-                else { UI.sidebar.classList.remove('open'); UI.toggleSideBtn.classList.remove('active'); }
+                if (State.sidebarOpen) {
+                    UI.sidebar.classList.add('open'); UI.toggleSideBtn.classList.add('active');
+                    UI.sidebarOverlay.classList.remove('hidden'); setTimeout(() => UI.sidebarOverlay.classList.replace('opacity-0', 'opacity-100'), 10);
+                }
+                else {
+                    UI.sidebar.classList.remove('open'); UI.toggleSideBtn.classList.remove('active');
+                    UI.sidebarOverlay.classList.replace('opacity-100', 'opacity-0'); setTimeout(() => UI.sidebarOverlay.classList.add('hidden'), 300);
+                }
             },
 
             bind: () => {
@@ -1008,6 +1039,7 @@
                 
                 UI.toggleSideBtn.addEventListener('click', () => App.toggleSidebar());
                 UI.closeSideBtn.addEventListener('click', () => App.toggleSidebar(false));
+                UI.sidebarOverlay.addEventListener('click', () => App.toggleSidebar(false));
                 
                 document.getElementById('tabChatBtn').addEventListener('click', () => {
                     document.getElementById('chatView').classList.remove('hidden'); document.getElementById('rosterView').classList.add('hidden');
@@ -1119,8 +1151,8 @@
                             if (!videoTrack) throw new Error("Canvas refused to capture video track.");
 
                             // Merge with flawless audiograph source
-                            let audioTrack = null;
-                            if (AudioGraph.dest && AudioGraph.dest.stream) {
+                            let audioTrack = vs.getAudioTracks()[0];
+                            if (!audioTrack && AudioGraph.dest && AudioGraph.dest.stream) {
                                 audioTrack = AudioGraph.dest.stream.getAudioTracks()[0];
                             }
                             
@@ -1163,6 +1195,7 @@
 
                         State.activeWebRTCStream = stream;
                         AudioGraph.init();
+                        if (AudioGraph.localGain) AudioGraph.localGain.gain.value = 0;
                         UI.video.srcObject = State.activeWebRTCStream; 
                         UI.video.play().catch(()=>{});
                         
@@ -1188,10 +1221,14 @@
                 
                 UI.micBtn.addEventListener('click', Mic.toggle);
                 
+                let timeUpdateFrame = null;
                 UI.video.addEventListener('timeupdate', () => {
                     if(State.isScrubbing || State.playMode === 'youtube') return;
-                    const c = UI.video.currentTime, d = UI.video.duration;
-                    if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
+                    if (timeUpdateFrame) cancelAnimationFrame(timeUpdateFrame);
+                    timeUpdateFrame = requestAnimationFrame(() => {
+                        const c = UI.video.currentTime, d = UI.video.duration;
+                        if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
+                    });
                 });
                 UI.video.addEventListener('play', () => { 
                     UI.iconPlay.classList.add('hidden'); 
@@ -1207,6 +1244,86 @@
                     else { Sync.requestAction(p ? 'play' : 'pause'); } 
                 };
                 UI.playBtn.addEventListener('click', togPlay);
+
+                const getScrubPos = (e) => {
+                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                };
+
+                const updateScrubUI = (pos) => {
+                    UI.scrubFill.style.width = `${pos * 100}%`;
+                    UI.scrubThumb.style.left = `${pos * 100}%`;
+                    const dur = Player.getDur();
+                    if (dur > 0) {
+                        UI.scrubTooltip.textContent = Utils.time(pos * dur);
+                        UI.scrubTooltip.style.left = `${pos * 100}%`;
+                    }
+                };
+
+                const onScrubMove = (e) => {
+                    if (!State.isScrubbing) return;
+                    e.preventDefault();
+                    requestAnimationFrame(() => updateScrubUI(getScrubPos(e)));
+                };
+
+                const onScrubEnd = (e) => {
+                    if (!State.isScrubbing) return;
+                    State.isScrubbing = false;
+                    UI.scrubTrack.classList.remove('scrubbing');
+
+                    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    const targetTime = pos * Player.getDur();
+
+                    if (State.isHost) {
+                        Player.seek(targetTime);
+                        Net.broadcastAll({type: 'CMD_SEEK', t: targetTime});
+                    } else {
+                        Sync.requestAction('seek', targetTime);
+                    }
+
+                    document.removeEventListener('mousemove', onScrubMove);
+                    document.removeEventListener('mouseup', onScrubEnd);
+                    document.removeEventListener('touchmove', onScrubMove);
+                    document.removeEventListener('touchend', onScrubEnd);
+                };
+
+                UI.scrubTrack.addEventListener('mousedown', (e) => {
+                    if (State.playMode === 'idle') return;
+                    State.isScrubbing = true;
+                    UI.scrubTrack.classList.add('scrubbing');
+                    updateScrubUI(getScrubPos(e));
+                    document.addEventListener('mousemove', onScrubMove);
+                    document.addEventListener('mouseup', onScrubEnd);
+                });
+
+                UI.scrubTrack.addEventListener('touchstart', (e) => {
+                    if (State.playMode === 'idle') return;
+                    State.isScrubbing = true;
+                    UI.scrubTrack.classList.add('scrubbing');
+                    updateScrubUI(getScrubPos(e));
+                    document.addEventListener('touchmove', onScrubMove, {passive: false});
+                    document.addEventListener('touchend', onScrubEnd);
+                }, {passive: true});
+
+                UI.scrubTrack.addEventListener('mousemove', (e) => {
+                    if (State.isScrubbing || State.playMode === 'idle') return;
+                    requestAnimationFrame(() => {
+                        const pos = getScrubPos(e);
+                        UI.scrubTooltip.textContent = Utils.time(pos * Player.getDur());
+                        UI.scrubTooltip.style.left = `${pos * 100}%`;
+                        UI.scrubTooltip.style.opacity = '1';
+                    });
+                });
+
+                UI.scrubTrack.addEventListener('mouseleave', () => {
+                    if (!State.isScrubbing) UI.scrubTooltip.style.opacity = '0';
+                });
+                UI.scrubTrack.addEventListener('touchend', () => {
+                     UI.scrubTooltip.style.opacity = '0';
+                });
                 
                 // Keep the viewport hover fade logic
                 let lastFadeTime = 0;
