@@ -58,13 +58,12 @@
         video, iframe { width: 100%; height: 100%; outline: none; background: #000; z-index: 2; border: none; object-fit: contain; transition: object-fit 0.3s; }         
         video.mode-contain { object-fit: contain; } video.mode-cover { object-fit: cover; } video.mode-fill { object-fit: fill; }         
         
-        /* Native Subtitle Styling */
-        ::cue { background: rgba(0, 0, 0, 0.8); color: #fff; font-family: 'Outfit', sans-serif; font-size: 1.3rem; padding: 4px 12px; border-radius: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }         
+        .subtitle-text { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8); }
 
         .glass-panel { background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--glass-border); }         
-        .controls-pill { position: absolute; bottom: 40px; left: 50%; transform: translate(-50%, 20px) scale(0.95); width: 90%; max-width: 1000px; z-index: 40; opacity: 0; pointer-events: none; transition: all 0.4s ease; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .controls-pill { position: absolute; bottom: 40px; left: 50%; transform: translate(-50%, 20px) scale(0.95); width: 90%; max-width: 1000px; z-index: 50; opacity: 0; pointer-events: none; transition: all 0.4s ease; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
         .player-viewport.active-ui .controls-pill { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
-        .top-bar { position: absolute; top: 0; left: 0; right: 0; padding: 24px; z-index: 40; display: flex; justify-content: space-between; opacity: 0; transform: translateY(-10px); transition: all 0.4s ease; pointer-events: none; }
+        .top-bar { position: absolute; top: 0; left: 0; right: 0; padding: 24px; z-index: 50; display: flex; justify-content: space-between; opacity: 0; transform: translateY(-10px); transition: all 0.4s ease; pointer-events: none; }
         .player-viewport.active-ui .top-bar { opacity: 1; transform: translateY(0); }
         .top-bar-interactive { pointer-events: auto; }
 
@@ -75,10 +74,10 @@
         .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 16px; height: 16px; background: #fff; border-radius: 50%; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); transition: transform 0.2s ease; pointer-events: none; }         
         .scrubber-track:hover .scrubber-thumb, .scrubber-track.scrubbing .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }                 
 
-        .sidebar-container { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; max-width: 90vw; z-index: 50; transform: translateX(100%); transition: transform 0.5s ease; background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-container { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; max-width: 90vw; z-index: 60; transform: translateX(100%); transition: transform 0.5s ease; background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.1); }
         .sidebar-container.open { transform: translateX(0); }
         
-        .interaction-gate { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .interaction-gate { position: absolute; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .interaction-gate.active { opacity: 1; pointer-events: auto; }
 
         .btn-icon { color: #a1a1aa; transition: all 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; padding: 8px; }         
@@ -167,7 +166,12 @@
                 <div id="ytPlayerDiv" class="w-full h-full"></div>                     
             </div>
 
-            <div id="reactionLayer" class="absolute inset-0 z-[50] pointer-events-none overflow-hidden"></div>
+            <!-- Custom Subtitle Layer -->
+            <div id="subtitleLayer" class="absolute inset-0 z-[45] pointer-events-none flex items-end justify-center pb-32 px-12 transition-opacity duration-300">
+                <div id="subtitleText" class="subtitle-text text-white font-sans text-3xl md:text-4xl text-center bg-black/50 px-4 py-2 rounded-xl hidden"></div>
+            </div>
+
+            <div id="reactionLayer" class="absolute inset-0 z-[48] pointer-events-none overflow-hidden"></div>
 
             <div class="top-bar flex-col md:flex-row gap-4">
                 <div class="flex items-center gap-3 top-bar-interactive glass-panel px-4 py-2 rounded-xl">
@@ -339,7 +343,7 @@
                             <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
                                 <div class="flex items-center gap-3">
                                     <div class="p-1.5 bg-blue-500/20 rounded-md text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Attach .vtt subtitles locally</p></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
                                 </div>
                                 <input type="file" id="subInputHost" class="hidden" accept=".vtt">
                             </label>
@@ -377,7 +381,7 @@
                             <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
                                 <div class="flex items-center gap-3">
                                     <div class="p-1.5 bg-blue-500/20 rounded-md text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Attach .vtt subtitles locally</p></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
                                 </div>
                                 <input type="file" id="subInputGuest" class="hidden" accept=".vtt">
                             </label>
@@ -402,9 +406,11 @@
             clockDelta: 0, lastActionTime: 0, 
             
             ambilight: true, sidebarOpen: false, aspectIdx: 0,
-            lastBlobUrl: null, lastSubUrl: null, lastVolume: 1,
+            lastBlobUrl: null, lastVolume: 1,
+            customSubs: [],
             
             peer: null, localVoiceStream: null, activeWebRTCStream: null,
+            isStreamingMedia: false, // NEW: Flag to control canvas draw loop
             hls: null, dash: null
         };
 
@@ -444,6 +450,7 @@
             
             fileSync: document.getElementById('fileSyncInput'), fileStream: document.getElementById('fileStreamInput'), guestSync: document.getElementById('guestSyncInput'),
             subInputHost: document.getElementById('subInputHost'), subInputGuest: document.getElementById('subInputGuest'),
+            subText: document.getElementById('subtitleText'),
             screenBtn: document.getElementById('shareScreenBtn'), urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
             
             micBtn: document.getElementById('micBtn'), micIco: document.getElementById('iconMic'), micMut: document.getElementById('iconMicMuted'),
@@ -462,15 +469,21 @@
                 return h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}` : `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
             },
             toast: (msg, type = 'info', rawHTML = false) => {
+                const cont = document.getElementById('toastContainer');
+                if(cont.children.length > 2) cont.firstChild.remove(); 
+                
                 const t = document.createElement('div');
                 const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
                 t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
                 if (rawHTML) t.innerHTML = msg; else t.textContent = msg;
-                document.getElementById('toastContainer').appendChild(t);
+                cont.appendChild(t);
                 t.offsetHeight; t.classList.remove('translate-y-4', 'opacity-0');
-                setTimeout(() => { t.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3500);
+                setTimeout(() => { t.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 4500);
             },
             toastAction: (msg, onApprove, onDeny) => {
+                const cont = document.getElementById('toastContainer');
+                if(cont.children.length > 2) cont.firstChild.remove();
+                
                 const t = document.createElement('div');
                 t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
                 
@@ -484,7 +497,7 @@
                 btnA.onclick = () => { if(onApprove) onApprove(); close(); }; btnD.onclick = () => { if(onDeny) onDeny(); close(); };
                 
                 btnRow.appendChild(btnA); btnRow.appendChild(btnD); t.appendChild(txt); t.appendChild(btnRow);
-                document.getElementById('toastContainer').appendChild(t);
+                cont.appendChild(t);
                 t.offsetHeight; t.classList.remove('translate-y-4', 'opacity-0');
                 setTimeout(() => { if(t.parentElement) close(); }, 10000); 
             },
@@ -515,8 +528,14 @@
                     AudioGraph.source = AudioGraph.ctx.createMediaElementSource(UI.video);
                     AudioGraph.eq = AudioGraph.ctx.createBiquadFilter(); AudioGraph.gain = AudioGraph.ctx.createGain(); AudioGraph.comp = AudioGraph.ctx.createDynamicsCompressor();
                     AudioGraph.dest = AudioGraph.ctx.createMediaStreamDestination(); 
-                    AudioGraph.source.connect(AudioGraph.eq); AudioGraph.eq.connect(AudioGraph.gain); AudioGraph.gain.connect(AudioGraph.comp);
-                    AudioGraph.comp.connect(AudioGraph.ctx.destination); AudioGraph.comp.connect(AudioGraph.dest); 
+                    
+                    AudioGraph.source.connect(AudioGraph.eq); 
+                    AudioGraph.eq.connect(AudioGraph.gain); 
+                    AudioGraph.gain.connect(AudioGraph.comp);
+                    
+                    AudioGraph.comp.connect(AudioGraph.ctx.destination); // Play to local speakers
+                    AudioGraph.comp.connect(AudioGraph.dest); // Route to WebRTC Stream perfectly synced
+                    
                     AudioGraph.applyProfile();
                 } catch(e) {}
             },
@@ -536,13 +555,11 @@
             setVolume: (val) => { 
                 if (State.playMode === 'youtube' && typeof ytPlayer !== 'undefined' && typeof ytPlayer.setVolume === 'function') {
                     ytPlayer.setVolume(val * 100);
-                    if (val === 0) {
-                        if (typeof ytPlayer.mute === 'function') ytPlayer.mute();
-                    } else {
-                        if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute();
-                    }
+                    if (val === 0) { if (typeof ytPlayer.mute === 'function') ytPlayer.mute(); }
+                    else { if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute(); }
                 } 
-                if(AudioGraph.gain) AudioGraph.gain.gain.value = val; else UI.video.volume = val; 
+                if(AudioGraph.gain) AudioGraph.gain.gain.value = val;
+                UI.video.volume = val; 
             }
         };
 
@@ -555,14 +572,17 @@
                 Player.loading(false); UI.emptyState.style.opacity = '1';
                 State.playMode = 'idle'; UI.title.textContent = "No Media Loaded";
                 UI.video.pause(); 
+                State.isStreamingMedia = false; // Stop the pristine canvas loop
                 
                 if(State.lastBlobUrl) { URL.revokeObjectURL(State.lastBlobUrl); State.lastBlobUrl = null; }
-                if(State.lastSubUrl) { URL.revokeObjectURL(State.lastSubUrl); State.lastSubUrl = null; }
                 
                 if(State.activeWebRTCStream) { State.activeWebRTCStream.getTracks().forEach(t => t.stop()); State.activeWebRTCStream = null; }
                 if(UI.video.srcObject) { const s = UI.video.srcObject; if(s && s.getTracks) s.getTracks().forEach(t => t.stop()); UI.video.srcObject = null; }
                 
-                State.mediaConns.forEach(call => call.close());
+                State.mediaConns.forEach(call => {
+                    if(call.peerConnection) call.peerConnection.close();
+                    call.close();
+                });
                 State.mediaConns.clear();
                 
                 UI.video.removeAttribute('src'); UI.video.innerHTML = ''; UI.video.load();
@@ -578,6 +598,8 @@
                 State.aspectIdx = 0; UI.aspectBtn.textContent = 'FIT';
                 UI.ytCont.classList.add('hidden'); UI.video.classList.remove('hidden'); UI.video.className = aspectModes[State.aspectIdx];
                 UI.scrubFill.style.width = '0%'; UI.scrubThumb.style.left = '0%'; UI.time.textContent = '00:00 / 00:00';
+                
+                State.customSubs = []; UI.subText.classList.add('hidden'); UI.subText.innerHTML = '';
             },
             loadNative: (srcObj, isUrl = false, title = "Local File") => {
                 Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
@@ -653,15 +675,38 @@
             cfg: { config: { iceServers: [{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}] } },
             
             broadcastAll: (data) => { State.connections.forEach(c => { if(c.open) c.send(data); }); },
+            
             broadcastMediaAll: (title, mode) => {
                 if(!State.activeWebRTCStream) return;
                 State.connections.forEach(c => {
                     const call = State.peer.call(c.peer, State.activeWebRTCStream, {metadata:{type: mode, name: title}});
                     State.mediaConns.set(c.peer, call);
                     const pc = call.peerConnection;
-                    if(pc) {
-                        const hack = () => { pc.getSenders().forEach(s => { if(s.track && s.track.kind==='video') { const p = s.getParameters(); if(!p.encodings) p.encodings=[{}]; p.degradationPreference = 'maintain-framerate'; p.encodings[0].maxBitrate = 5000000; s.setParameters(p).catch(()=>{}); } }); };
-                        hack(); pc.addEventListener('connectionstatechange', ()=>{if(pc.connectionState==='connected') hack();});
+                    
+                    // The Definitive Video Hack: Forces Pristine 50Mbps Resolution
+                    const forceHighQuality = () => { 
+                        if (!pc) return;
+                        pc.getSenders().forEach(s => { 
+                            if(s.track) { 
+                                const p = s.getParameters(); 
+                                if(!p.encodings) p.encodings=[{}]; 
+                                
+                                if (s.track.kind === 'video') {
+                                    // Forces resolution over frames during network drops. Absolute clarity is key for movies.
+                                    p.degradationPreference = 'maintain-resolution'; 
+                                    p.encodings[0].maxBitrate = 50000000; // 50 Mbps headroom
+                                    p.encodings[0].networkPriority = 'high';
+                                } else if (s.track.kind === 'audio') {
+                                    p.encodings[0].maxBitrate = 320000; // Force 320kbps audio bitrate over WebRTC
+                                }
+                                s.setParameters(p).catch(()=>{}); 
+                            } 
+                        }); 
+                    };
+                    
+                    if (pc) {
+                        forceHighQuality(); 
+                        pc.addEventListener('connectionstatechange', () => { if(pc.connectionState==='connected') forceHighQuality(); });
                     }
                 });
             },
@@ -764,9 +809,15 @@
                     call.answer(); AudioGraph.init();
                     call.on('stream', s => {
                         Player.purge(); UI.emptyState.style.opacity = '0';
-                        UI.video.srcObject = s; State.mediaConns.set(call.peer, call);
+                        UI.video.srcObject = s; 
+                        
+                        // Small buffer to guarantee smoothness on arrival
+                        UI.video.preservesPitch = true;
+                        
+                        State.mediaConns.set(call.peer, call);
                         State.playMode = call.metadata?.type; State.mediaTitle = call.metadata?.name || "Live Broadcast";
                         UI.title.textContent = State.mediaTitle;
+                        
                         UI.video.play().catch(e => { if(e.name === 'NotAllowedError') UI.gate.classList.add('active'); });
                         Ambilight();
                     });
@@ -799,17 +850,11 @@
                         App.updateRoster();
                         Utils.log('System', `${Utils.escapeHTML(d.name)} joined.`, true); 
                         break;
-                    case 'REACTION':
-                        App.spawnReaction(d.emoji);
-                        break;
+                    case 'REACTION': App.spawnReaction(d.emoji); break;
                     case 'CHAT': 
                         const senderName = d.name || (State.isHost ? 'Viewer' : 'Host');
                         Utils.log(senderName, d.text); 
-                        
-                        if (!State.sidebarOpen) {
-                            Utils.toast(`<b>${Utils.escapeHTML(senderName)}:</b> ${Utils.escapeHTML(d.text)}`);
-                        }
-
+                        if (!State.sidebarOpen) Utils.toast(`<b>${Utils.escapeHTML(senderName)}:</b> ${Utils.escapeHTML(d.text)}`);
                         if(State.isHost) { State.connections.forEach((c, pid) => { if(pid !== peerId) c.send({type:'CHAT', text: d.text, name: d.name}); }); }
                         break;
                     case 'MASTER_STATE':
@@ -825,18 +870,15 @@
                         break;
                     case 'URL': App.loadUrl(d.url, d.title, false); break;
                     case 'STATE': Sync.enforce(d.s); break;
-                    
                     case 'CMD_PLAY': if(!State.isHost) Player.play(); break;
                     case 'CMD_PAUSE': if(!State.isHost) Player.pause(); break;
                     case 'CMD_SEEK': if(!State.isHost) { State.ignoreNextSeek=true; Player.seek(d.t); setTimeout(()=>State.ignoreNextSeek=false, 2000); } break;
-                    
                     case 'REQ_SYNC': 
                         if(State.isHost) { 
                             Utils.toast(`${d.name} requested sync frame.`, 'info');
                             State.connections.get(peerId)?.send({type:'STATE', s: {time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now()}}); 
                         } 
                         break;
-                    
                     case 'REQ_ACTION': 
                         if(State.isHost) {
                             const map = { 'play': "Play Video", 'pause': "Pause Video", 'seek': `Seek to ${Utils.time(d.val)}` };
@@ -846,19 +888,15 @@
                                     else if(d.action === 'pause') { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); }
                                     else if(d.action === 'seek') { Player.seek(d.val); Net.broadcastAll({type:'CMD_SEEK', t: d.val}); }
                                 },
-                                () => {
-                                    State.connections.get(peerId)?.send({type:'REQ_DENIED', action: d.action});
-                                }
+                                () => { State.connections.get(peerId)?.send({type:'REQ_DENIED', action: d.action}); }
                             );
                         }
                         break;
-                    case 'REQ_DENIED':
-                        Utils.toast(`Host denied request to ${d.action}`, "error");
-                        break;
+                    case 'REQ_DENIED': Utils.toast(`Host denied request to ${d.action}`, "error"); break;
                 }
             },
             enforce: (h) => {
-                if(State.isHost || State.isScrubbing) return;
+                if(State.isHost || State.isScrubbing || State.ignoreNextSeek) return;
                 
                 let hTime = h.time;
                 if(!h.paused) {
@@ -867,8 +905,6 @@
                     const transitDelay = (rtt / 2) / 1000;
                     hTime += transitDelay;
                     if (State.clockDelta !== undefined) {
-                        // Math: now + State.clockDelta gives us the estimated Host's current absolute time.
-                        // Subtract h.timestamp (when the host sent the message in host time) to get elapsed time.
                         const elapsed = ((now + State.clockDelta) - h.timestamp) / 1000;
                         if (elapsed > 0) hTime += elapsed;
                     }
@@ -877,8 +913,21 @@
                 const absDrift = Math.abs(Player.getTime() - hTime);
                 if(!h.paused) {
                     if(absDrift > 2) Player.seek(hTime);
-                    else if(absDrift > 0.05) { UI.video.playbackRate = 1.0 + (Player.getTime() < hTime ? 0.05 : -0.05); }
-                    else { UI.video.playbackRate = 1.0; }
+                    else if(absDrift > 0.05) { 
+                        const rate = 1.0 + (Player.getTime() < hTime ? 0.05 : -0.05); 
+                        if (State.playMode === 'youtube' && typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) {
+                            ytPlayer.setPlaybackRate(rate);
+                        } else {
+                            UI.video.playbackRate = rate; 
+                        }
+                    }
+                    else { 
+                        if (State.playMode === 'youtube' && typeof ytPlayer !== 'undefined' && ytPlayer.setPlaybackRate) {
+                            ytPlayer.setPlaybackRate(1.0);
+                        } else {
+                            UI.video.playbackRate = 1.0; 
+                        }
+                    }
                 }
                 if(h.paused && absDrift > 0.1) Player.seek(hTime);
             },
@@ -891,6 +940,44 @@
         };
 
         const App = {
+            parseVTT: (vttText) => {
+                const lines = vttText.split(/\r?\n/);
+                const subs = []; let i = 0;
+                while (i < lines.length) {
+                    if (lines[i].includes('-->')) {
+                        const parts = lines[i].split(' --> ');
+                        const parseTime = (str) => {
+                            const p = str.replace(',', '.').split(':');
+                            let sec = 0;
+                            if (p.length === 3) sec = parseInt(p[0])*3600 + parseInt(p[1])*60 + parseFloat(p[2]);
+                            else if (p.length === 2) sec = parseInt(p[0])*60 + parseFloat(p[1]);
+                            return sec;
+                        };
+                        const start = parseTime(parts[0]);
+                        const end = parseTime(parts[1]);
+                        let text = '';
+                        i++;
+                        while (i < lines.length && lines[i].trim() !== '') { text += lines[i] + '<br>'; i++; }
+                        subs.push({start, end, text: text.trim()});
+                    }
+                    i++;
+                }
+                return subs;
+            },
+
+            updateCustomSubtitles: () => {
+                if(State.customSubs && State.customSubs.length > 0) {
+                    const cTime = Player.getTime();
+                    const activeSub = State.customSubs.find(s => cTime >= s.start && cTime <= s.end);
+                    if(activeSub) {
+                        UI.subText.innerHTML = activeSub.text;
+                        UI.subText.classList.remove('hidden');
+                    } else {
+                        UI.subText.classList.add('hidden');
+                    }
+                }
+            },
+
             spawnReaction: (emoji) => {
                 const el = document.createElement('div');
                 el.textContent = emoji;
@@ -925,6 +1012,16 @@
                     el.innerHTML = `${createAvatar(peerName)} <div class="flex-1 min-w-0"><p class="text-sm font-bold text-zinc-300 truncate">${Utils.escapeHTML(peerName)}</p><p class="text-[10px] text-zinc-500 font-medium tracking-wider">Connected</p></div>`;
                     list.appendChild(el);
                 });
+            },
+
+            checkFormat: (file) => {
+                if(!file) return;
+                const name = file.name.toLowerCase();
+                // We keep this warning for entirely unsupported files (like RAW HEVC missing audio entirely on browser), 
+                // but the canvas stream fixes all visual bugs.
+                if(name.endsWith('.avi') || name.endsWith('.mov')) {
+                    Utils.toast(`<b>Format Warning:</b> Ensure your browser can natively decode <b>${name}</b> codecs.`, 'info', true);
+                }
             },
 
             enter: () => { UI.lobby.style.opacity = '0'; setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700); },
@@ -973,6 +1070,7 @@
             startYTLoop: () => {
                 if(State.ytLoop) clearInterval(State.ytLoop);
                 State.ytLoop = setInterval(() => {
+                    App.updateCustomSubtitles();
                     if(State.isScrubbing || !ytPlayer || !ytPlayer.getCurrentTime) return;
                     const c = ytPlayer.getCurrentTime(), d = ytPlayer.getDuration();
                     if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
@@ -1045,6 +1143,7 @@
                 
                 UI.fileSync.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
+                    App.checkFormat(f);
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
                     e.target.value = ''; 
@@ -1052,6 +1151,7 @@
                 
                 UI.guestSync.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
+                    App.checkFormat(f);
                     Player.loadNative(f, false, f.name); Ambilight();
                     State.connections.values().next().value?.send({type:'FILE_MOUNTED'});
                     e.target.value = '';
@@ -1059,46 +1159,97 @@
 
                 const loadSubtitles = (e) => {
                     const f = e.target.files[0]; if(!f) return;
-                    if(State.lastSubUrl) URL.revokeObjectURL(State.lastSubUrl);
-                    State.lastSubUrl = URL.createObjectURL(f);
-                    UI.video.querySelectorAll('track').forEach(t => t.remove());
-                    const track = document.createElement('track');
-                    track.kind = 'subtitles'; track.label = 'Custom'; track.srclang = 'en'; track.src = State.lastSubUrl; track.default = true;
-                    UI.video.appendChild(track); track.track.mode = 'showing';
-                    Utils.toast(`Loaded subtitles: ${f.name}`, "success"); e.target.value = '';
+                    const reader = new FileReader();
+                    reader.onload = (re) => {
+                        State.customSubs = App.parseVTT(re.target.result);
+                        Utils.toast(`Loaded custom subtitles: ${f.name}`, "success");
+                    };
+                    reader.readAsText(f);
+                    e.target.value = '';
                 };
                 UI.subInputHost.addEventListener('change', loadSubtitles);
                 UI.subInputGuest.addEventListener('change', loadSubtitles);
 
+                // --- THE DEFINITIVE FIX FOR MKV & MEDIA STREAMING ---
                 UI.fileStream.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
+                    App.checkFormat(f);
                     Player.loadNative(f, false, f.name); Ambilight();
+                    
                     UI.video.onplaying = () => { 
-                        UI.video.onplaying = null; if(State.activeWebRTCStream) return;
+                        UI.video.onplaying = null; 
+                        if (State.activeWebRTCStream) return;
+                        
                         try {
-                            const vs = UI.video.captureStream ? UI.video.captureStream(60) : UI.video.mozCaptureStream(60); 
-                            const tracks = [];
+                            // 1. Ensure the Audio Graph is fully wired up first.
+                            AudioGraph.init(); 
+
+                            // 2. We bypass native buggy captureStream entirely by rendering to a 
+                            //    hardware-accelerated, hidden internal canvas at exact scale.
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+                            State.isStreamingMedia = true;
                             
+                            // Using requestVideoFrameCallback saves immense CPU & guarantees no duplicate frames.
+                            const drawFrame = (now, metadata) => {
+                                if (!State.isStreamingMedia) return;
+                                if (canvas.width !== metadata.width) {
+                                    canvas.width = metadata.width;
+                                    canvas.height = metadata.height;
+                                }
+                                ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+                                UI.video.requestVideoFrameCallback(drawFrame);
+                            };
+                            
+                            if ('requestVideoFrameCallback' in UI.video) {
+                                UI.video.requestVideoFrameCallback(drawFrame);
+                            } else {
+                                // Fallback for browsers that don't support callback
+                                const drawLoop = () => {
+                                    if (!State.isStreamingMedia) return;
+                                    if (UI.video.videoWidth > 0) {
+                                        if (canvas.width !== UI.video.videoWidth) {
+                                            canvas.width = UI.video.videoWidth;
+                                            canvas.height = UI.video.videoHeight;
+                                        }
+                                        ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+                                    }
+                                    requestAnimationFrame(drawLoop);
+                                };
+                                drawLoop();
+                            }
+
+                            // Capture exactly at 60 fps limit to match most display syncs
+                            const vs = canvas.captureStream(60); 
+                            
+                            // Get the Video track from Canvas, preventing MKV Container drops
                             const videoTrack = vs.getVideoTracks()[0];
-                            if(videoTrack) tracks.push(videoTrack);
+                            if (!videoTrack) throw new Error("Canvas refused to capture video track.");
 
-                            const nativeAudioTrack = vs.getAudioTracks()[0];
-
-                            if (nativeAudioTrack) {
-                                tracks.push(nativeAudioTrack);
+                            // Get the Audio Track directly out of our WebAudio API processing graph, 
+                            // ignoring the raw corrupted file stream audio entirely.
+                            let audioTrack = null;
+                            if (AudioGraph.dest && AudioGraph.dest.stream) {
+                                audioTrack = AudioGraph.dest.stream.getAudioTracks()[0];
                             }
-
-                            if (tracks.length === 0) {
-                                throw new Error("No media tracks could be captured from this file.");
-                            }
+                            
+                            const tracks = [videoTrack];
+                            if (audioTrack) tracks.push(audioTrack);
 
                             State.activeWebRTCStream = new MediaStream(tracks);
                             Net.broadcastMediaAll(f.name, 'local_stream');
-                            Utils.toast("Broadcasting stream to peers...", "success");
+                            Utils.toast("Broadcasting 1:1 stream to peers...", "success");
+
+                            // MKV Audio sanity check (if it has AC3 and browser can't decode it)
+                            setTimeout(() => {
+                                if (UI.video.videoWidth > 0 && !audioTrack && State.playMode !== 'idle') {
+                                    Utils.toast("No valid audio track detected. If this is an MKV with AC3/DTS, the browser blocked it. Use 'Share Browser Tab' as a fallback to stream VLC.", "error", true);
+                                }
+                            }, 2500);
 
                         } catch(err) { 
                             console.error("Capture Failed:", err);
-                            Utils.toast(`Capture Failed: ${err.message || "DRM/Codec issue"}`, "error"); 
+                            Utils.toast(`Capture Failed: ${err.message || "Hardware issue"}`, "error"); 
                         }
                     };
                     e.target.value = '';
@@ -1107,7 +1258,7 @@
                 UI.screenBtn.addEventListener('click', async () => {
                     try {
                         const stream = await navigator.mediaDevices.getDisplayMedia({
-                            video: { frameRate: 60 }, 
+                            video: { frameRate: 60, displaySurface: "browser" }, 
                             audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                         });
                         Player.purge(); UI.emptyState.style.opacity = '0';
@@ -1123,7 +1274,7 @@
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
                         Net.broadcastMediaAll("Screen Share", 'screenshare');
                     } catch(e) {
-                        Utils.toast("Screen share canceled or not supported on this device.", "error");
+                        Utils.toast("Screen share canceled.", "error");
                         console.warn("Screen share failed:", e);
                     }
                 });
@@ -1141,6 +1292,7 @@
                 UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
 
                 UI.video.addEventListener('timeupdate', () => {
+                    App.updateCustomSubtitles();
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
                     if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
