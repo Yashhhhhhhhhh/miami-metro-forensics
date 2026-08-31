@@ -744,30 +744,30 @@
                     State.mediaConns.set(c.peer, call);
                     const pc = call.peerConnection;
                     
-                    // The Definitive WebRTC Override: Forces Pristine Encoding
-                    const forceHighQuality = () => { 
+                    const optimizeStream = () => { 
                         if (!pc) return;
                         pc.getSenders().forEach(s => { 
-                            if(s.track) { 
+                            if(s.track && s.track.kind === 'video') { 
                                 const p = s.getParameters(); 
                                 if(!p.encodings) p.encodings=[{}]; 
-                                
-                                if (s.track.kind === 'video') {
-                                    // Forces resolution over frames during network drops. Absolute clarity is key for movies.
-                                    p.degradationPreference = 'maintain-resolution'; 
-                                    p.encodings[0].maxBitrate = 50000000; // 50 Mbps headroom
-                                    p.encodings[0].networkPriority = 'high';
-                                } else if (s.track.kind === 'audio') {
-                                    p.encodings[0].maxBitrate = 320000; // Force 320kbps audio bitrate over WebRTC
-                                }
+                                // FIX: 8 Mbps is the safe maximum for WebRTC. 50 Mbps causes complete encoder crash and black screens.
+                                p.encodings[0].maxBitrate = 8000000; 
+                                // FIX: Balanced degradation prevents frame freezes on minor network drops
+                                p.degradationPreference = 'balanced';
                                 s.setParameters(p).catch(()=>{}); 
-                            } 
+                            }
+                            if(s.track && s.track.kind === 'audio') { 
+                                const p = s.getParameters(); 
+                                if(!p.encodings) p.encodings=[{}]; 
+                                p.encodings[0].maxBitrate = 256000; 
+                                s.setParameters(p).catch(()=>{}); 
+                            }
                         }); 
                     };
                     
                     if (pc) {
-                        forceHighQuality(); 
-                        pc.addEventListener('connectionstatechange', () => { if(pc.connectionState==='connected') forceHighQuality(); });
+                        optimizeStream(); 
+                        pc.addEventListener('connectionstatechange', () => { if(pc.connectionState==='connected') optimizeStream(); });
                     }
                 });
             },
@@ -1245,48 +1245,49 @@
                             // 1. Ensure Audio Graph is live
                             AudioGraph.init(); 
 
-                            // 2. We bypass native buggy captureStream entirely by rendering to a 
-                            //    hardware-accelerated, hidden internal canvas at exact scale.
+                            // 2. Hardware-accelerated Canvas with safe constraints
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
                             State.isStreamingMedia = true;
                             
-                            // Using requestVideoFrameCallback saves CPU & guarantees frame accuracy regardless of container
-                            const drawFrame = (now, metadata) => {
+                            // Initialize with default safe dimensions to prevent 0x0 capture crash (another cause of black screens)
+                            canvas.width = UI.video.videoWidth || 1280;
+                            canvas.height = UI.video.videoHeight || 720;
+                            
+                            const drawFrame = () => {
                                 if (!State.isStreamingMedia) return;
-                                if (canvas.width !== metadata.width) {
-                                    canvas.width = metadata.width;
-                                    canvas.height = metadata.height;
+                                
+                                if (UI.video.videoWidth > 0 && UI.video.videoHeight > 0) {
+                                    // WebRTC heavily struggles with 4K. Downscale to max 1080p for stream stability.
+                                    const MAX_W = 1920, MAX_H = 1080;
+                                    let w = UI.video.videoWidth, h = UI.video.videoHeight;
+                                    if (w > MAX_W || h > MAX_H) {
+                                        const r = Math.min(MAX_W/w, MAX_H/h);
+                                        w = Math.floor(w * r); h = Math.floor(h * r);
+                                    }
+                                    
+                                    if (canvas.width !== w || canvas.height !== h) {
+                                        canvas.width = w; canvas.height = h;
+                                    }
+                                    ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
                                 }
-                                ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
-                                UI.video.requestVideoFrameCallback(drawFrame);
+                                
+                                if ('requestVideoFrameCallback' in UI.video) {
+                                    UI.video.requestVideoFrameCallback(drawFrame);
+                                } else {
+                                    requestAnimationFrame(drawFrame);
+                                }
                             };
                             
-                            if ('requestVideoFrameCallback' in UI.video) {
-                                UI.video.requestVideoFrameCallback(drawFrame);
-                            } else {
-                                const drawLoop = () => {
-                                    if (!State.isStreamingMedia) return;
-                                    if (UI.video.videoWidth > 0) {
-                                        if (canvas.width !== UI.video.videoWidth) {
-                                            canvas.width = UI.video.videoWidth;
-                                            canvas.height = UI.video.videoHeight;
-                                        }
-                                        ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
-                                    }
-                                    requestAnimationFrame(drawLoop);
-                                };
-                                drawLoop();
-                            }
+                            // Draw immediately to populate buffer before capturing
+                            drawFrame();
 
-                            // Capture exact 60fps limit to match most display syncs
-                            const vs = canvas.captureStream(60); 
-                            
-                            // Get the pristine Video track from Canvas
+                            // Capture at 30fps. 60fps causes severe encoder drops and black screens on most networks.
+                            const vs = canvas.captureStream(30); 
                             const videoTrack = vs.getVideoTracks()[0];
                             if (!videoTrack) throw new Error("Canvas refused to capture video track.");
 
-                            // Get the Audio Track directly out of our WebAudio API graph, perfectly synced.
+                            // Get Audio Track
                             let audioTrack = null;
                             if (AudioGraph.dest && AudioGraph.dest.stream) {
                                 audioTrack = AudioGraph.dest.stream.getAudioTracks()[0];
