@@ -175,10 +175,6 @@
                 <div id="ytPlayerDiv" class="w-full h-full"></div>                     
             </div>
 
-            <div id="subtitleLayer" class="absolute inset-0 z-[45] pointer-events-none flex items-end justify-center pb-32 px-12 transition-opacity duration-300">
-                <div id="subtitleText" class="subtitle-text text-white font-sans text-3xl md:text-4xl text-center bg-black/50 px-4 py-2 rounded-xl hidden"></div>
-            </div>
-
             <div id="reactionLayer" class="absolute inset-0 z-[48] pointer-events-none overflow-hidden"></div>
 
             <div class="top-bar flex-col md:flex-row gap-4">
@@ -435,7 +431,7 @@
             
             title: document.getElementById('nowPlayingTitle'), time: document.getElementById('timeDisplay'),
             playBtn: document.getElementById('playBtn'), iconPlay: document.getElementById('iconPlay'), iconPause: document.getElementById('iconPause'),
-            scrubTrack: document.getElementById('scrubber'), scrubBuf: document.getElementById('scrubberBuffer'), scrubFill: document.getElementById('scrubberFill'), scrubThumb: document.getElementById('scrubberThumb'),
+            scrubTrack: document.getElementById('scrubber'), scrubBuf: document.getElementById('scrubberBuffer'), scrubFill: document.getElementById('scrubberFill'), scrubThumb: document.getElementById('scrubberThumb'), scrubTooltip: document.getElementById('scrubTooltip'),
             skipB: document.getElementById('skipBackBtn'), skipF: document.getElementById('skipFwdBtn'),
             volBtn: document.getElementById('muteBtn'), volIco: document.getElementById('iconVol'), volMut: document.getElementById('iconVolMuted'), volSlider: document.getElementById('volSlider'),
             
@@ -891,6 +887,13 @@
                             State.connections.get(peerId)?.send({type:'STATE', s: {time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now()}}); 
                         } 
                         break;
+                    case 'REQ_ACTION':
+                        if (State.isHost) {
+                            if (d.action === 'play') { Player.play(); Net.broadcastAll({type: 'CMD_PLAY'}); }
+                            else if (d.action === 'pause') { Player.pause(); Net.broadcastAll({type: 'CMD_PAUSE'}); }
+                            else if (d.action === 'seek') { Player.seek(d.val); Net.broadcastAll({type: 'CMD_SEEK', t: d.val}); }
+                        }
+                        break;
                 }
             },
             enforce: (h) => {
@@ -1241,6 +1244,86 @@
                     else { Sync.requestAction(p ? 'play' : 'pause'); } 
                 };
                 UI.playBtn.addEventListener('click', togPlay);
+
+                const getScrubPos = (e) => {
+                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                };
+
+                const updateScrubUI = (pos) => {
+                    UI.scrubFill.style.width = `${pos * 100}%`;
+                    UI.scrubThumb.style.left = `${pos * 100}%`;
+                    const dur = Player.getDur();
+                    if (dur > 0) {
+                        UI.scrubTooltip.textContent = Utils.time(pos * dur);
+                        UI.scrubTooltip.style.left = `${pos * 100}%`;
+                    }
+                };
+
+                const onScrubMove = (e) => {
+                    if (!State.isScrubbing) return;
+                    e.preventDefault();
+                    requestAnimationFrame(() => updateScrubUI(getScrubPos(e)));
+                };
+
+                const onScrubEnd = (e) => {
+                    if (!State.isScrubbing) return;
+                    State.isScrubbing = false;
+                    UI.scrubTrack.classList.remove('scrubbing');
+
+                    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                    const rect = UI.scrubTrack.getBoundingClientRect();
+                    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    const targetTime = pos * Player.getDur();
+
+                    if (State.isHost) {
+                        Player.seek(targetTime);
+                        Net.broadcastAll({type: 'CMD_SEEK', t: targetTime});
+                    } else {
+                        Sync.requestAction('seek', targetTime);
+                    }
+
+                    document.removeEventListener('mousemove', onScrubMove);
+                    document.removeEventListener('mouseup', onScrubEnd);
+                    document.removeEventListener('touchmove', onScrubMove);
+                    document.removeEventListener('touchend', onScrubEnd);
+                };
+
+                UI.scrubTrack.addEventListener('mousedown', (e) => {
+                    if (State.playMode === 'idle') return;
+                    State.isScrubbing = true;
+                    UI.scrubTrack.classList.add('scrubbing');
+                    updateScrubUI(getScrubPos(e));
+                    document.addEventListener('mousemove', onScrubMove);
+                    document.addEventListener('mouseup', onScrubEnd);
+                });
+
+                UI.scrubTrack.addEventListener('touchstart', (e) => {
+                    if (State.playMode === 'idle') return;
+                    State.isScrubbing = true;
+                    UI.scrubTrack.classList.add('scrubbing');
+                    updateScrubUI(getScrubPos(e));
+                    document.addEventListener('touchmove', onScrubMove, {passive: false});
+                    document.addEventListener('touchend', onScrubEnd);
+                }, {passive: true});
+
+                UI.scrubTrack.addEventListener('mousemove', (e) => {
+                    if (State.isScrubbing || State.playMode === 'idle') return;
+                    requestAnimationFrame(() => {
+                        const pos = getScrubPos(e);
+                        UI.scrubTooltip.textContent = Utils.time(pos * Player.getDur());
+                        UI.scrubTooltip.style.left = `${pos * 100}%`;
+                        UI.scrubTooltip.style.opacity = '1';
+                    });
+                });
+
+                UI.scrubTrack.addEventListener('mouseleave', () => {
+                    if (!State.isScrubbing) UI.scrubTooltip.style.opacity = '0';
+                });
+                UI.scrubTrack.addEventListener('touchend', () => {
+                     UI.scrubTooltip.style.opacity = '0';
+                });
                 
                 // Keep the viewport hover fade logic
                 let lastFadeTime = 0;
