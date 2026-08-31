@@ -30,8 +30,16 @@
                         accent: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }                     
                     },
                     boxShadow: { 'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)', 'glow': '0 0 20px rgba(239, 68, 68, 0.4)' },
-                    animation: { 'slide-in': 'slideIn 0.3s ease-out forwards' },
-                    keyframes: { slideIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
+                    animation: { 
+                        'slide-in': 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'toast-in': 'toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'toast-out': 'toastOut 0.3s ease-in forwards'
+                    },
+                    keyframes: { 
+                        slideIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        toastIn: { '0%': { opacity: '0', transform: 'translateY(-20px) scale(0.95)' }, '100%': { opacity: '1', transform: 'translateY(0) scale(1)' } },
+                        toastOut: { '0%': { opacity: '1', transform: 'translateY(0) scale(1)' }, '100%': { opacity: '0', transform: 'translateY(-20px) scale(0.95)' } }
+                    }
                 }             
             }         
         }     
@@ -40,7 +48,7 @@
     <style>         
         :root { --glass-bg: rgba(15, 15, 20, 0.65); --glass-border: rgba(255, 255, 255, 0.08); }
         body { background-color: #050507; color: #f4f4f5; overflow: hidden; -webkit-font-smoothing: antialiased; touch-action: none; }         
-        ::-webkit-scrollbar { width: 4px; height: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }                 
+        ::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 6px; } ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }                 
         .ambient-grid {             
             background-image: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.08) 0%, transparent 60%), linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
             background-size: 100% 100%, 30px 30px, 30px 30px; background-position: center top;
@@ -61,39 +69,42 @@
         .subtitle-text { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8); }
 
         .glass-panel { background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--glass-border); }         
-        .controls-pill { position: absolute; bottom: 40px; left: 50%; transform: translate(-50%, 20px) scale(0.95); width: 90%; max-width: 1000px; z-index: 50; opacity: 0; pointer-events: none; transition: all 0.4s ease; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .controls-pill { position: absolute; bottom: 40px; left: 50%; transform: translate(-50%, 20px) scale(0.95); width: 90%; max-width: 1000px; z-index: 50; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); }
         .player-viewport.active-ui .controls-pill { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
+        
         .top-bar { position: absolute; top: 0; left: 0; right: 0; padding: 24px; z-index: 50; display: flex; justify-content: space-between; opacity: 0; transform: translateY(-10px); transition: all 0.4s ease; pointer-events: none; }
         .player-viewport.active-ui .top-bar { opacity: 1; transform: translateY(0); }
         .top-bar-interactive { pointer-events: auto; }
 
-        .scrubber-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; cursor: pointer; position: relative; touch-action: none; transition: height 0.2s; }         
-        .scrubber-track:hover, .scrubber-track:active { height: 10px; }
-        .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.2); border-radius: 3px; pointer-events: none; }         
-        .scrubber-fill { position: absolute; top: 0; left: 0; height: 100%; background: #ef4444; border-radius: 3px; pointer-events: none; z-index: 2; }         
-        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 16px; height: 16px; background: #fff; border-radius: 50%; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); transition: transform 0.2s ease; pointer-events: none; }         
+        .scrubber-track { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; position: relative; touch-action: none; transition: height 0.2s, transform 0.2s; }         
+        .scrubber-track:hover, .scrubber-track:active { height: 12px; transform: scaleY(1.1); }
+        .scrubber-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.2); border-radius: 4px; pointer-events: none; transition: width 0.3s linear; }         
+        .scrubber-fill { position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, #ef4444, #f87171); border-radius: 4px; pointer-events: none; z-index: 2; transition: width 0.1s linear; }         
+        .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; }         
         .scrubber-track:hover .scrubber-thumb, .scrubber-track.scrubbing .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }                 
 
-        .sidebar-container { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; max-width: 90vw; z-index: 60; transform: translateX(100%); transition: transform 0.5s ease; background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.1); }
+        /* Refined Sidebar */
+        .sidebar-container { position: absolute; right: 0; top: 0; bottom: 0; width: 420px; max-width: 100vw; z-index: 60; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.08); box-shadow: -20px 0 50px rgba(0,0,0,0.5); }
         .sidebar-container.open { transform: translateX(0); }
         
-        .interaction-gate { position: absolute; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .interaction-gate { position: absolute; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .interaction-gate.active { opacity: 1; pointer-events: auto; }
 
         .btn-icon { color: #a1a1aa; transition: all 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; padding: 8px; }         
         .btn-icon:hover { color: #fff; background: rgba(255,255,255,0.1); transform: scale(1.05); }         
         .btn-icon:active { transform: scale(0.95); }
-        .btn-icon.active { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .btn-icon.active { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
         
-        .btn-action-approve { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
-        .btn-action-approve:hover { background: rgba(16, 185, 129, 0.4); color: #fff; }
-        .btn-action-deny { background: rgba(255, 255, 255, 0.1); color: #e4e4e7; border: 1px solid rgba(255, 255, 255, 0.2); }
-        .btn-action-deny:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+        .btn-action-approve { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); transition: all 0.2s; }
+        .btn-action-approve:hover { background: rgba(16, 185, 129, 0.3); color: #fff; transform: translateY(-1px); }
+        .btn-action-deny { background: rgba(255, 255, 255, 0.05); color: #e4e4e7; border: 1px solid rgba(255, 255, 255, 0.15); transition: all 0.2s; }
+        .btn-action-deny:hover { background: rgba(255, 255, 255, 0.15); color: #fff; transform: translateY(-1px); }
 
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; width: 100%; }         
         input[type=range]:focus { outline: none; }         
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }         
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #fff; margin-top: -5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}         
+        
         .spinner { border: 2px solid rgba(255,255,255,0.1); border-left-color: #ef4444; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }         
         @keyframes spin { 100% { transform: rotate(360deg); } }     
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; transform: translateY(-20px) scale(1.2); } 100% { transform: translateY(-200px) scale(1); opacity: 0; } }
@@ -174,8 +185,11 @@
             <div id="reactionLayer" class="absolute inset-0 z-[48] pointer-events-none overflow-hidden"></div>
 
             <div class="top-bar flex-col md:flex-row gap-4">
-                <div class="flex items-center gap-3 top-bar-interactive glass-panel px-4 py-2 rounded-xl">
-                    <span class="text-accent-400 text-xs font-bold tracking-widest uppercase"><span id="roleIndicator">Host</span></span>
+                <div class="flex items-center gap-3 top-bar-interactive glass-panel px-4 py-2 rounded-xl shadow-lg">
+                    <span class="text-accent-400 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"/></svg>
+                        <span id="roleIndicator">Host</span>
+                    </span>
                     <div class="w-px h-4 bg-white/20"></div>
                     <span id="roomCodeDisplay" class="font-mono text-lg font-bold text-white tracking-widest">----</span>
                     <button id="copyCodeBtn" class="btn-icon !p-1 text-zinc-400 hover:text-white" title="Copy Code">
@@ -184,12 +198,12 @@
                 </div>
                 
                 <div class="flex items-center gap-3 top-bar-interactive">
-                    <div id="syncIndicator" class="glass-panel px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-medium text-zinc-300">
+                    <div id="syncIndicator" class="glass-panel px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-medium text-zinc-300 shadow-lg">
                         <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="syncDot"></div>                             
                         <span id="syncText">Awaiting Network...</span>
                     </div>
-                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <button id="toggleSidebarBtn" class="glass-panel p-2.5 rounded-xl hover:bg-white/10 text-white transition-all shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                 </div>
             </div>
@@ -217,31 +231,31 @@
 
             <div id="controlsPill" class="controls-pill flex flex-col gap-3">
                 <div class="flex justify-between items-end mb-1 px-2">
-                    <span id="nowPlayingTitle" class="text-white/90 text-sm font-medium truncate max-w-[70%]">No Media Loaded</span>
-                    <span id="timeDisplay" class="text-zinc-400 font-mono text-xs tracking-wider">00:00 / 00:00</span>
+                    <span id="nowPlayingTitle" class="text-white/95 text-sm font-semibold tracking-wide truncate max-w-[70%] drop-shadow-md">No Media Loaded</span>
+                    <span id="timeDisplay" class="text-zinc-300 font-mono text-xs tracking-wider">00:00 / 00:00</span>
                 </div>
 
                 <div id="scrubber" class="scrubber-track group/scrub relative">
                     <div id="scrubberBuffer" class="scrubber-buffer w-0"></div>
                     <div id="scrubberFill" class="scrubber-fill w-0"></div>
                     <div id="scrubberThumb" class="scrubber-thumb left-0"></div>
-                    <div id="scrubTooltip" class="absolute -top-8 left-0 transform -translate-x-1/2 bg-zinc-900/90 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 transition-opacity pointer-events-none z-10">00:00</div>
+                    <div id="scrubTooltip" class="absolute -top-8 left-0 transform -translate-x-1/2 bg-zinc-900/95 border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 transition-opacity pointer-events-none z-10 shadow-lg">00:00</div>
                 </div>
 
                 <div class="flex items-center justify-between pt-2">
                     <div class="flex items-center gap-2 md:gap-4">
-                        <button id="playBtn" class="btn-icon text-white">
+                        <button id="playBtn" class="btn-icon text-white hover:text-accent-400">
                             <svg id="iconPlay" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                             <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         </button>
                         
-                        <button id="skipBackBtn" class="btn-icon" title="-10s"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg></button>
-                        <button id="skipFwdBtn" class="btn-icon" title="+10s"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"></path></svg></button>
+                        <button id="skipBackBtn" class="btn-icon" title="-10s"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path></svg></button>
+                        <button id="skipFwdBtn" class="btn-icon" title="+10s"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"></path></svg></button>
 
                         <div class="relative flex items-center group/vol ml-2">
                             <button id="muteBtn" class="btn-icon">
-                                <svg id="iconVol" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
-                                <svg id="iconVolMuted" class="w-6 h-6 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                                <svg id="iconVol" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                                <svg id="iconVolMuted" class="w-6 h-6 hidden text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                             </button>
                             <div class="absolute left-full top-1/2 -translate-y-1/2 w-0 overflow-hidden group-hover/vol:w-28 transition-all duration-300 py-4 px-2 z-10 flex items-center">
                                 <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1">
@@ -253,41 +267,41 @@
                         <button id="requestSyncBtn" class="hidden btn-icon text-accent-400 bg-accent-400/10 hover:bg-accent-400 hover:text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider mr-2 border border-accent-400/20">Sync</button>
                         
                         <button id="aspectBtn" class="btn-icon !w-10 !h-10 text-[10px] font-bold tracking-wider uppercase">FIT</button>
-                        <button id="pipBtn" class="btn-icon" title="Picture in Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
-                        <button id="ambilightBtn" class="btn-icon active" title="Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
-                        <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
+                        <button id="pipBtn" class="btn-icon" title="Picture in Picture"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2h0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></button>
+                        <button id="ambilightBtn" class="btn-icon active" title="Ambilight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></button>
+                        <button id="fullscreenBtn" class="btn-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg></button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="sidebar" class="sidebar-container flex flex-col">
-            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/20">
-                <div class="flex gap-4" id="sidebarTabs">
-                    <button class="text-xs font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1" id="tabChatBtn">Chat</button>
-                    <button class="text-xs font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors" id="tabRosterBtn">Roster</button>
+            <div class="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-zinc-950/50 backdrop-blur-md">
+                <div class="flex gap-5" id="sidebarTabs">
+                    <button class="text-[11px] font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1" id="tabChatBtn">Chat</button>
+                    <button class="text-[11px] font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors" id="tabRosterBtn">Roster</button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="settingsBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-                    <button id="closeSidebarBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    <button id="settingsBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10 border border-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+                    <button id="closeSidebarBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10 border border-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                 </div>
             </div>
 
-            <div class="flex-1 flex flex-col min-h-0 bg-black/10 relative">
+            <div class="flex-1 flex flex-col min-h-0 bg-transparent relative">
                 <div id="chatView" class="absolute inset-0 flex flex-col">
-                    <div id="chatMessages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-                        <div class="text-center text-[9px] text-emerald-500 font-bold tracking-widest py-2 uppercase opacity-70">Peer-to-Peer Encryption Active</div>
+                    <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+                        <div class="text-center text-[10px] text-emerald-400/80 font-bold tracking-widest py-2 uppercase rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-2">P2P Encrypted Session</div>
                     </div>
-                    <div class="p-4 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 pb-8 md:pb-4">
-                        <div class="flex items-center gap-2 mb-2" id="reactionBar">
-                            <button class="hover:scale-125 transition-transform" onclick="App.sendReaction('❤️')">❤️</button>
-                            <button class="hover:scale-125 transition-transform" onclick="App.sendReaction('😂')">😂</button>
-                            <button class="hover:scale-125 transition-transform" onclick="App.sendReaction('😲')">😲</button>
-                            <button class="hover:scale-125 transition-transform" onclick="App.sendReaction('🔥')">🔥</button>
+                    <div class="p-4 bg-zinc-950 border-t border-white/5 pb-8 md:pb-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+                        <div class="flex items-center gap-3 mb-3 px-1" id="reactionBar">
+                            <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('❤️')">❤️</button>
+                            <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('😂')">😂</button>
+                            <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('😲')">😲</button>
+                            <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('🔥')">🔥</button>
                         </div>
-                        <form id="chatForm" class="relative">
-                            <input type="text" id="chatInput" class="w-full bg-black/60 border border-white/10 rounded-xl pl-4 pr-10 py-3 text-sm text-white focus:border-accent-500 outline-none" placeholder="Send a message..." autocomplete="off">
-                            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-accent-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
+                        <form id="chatForm" class="relative" onsubmit="return false;">
+                            <input type="text" id="chatInput" class="w-full bg-zinc-900 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-white focus:border-accent-500 focus:bg-zinc-800 transition-all outline-none" placeholder="Send a message..." autocomplete="off">
+                            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-accent-400 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"><svg class="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
                         </form>
                     </div>
                 </div>
@@ -299,10 +313,10 @@
         </div>
 
         <div id="settingsModal" class="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden items-center justify-center pointer-events-none opacity-0 transition-opacity">
-            <div class="bg-zinc-900/90 border border-white/10 p-6 rounded-2xl w-[90%] max-w-md shadow-2xl pointer-events-auto transform scale-95 transition-transform flex flex-col max-h-[80vh]">
+            <div class="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-[90%] max-w-md shadow-2xl pointer-events-auto transform scale-95 transition-transform flex flex-col max-h-[80vh]">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-lg font-bold text-white tracking-wide">Settings</h2>
-                    <button id="closeSettingsBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    <button id="closeSettingsBtn" class="btn-icon !p-1.5 bg-white/5 hover:bg-white/10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                 </div>
 
                 <div class="flex gap-4 border-b border-white/10 mb-4" id="settingsTabs">
@@ -310,78 +324,79 @@
                     <button class="text-xs font-bold tracking-widest text-zinc-500 hover:text-zinc-300 uppercase pb-2 transition-colors" data-target="mediaSettings">Media Mount</button>
                 </div>
 
-                <div class="overflow-y-auto flex-1">
-                    <div id="audioSettings" class="settings-pane space-y-4 block">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500 hidden" id="voiceDot"></div> Spatial Voice</h3>
+                <div class="overflow-y-auto flex-1 pr-2">
+                    <div id="audioSettings" class="settings-pane space-y-5 block">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500 hidden" id="voiceDot"></div> Spatial Voice</h3>
                             <button id="micBtn" class="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
-                                <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>                         
-                                <svg id="iconMicMuted" class="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                                <svg id="iconMic" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>                         
+                                <svg id="iconMicMuted" class="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                             </button>
                         </div>
                         <div class="flex gap-2 mb-4">
-                            <button id="eqSpeakerBtn" class="flex-1 py-2 bg-accent-600 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white transition-all">Laptop</button>
-                            <button id="eqEarphoneBtn" class="flex-1 py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">IEMs</button>
+                            <button id="eqSpeakerBtn" class="flex-1 py-2.5 bg-accent-600 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white transition-all shadow-md">Laptop</button>
+                            <button id="eqEarphoneBtn" class="flex-1 py-2.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">IEMs</button>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
+                        <div class="flex items-center gap-4 bg-zinc-950 p-3 rounded-xl border border-white/5">
+                            <svg class="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10H7L11 6V18L7 14H5V10Z"></path></svg>
                             <input type="range" id="voiceVolSlider" min="0" max="1" step="0.05" value="0.8">
                         </div>
                     </div>
 
                     <div id="mediaSettings" class="settings-pane space-y-4 hidden">
                         <div id="hostDeck" class="hidden flex flex-col gap-3">
-                            <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Host Media Config</h3>
-                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-1.5 bg-green-500/20 rounded-md text-green-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Zero bandwidth, exact match</p></div>
+                            <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Host Media Config</h3>
+                            
+                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2 bg-green-500/20 rounded-lg text-green-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Zero bandwidth, exact match</p></div>
                                 </div>
-                                <input type="file" id="fileSyncInput" class="hidden" accept="video/*,.mkv,.avi">
+                                <input type="file" id="fileSyncInput" class="hidden" accept="video/*,.mkv,.avi,.mp4,.webm">
                             </label>
 
-                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-1.5 bg-blue-500/20 rounded-md text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
+                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
                                 </div>
                                 <input type="file" id="subInputHost" class="hidden" accept=".vtt">
                             </label>
 
-                            <label class="flex items-center justify-between w-full bg-accent-600/20 hover:bg-accent-600 border border-accent-500/30 rounded-xl px-4 py-3 cursor-pointer group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-1.5 bg-accent-500 rounded-md text-white group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">WebRTC Stream</p><p class="text-[10px] text-zinc-300">Live transcode to peers</p></div>
+                            <label class="flex items-center justify-between w-full bg-accent-600/20 hover:bg-accent-600/30 border border-accent-500/30 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2 bg-accent-500 rounded-lg text-white shadow-glow group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">WebRTC Stream</p><p class="text-[10px] text-zinc-300">Live transcode for MKV/formats</p></div>
                                 </div>
-                                <input type="file" id="fileStreamInput" class="hidden" accept="video/*,.mkv,.avi">
+                                <input type="file" id="fileStreamInput" class="hidden" accept="video/*,.mkv,.avi,.mp4,.mov">
                             </label>
 
-                            <button id="shareScreenBtn" class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 group text-left">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-1.5 bg-purple-500/20 rounded-md text-purple-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
-                                    <div><p class="text-sm font-bold text-white">Share Browser Tab</p><p class="text-[10px] text-zinc-400">Capture internal audio</p></div>
+                            <button id="shareScreenBtn" class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 group text-left transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
+                                    <div><p class="text-sm font-bold text-white leading-tight">Share Screen</p><p class="text-[10px] text-zinc-400">Capture VLC / Internal audio</p></div>
                                 </div>
                             </button>
 
                             <div class="flex gap-2 pt-2">
-                                <input type="url" id="urlInput" class="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white focus:border-accent-500 outline-none" placeholder="YouTube, HLS, DASH, MP4 URL...">
-                                <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg px-4 font-bold text-xs text-white">Load</button>
+                                <input type="url" id="urlInput" class="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-500 outline-none transition-colors" placeholder="YouTube, HLS, DASH...">
+                                <button id="loadUrlBtn" class="bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl px-5 font-bold text-xs text-white transition-colors">Load</button>
                             </div>
                         </div>
 
                         <div id="guestDeck" class="hidden flex flex-col gap-3">
-                            <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Viewer Media Config</h3>
-                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-1.5 bg-emerald-500/20 rounded-md text-emerald-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Mount Local File Match</p></div>
+                            <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Viewer Media Config</h3>
+                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Mount Local File Match</p></div>
                                 </div>
-                                <input type="file" id="guestSyncInput" class="hidden" accept="video/*,.mkv,.avi">
+                                <input type="file" id="guestSyncInput" class="hidden" accept="video/*,.mkv,.avi,.mp4">
                             </label>
-                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 cursor-pointer group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-1.5 bg-blue-500/20 rounded-md text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
+                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
                                 </div>
                                 <input type="file" id="subInputGuest" class="hidden" accept=".vtt">
                             </label>
@@ -410,7 +425,7 @@
             customSubs: [],
             
             peer: null, localVoiceStream: null, activeWebRTCStream: null,
-            isStreamingMedia: false, // NEW: Flag to control canvas draw loop
+            isStreamingMedia: false, // Flag to control canvas draw loop
             hls: null, dash: null
         };
 
@@ -468,53 +483,99 @@
                 const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
                 return h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}` : `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
             },
+            
+            // Enhanced Sleek Toasts
             toast: (msg, type = 'info', rawHTML = false) => {
                 const cont = document.getElementById('toastContainer');
-                if(cont.children.length > 2) cont.firstChild.remove(); 
+                if(cont.children.length > 3) cont.firstChild.remove(); 
                 
                 const t = document.createElement('div');
-                const colors = type === 'error' ? 'bg-accent-600/90 text-white border-accent-400/50' : (type === 'success' ? 'bg-emerald-600/90 text-white border-emerald-400/50' : 'bg-zinc-800/90 text-white border-white/10');
-                t.className = `px-5 py-3 rounded-2xl shadow-glass border backdrop-blur-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full ${colors}`;
-                if (rawHTML) t.innerHTML = msg; else t.textContent = msg;
+                let icon = ''; let colors = '';
+                
+                if (type === 'error') {
+                    colors = 'bg-accent-600 text-white shadow-[0_10px_30px_rgba(220,38,38,0.3)]';
+                    icon = `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                } else if (type === 'success') {
+                    colors = 'bg-emerald-600 text-white shadow-[0_10px_30px_rgba(5,150,105,0.3)]';
+                    icon = `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                } else {
+                    colors = 'bg-zinc-800 text-white border border-white/10 shadow-xl';
+                    icon = `<svg class="w-5 h-5 flex-shrink-0 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                }
+
+                t.className = `px-5 py-3.5 rounded-2xl flex items-center gap-3 w-full animate-toast-in ${colors}`;
+                
+                const txtNode = document.createElement('div');
+                txtNode.className = "flex-1 text-sm font-medium text-left";
+                if (rawHTML) txtNode.innerHTML = msg; else txtNode.textContent = msg;
+                
+                t.innerHTML = icon;
+                t.appendChild(txtNode);
                 cont.appendChild(t);
-                t.offsetHeight; t.classList.remove('translate-y-4', 'opacity-0');
-                setTimeout(() => { t.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 4500);
+                
+                setTimeout(() => { 
+                    t.classList.replace('animate-toast-in', 'animate-toast-out'); 
+                    setTimeout(() => t.remove(), 300); 
+                }, 4000);
             },
+            
             toastAction: (msg, onApprove, onDeny) => {
                 const cont = document.getElementById('toastContainer');
                 if(cont.children.length > 2) cont.firstChild.remove();
                 
                 const t = document.createElement('div');
-                t.className = `px-5 py-4 rounded-2xl shadow-glass border border-white/20 bg-zinc-900/95 backdrop-blur-xl flex flex-col gap-3 transition-all duration-300 transform translate-y-4 opacity-0 w-full max-w-sm pointer-events-auto`;
+                t.className = `px-5 py-4 rounded-2xl shadow-2xl border border-white/20 bg-zinc-900 backdrop-blur-xl flex flex-col gap-4 animate-toast-in w-full max-w-sm pointer-events-auto`;
                 
-                const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white'; txt.innerHTML = msg;
-                const btnRow = document.createElement('div'); btnRow.className = "flex gap-2 w-full";
+                const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white text-left'; txt.innerHTML = msg;
+                const btnRow = document.createElement('div'); btnRow.className = "flex gap-3 w-full";
                 
-                const btnA = document.createElement('button'); btnA.className = "flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider btn-action-approve"; btnA.textContent = "Approve";
-                const btnD = document.createElement('button'); btnD.className = "flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider btn-action-deny"; btnD.textContent = "Deny";
+                const btnA = document.createElement('button'); btnA.className = "flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider btn-action-approve"; btnA.textContent = "Approve";
+                const btnD = document.createElement('button'); btnD.className = "flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider btn-action-deny"; btnD.textContent = "Deny";
                 
-                const close = () => { t.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); };
+                const close = () => { 
+                    t.classList.replace('animate-toast-in', 'animate-toast-out'); 
+                    setTimeout(() => t.remove(), 300); 
+                };
                 btnA.onclick = () => { if(onApprove) onApprove(); close(); }; btnD.onclick = () => { if(onDeny) onDeny(); close(); };
                 
                 btnRow.appendChild(btnA); btnRow.appendChild(btnD); t.appendChild(txt); t.appendChild(btnRow);
                 cont.appendChild(t);
-                t.offsetHeight; t.classList.remove('translate-y-4', 'opacity-0');
-                setTimeout(() => { if(t.parentElement) close(); }, 10000); 
+                
+                setTimeout(() => { if(t.parentElement) close(); }, 12000); 
             },
+            
             log: (sender, txt, sys = false) => {
                 const d = document.createElement('div'); d.className = 'animate-slide-in';
                 if(sys) {
-                    d.className += " text-center text-[10px] text-accent-400 font-bold uppercase tracking-wider py-1 opacity-80";
+                    d.className += " text-center text-[10px] text-zinc-500 font-bold uppercase tracking-wider py-1 opacity-80";
                     d.textContent = txt;
                 } else {
                     const me = sender === State.myName;
                     d.className += ` flex flex-col ${me ? 'items-end' : 'items-start'}`;
-                    const nameSpan = document.createElement('span'); nameSpan.className = "text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1 px-1"; nameSpan.textContent = sender;
-                    const bubble = document.createElement('div'); bubble.className = `px-4 py-2.5 max-w-[85%] text-sm rounded-2xl ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-white/10 border border-white/5 text-zinc-200 rounded-tl-sm'}`;
+                    
+                    const meta = document.createElement('div');
+                    meta.className = "flex items-center gap-2 mb-1 px-1";
+                    const nameSpan = document.createElement('span'); 
+                    nameSpan.className = "text-[10px] text-zinc-400 font-bold uppercase tracking-widest"; 
+                    nameSpan.textContent = sender;
+                    const timeSpan = document.createElement('span');
+                    timeSpan.className = "text-[9px] text-zinc-600 font-medium";
+                    const dObj = new Date();
+                    timeSpan.textContent = `${dObj.getHours().toString().padStart(2,'0')}:${dObj.getMinutes().toString().padStart(2,'0')}`;
+                    
+                    if (me) { meta.appendChild(timeSpan); meta.appendChild(nameSpan); }
+                    else { meta.appendChild(nameSpan); meta.appendChild(timeSpan); }
+
+                    const bubble = document.createElement('div'); 
+                    bubble.className = `px-4 py-2.5 max-w-[90%] text-sm rounded-2xl shadow-sm ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-zinc-800 border border-white/5 text-zinc-100 rounded-tl-sm'}`;
                     bubble.textContent = txt;
-                    d.appendChild(nameSpan); d.appendChild(bubble);
+                    d.appendChild(meta); d.appendChild(bubble);
                 }
-                UI.chatMsgs.appendChild(d); UI.chatMsgs.scrollTop = UI.chatMsgs.scrollHeight;
+                UI.chatMsgs.appendChild(d); 
+                // Ensure scrolling fires after layout render
+                requestAnimationFrame(() => {
+                    UI.chatMsgs.scrollTop = UI.chatMsgs.scrollHeight;
+                });
             },
             copyToClipboard: (text) => { navigator.clipboard.writeText(text).then(() => Utils.toast("Code copied!", "success")).catch(()=>{}); }
         };
@@ -537,7 +598,7 @@
                     AudioGraph.comp.connect(AudioGraph.dest); // Route to WebRTC Stream perfectly synced
                     
                     AudioGraph.applyProfile();
-                } catch(e) {}
+                } catch(e) { console.warn("AudioGraph init blocked by browser:", e); }
             },
             resume: async () => { if(AudioGraph.ctx && AudioGraph.ctx.state === 'suspended') await AudioGraph.ctx.resume(); },
             applyProfile: () => {
@@ -572,7 +633,7 @@
                 Player.loading(false); UI.emptyState.style.opacity = '1';
                 State.playMode = 'idle'; UI.title.textContent = "No Media Loaded";
                 UI.video.pause(); 
-                State.isStreamingMedia = false; // Stop the pristine canvas loop
+                State.isStreamingMedia = false; 
                 
                 if(State.lastBlobUrl) { URL.revokeObjectURL(State.lastBlobUrl); State.lastBlobUrl = null; }
                 
@@ -683,7 +744,7 @@
                     State.mediaConns.set(c.peer, call);
                     const pc = call.peerConnection;
                     
-                    // The Definitive Video Hack: Forces Pristine 50Mbps Resolution
+                    // The Definitive WebRTC Override: Forces Pristine Encoding
                     const forceHighQuality = () => { 
                         if (!pc) return;
                         pc.getSenders().forEach(s => { 
@@ -767,7 +828,7 @@
                 const onOpen = () => {
                     if(!State.isHost) {
                         UI.codeDisp.textContent = State.roomId; App.enter();
-                        UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase";
+                        UI.roleInd.textContent = "Viewer"; UI.roleInd.className = "text-zinc-400 text-xs font-bold tracking-widest uppercase flex items-center gap-2";
                         UI.reqSyncBtn.classList.remove('hidden'); UI.guestDeck.classList.remove('hidden'); 
                         UI.syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-glow"; UI.syncTxt.textContent = "Encrypted Link Active";
                         c.send({type:'PING', t: Date.now()}); 
@@ -854,7 +915,9 @@
                     case 'CHAT': 
                         const senderName = d.name || (State.isHost ? 'Viewer' : 'Host');
                         Utils.log(senderName, d.text); 
-                        if (!State.sidebarOpen) Utils.toast(`<b>${Utils.escapeHTML(senderName)}:</b> ${Utils.escapeHTML(d.text)}`);
+                        if (!State.sidebarOpen) {
+                            Utils.toast(`<b>${Utils.escapeHTML(senderName)}</b>: ${Utils.escapeHTML(d.text)}`, 'info', true);
+                        }
                         if(State.isHost) { State.connections.forEach((c, pid) => { if(pid !== peerId) c.send({type:'CHAT', text: d.text, name: d.name}); }); }
                         break;
                     case 'MASTER_STATE':
@@ -981,7 +1044,7 @@
             spawnReaction: (emoji) => {
                 const el = document.createElement('div');
                 el.textContent = emoji;
-                el.className = 'absolute text-4xl pointer-events-none z-[100] animate-float-up';
+                el.className = 'absolute text-4xl pointer-events-none z-[100] animate-float-up drop-shadow-xl';
                 el.style.left = `${Math.random() * 20 + 80}%`;
                 el.style.bottom = '10%';
                 el.style.animationDuration = `${Math.random() * 1 + 2}s`;
@@ -997,18 +1060,18 @@
                 const createAvatar = (name) => {
                     let hash = 0; for(let i=0; i<name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
                     const color = `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
-                    return `<div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border border-white/10" style="background-color: ${color}">${name.charAt(0).toUpperCase()}</div>`;
+                    return `<div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg border border-white/10" style="background-color: ${color}">${name.charAt(0).toUpperCase()}</div>`;
                 };
 
                 const me = document.createElement('div');
-                me.className = 'flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5';
+                me.className = 'flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5';
                 me.innerHTML = `${createAvatar(State.myName)} <div class="flex-1 min-w-0"><p class="text-sm font-bold text-white truncate">${Utils.escapeHTML(State.myName)}</p><p class="text-[10px] text-accent-400 font-medium">You ${State.isHost ? '(Host)' : ''}</p></div>`;
                 list.appendChild(me);
 
                 State.connections.forEach((c, pid) => {
                     const peerName = State.peerNames?.get(pid) || 'Viewer';
                     const el = document.createElement('div');
-                    el.className = 'flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors';
+                    el.className = 'flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl transition-colors';
                     el.innerHTML = `${createAvatar(peerName)} <div class="flex-1 min-w-0"><p class="text-sm font-bold text-zinc-300 truncate">${Utils.escapeHTML(peerName)}</p><p class="text-[10px] text-zinc-500 font-medium tracking-wider">Connected</p></div>`;
                     list.appendChild(el);
                 });
@@ -1017,10 +1080,8 @@
             checkFormat: (file) => {
                 if(!file) return;
                 const name = file.name.toLowerCase();
-                // We keep this warning for entirely unsupported files (like RAW HEVC missing audio entirely on browser), 
-                // but the canvas stream fixes all visual bugs.
                 if(name.endsWith('.avi') || name.endsWith('.mov')) {
-                    Utils.toast(`<b>Format Warning:</b> Ensure your browser can natively decode <b>${name}</b> codecs.`, 'info', true);
+                    Utils.toast(`<b>Format Warning:</b> This browser may not decode <b>${name}</b> codecs locally. Use "WebRTC Stream" if it fails.`, 'info', true);
                 }
             },
 
@@ -1094,13 +1155,13 @@
                 
                 document.getElementById('tabChatBtn').addEventListener('click', () => {
                     document.getElementById('chatView').classList.remove('hidden'); document.getElementById('rosterView').classList.add('hidden');
-                    document.getElementById('tabChatBtn').className = 'text-xs font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1';
-                    document.getElementById('tabRosterBtn').className = 'text-xs font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors';
+                    document.getElementById('tabChatBtn').className = 'text-[11px] font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1';
+                    document.getElementById('tabRosterBtn').className = 'text-[11px] font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors';
                 });
                 document.getElementById('tabRosterBtn').addEventListener('click', () => {
                     document.getElementById('chatView').classList.add('hidden'); document.getElementById('rosterView').classList.remove('hidden');
-                    document.getElementById('tabRosterBtn').className = 'text-xs font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1';
-                    document.getElementById('tabChatBtn').className = 'text-xs font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors';
+                    document.getElementById('tabRosterBtn').className = 'text-[11px] font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1';
+                    document.getElementById('tabChatBtn').className = 'text-[11px] font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors';
                     App.updateRoster();
                 });
 
@@ -1170,7 +1231,7 @@
                 UI.subInputHost.addEventListener('change', loadSubtitles);
                 UI.subInputGuest.addEventListener('change', loadSubtitles);
 
-                // --- THE DEFINITIVE FIX FOR MKV & MEDIA STREAMING ---
+                // --- THE DEFINITIVE FIX FOR MKV & MEDIA STREAMING (CANVAS OVERRIDE) ---
                 UI.fileStream.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
                     App.checkFormat(f);
@@ -1181,7 +1242,7 @@
                         if (State.activeWebRTCStream) return;
                         
                         try {
-                            // 1. Ensure the Audio Graph is fully wired up first.
+                            // 1. Ensure Audio Graph is live
                             AudioGraph.init(); 
 
                             // 2. We bypass native buggy captureStream entirely by rendering to a 
@@ -1190,7 +1251,7 @@
                             const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
                             State.isStreamingMedia = true;
                             
-                            // Using requestVideoFrameCallback saves immense CPU & guarantees no duplicate frames.
+                            // Using requestVideoFrameCallback saves CPU & guarantees frame accuracy regardless of container
                             const drawFrame = (now, metadata) => {
                                 if (!State.isStreamingMedia) return;
                                 if (canvas.width !== metadata.width) {
@@ -1204,7 +1265,6 @@
                             if ('requestVideoFrameCallback' in UI.video) {
                                 UI.video.requestVideoFrameCallback(drawFrame);
                             } else {
-                                // Fallback for browsers that don't support callback
                                 const drawLoop = () => {
                                     if (!State.isStreamingMedia) return;
                                     if (UI.video.videoWidth > 0) {
@@ -1219,15 +1279,14 @@
                                 drawLoop();
                             }
 
-                            // Capture exactly at 60 fps limit to match most display syncs
+                            // Capture exact 60fps limit to match most display syncs
                             const vs = canvas.captureStream(60); 
                             
-                            // Get the Video track from Canvas, preventing MKV Container drops
+                            // Get the pristine Video track from Canvas
                             const videoTrack = vs.getVideoTracks()[0];
                             if (!videoTrack) throw new Error("Canvas refused to capture video track.");
 
-                            // Get the Audio Track directly out of our WebAudio API processing graph, 
-                            // ignoring the raw corrupted file stream audio entirely.
+                            // Get the Audio Track directly out of our WebAudio API graph, perfectly synced.
                             let audioTrack = null;
                             if (AudioGraph.dest && AudioGraph.dest.stream) {
                                 audioTrack = AudioGraph.dest.stream.getAudioTracks()[0];
@@ -1238,12 +1297,11 @@
 
                             State.activeWebRTCStream = new MediaStream(tracks);
                             Net.broadcastMediaAll(f.name, 'local_stream');
-                            Utils.toast("Broadcasting 1:1 stream to peers...", "success");
+                            Utils.toast("Broadcasting flawless transcode to peers...", "success");
 
-                            // MKV Audio sanity check (if it has AC3 and browser can't decode it)
                             setTimeout(() => {
                                 if (UI.video.videoWidth > 0 && !audioTrack && State.playMode !== 'idle') {
-                                    Utils.toast("No valid audio track detected. If this is an MKV with AC3/DTS, the browser blocked it. Use 'Share Browser Tab' as a fallback to stream VLC.", "error", true);
+                                    Utils.toast("Warning: Browser blocked AC3/DTS audio decoding for this file. Use 'Share Screen' to capture audio via VLC instead.", "error", true);
                                 }
                             }, 2500);
 
@@ -1255,22 +1313,35 @@
                     e.target.value = '';
                 });
 
+                // --- ROBUST SCREEN SHARE FIX ---
                 UI.screenBtn.addEventListener('click', async () => {
                     try {
+                        // Force requesting system audio directly
                         const stream = await navigator.mediaDevices.getDisplayMedia({
                             video: { frameRate: 60, displaySurface: "browser" }, 
-                            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 48000 }
                         });
+                        
                         Player.purge(); UI.emptyState.style.opacity = '0';
-                        State.activeWebRTCStream = stream;
                         
                         stream.getVideoTracks()[0].onended = () => { 
                             Player.purge(); Utils.toast("Screen share ended.");
                             if(State.isHost) Net.broadcastAll({type: 'MASTER_STATE', payload: { mode: 'idle' }});
                         };
                         
+                        // Critical logic: Warn if user forgot to check the audio box
+                        const hasAudio = stream.getAudioTracks().length > 0;
+                        if (!hasAudio) {
+                            Utils.toast("Notice: You did not share System Audio. Viewers will only see video.", "error");
+                        } else {
+                            Utils.toast("Screen and Audio captured perfectly.", "success");
+                        }
+
+                        State.activeWebRTCStream = stream;
                         AudioGraph.init();
-                        UI.video.srcObject = State.activeWebRTCStream; UI.video.play().catch(()=>{});
+                        UI.video.srcObject = State.activeWebRTCStream; 
+                        UI.video.play().catch(()=>{});
+                        
                         State.playMode = 'screenshare'; UI.title.textContent = "Screen Broadcast";
                         Net.broadcastMediaAll("Screen Share", 'screenshare');
                     } catch(e) {
@@ -1280,9 +1351,16 @@
                 });
 
                 UI.chatForm.addEventListener('submit', e => {
-                    e.preventDefault(); const t = UI.chatIn.value.trim(); if(!t) return;
-                    Utils.log(State.myName, t); if(State.connections.size > 0) { if(State.isHost) Net.broadcastAll({type:'CHAT', text: t, name: State.myName}); else State.connections.values().next().value?.send({type:'CHAT', text: t, name: State.myName}); }
+                    e.preventDefault(); 
+                    const t = UI.chatIn.value.trim(); if(!t) return;
+                    Utils.log(State.myName, t); 
+                    if(State.connections.size > 0) { 
+                        if(State.isHost) Net.broadcastAll({type:'CHAT', text: t, name: State.myName}); 
+                        else State.connections.values().next().value?.send({type:'CHAT', text: t, name: State.myName}); 
+                    }
                     UI.chatIn.value = '';
+                    // Keep focus on input for rapid chatting
+                    UI.chatIn.focus();
                 });
                 
                 UI.micBtn.addEventListener('click', Mic.toggle);
