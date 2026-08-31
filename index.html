@@ -6,8 +6,6 @@
     <meta name="theme-color" content="#09090b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTHVtacOocmUgU3R1ZGlvIFYzIiwic2hvcnRfbmFtZSI6Ikx1bWnDqHJlIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzA5MDkwYiIsInRoZW1lX2NvbG9yIjoiIzA5MDkwYiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAlM0UlM0NyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyMwOTA5MGInLyUzRSUzQy9zdmclM0UiLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100%25' height='100%25' fill='%2309090b'/%3E%3C/svg%3E">
     <title>Lumière Studio V3 | Definitive Cinema</title>         
 
     <link rel="preconnect" href="https://fonts.googleapis.com">     
@@ -83,8 +81,8 @@
         .scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%) scale(0); z-index: 3; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; }         
         .scrubber-track:hover .scrubber-thumb, .scrubber-track.scrubbing .scrubber-thumb { transform: translate(-50%, -50%) scale(1); }                 
 
-        /* Refined Sidebar */
-        .sidebar-container { position: absolute; right: 0; top: 0; bottom: 0; width: 420px; max-width: 100vw; z-index: 60; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.08); box-shadow: -20px 0 50px rgba(0,0,0,0.5); }
+        /* Completely Refined Sidebar UI */
+        .sidebar-container { position: absolute; right: 0; top: 0; bottom: 0; width: 420px; max-width: 100vw; z-index: 60; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-left: 1px solid rgba(255,255,255,0.08); box-shadow: -20px 0 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
         .sidebar-container.open { transform: translateX(0); }
         
         .interaction-gate { position: absolute; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -177,7 +175,6 @@
                 <div id="ytPlayerDiv" class="w-full h-full"></div>                     
             </div>
 
-            <!-- Custom Subtitle Layer -->
             <div id="subtitleLayer" class="absolute inset-0 z-[45] pointer-events-none flex items-end justify-center pb-32 px-12 transition-opacity duration-300">
                 <div id="subtitleText" class="subtitle-text text-white font-sans text-3xl md:text-4xl text-center bg-black/50 px-4 py-2 rounded-xl hidden"></div>
             </div>
@@ -275,8 +272,8 @@
             </div>
         </div>
 
-        <div id="sidebar" class="sidebar-container flex flex-col">
-            <div class="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-zinc-950/50 backdrop-blur-md">
+        <div id="sidebar" class="sidebar-container">
+            <div class="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-zinc-950/40">
                 <div class="flex gap-5" id="sidebarTabs">
                     <button class="text-[11px] font-bold tracking-widest text-white uppercase border-b-2 border-accent-500 pb-1" id="tabChatBtn">Chat</button>
                     <button class="text-[11px] font-bold tracking-widest text-zinc-500 uppercase pb-1 hover:text-zinc-300 transition-colors" id="tabRosterBtn">Roster</button>
@@ -287,19 +284,19 @@
                 </div>
             </div>
 
-            <div class="flex-1 flex flex-col min-h-0 bg-transparent relative">
+            <div class="flex-1 flex flex-col min-h-0 relative">
                 <div id="chatView" class="absolute inset-0 flex flex-col">
-                    <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+                    <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4 scroll-smooth">
                         <div class="text-center text-[10px] text-emerald-400/80 font-bold tracking-widest py-2 uppercase rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-2">P2P Encrypted Session</div>
                     </div>
-                    <div class="p-4 bg-zinc-950 border-t border-white/5 pb-8 md:pb-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+                    <div class="p-4 bg-zinc-950 border-t border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-10">
                         <div class="flex items-center gap-3 mb-3 px-1" id="reactionBar">
                             <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('❤️')">❤️</button>
                             <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('😂')">😂</button>
                             <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('😲')">😲</button>
                             <button class="hover:scale-125 transition-transform text-lg" onclick="App.sendReaction('🔥')">🔥</button>
                         </div>
-                        <form id="chatForm" class="relative" onsubmit="return false;">
+                        <form id="chatForm" class="relative">
                             <input type="text" id="chatInput" class="w-full bg-zinc-900 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-white focus:border-accent-500 focus:bg-zinc-800 transition-all outline-none" placeholder="Send a message..." autocomplete="off">
                             <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-accent-400 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"><svg class="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
                         </form>
@@ -312,7 +309,7 @@
             </div>
         </div>
 
-        <div id="settingsModal" class="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden items-center justify-center pointer-events-none opacity-0 transition-opacity">
+        <div id="settingsModal" class="absolute inset-0 z-[100] bg-black/70 backdrop-blur-md hidden items-center justify-center pointer-events-none opacity-0 transition-opacity">
             <div class="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-[90%] max-w-md shadow-2xl pointer-events-auto transform scale-95 transition-transform flex flex-col max-h-[80vh]">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-lg font-bold text-white tracking-wide">Settings</h2>
@@ -355,18 +352,10 @@
                                 <input type="file" id="fileSyncInput" class="hidden" accept="video/*,.mkv,.avi,.mp4,.webm">
                             </label>
 
-                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
-                                <div class="flex items-center gap-4">
-                                    <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
-                                </div>
-                                <input type="file" id="subInputHost" class="hidden" accept=".vtt">
-                            </label>
-
                             <label class="flex items-center justify-between w-full bg-accent-600/20 hover:bg-accent-600/30 border border-accent-500/30 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
                                 <div class="flex items-center gap-4">
                                     <div class="p-2 bg-accent-500 rounded-lg text-white shadow-glow group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">WebRTC Stream</p><p class="text-[10px] text-zinc-300">Live transcode for MKV/formats</p></div>
+                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">WebRTC Stream</p><p class="text-[10px] text-zinc-300">Live transcode for formats</p></div>
                                 </div>
                                 <input type="file" id="fileStreamInput" class="hidden" accept="video/*,.mkv,.avi,.mp4,.mov">
                             </label>
@@ -374,7 +363,7 @@
                             <button id="shareScreenBtn" class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 group text-left transition-colors">
                                 <div class="flex items-center gap-4">
                                     <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
-                                    <div><p class="text-sm font-bold text-white leading-tight">Share Screen</p><p class="text-[10px] text-zinc-400">Capture VLC / Internal audio</p></div>
+                                    <div><p class="text-sm font-bold text-white leading-tight">Share Screen</p><p class="text-[10px] text-zinc-400">Fix for x265 (Use VLC!)</p></div>
                                 </div>
                             </button>
 
@@ -392,13 +381,6 @@
                                     <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Dual-Local Sync</p><p class="text-[10px] text-zinc-400">Mount Local File Match</p></div>
                                 </div>
                                 <input type="file" id="guestSyncInput" class="hidden" accept="video/*,.mkv,.avi,.mp4">
-                            </label>
-                            <label class="flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer group transition-colors">
-                                <div class="flex items-center gap-4">
-                                    <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400 group-hover:scale-110 transition-transform"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                                    <div class="text-left"><p class="text-sm font-bold text-white leading-tight">Load Subtitles</p><p class="text-[10px] text-zinc-400">Overlay .vtt file locally</p></div>
-                                </div>
-                                <input type="file" id="subInputGuest" class="hidden" accept=".vtt">
                             </label>
                         </div>
                     </div>
@@ -464,8 +446,6 @@
             chatMsgs: document.getElementById('chatMessages'), chatForm: document.getElementById('chatForm'), chatIn: document.getElementById('chatInput'),
             
             fileSync: document.getElementById('fileSyncInput'), fileStream: document.getElementById('fileStreamInput'), guestSync: document.getElementById('guestSyncInput'),
-            subInputHost: document.getElementById('subInputHost'), subInputGuest: document.getElementById('subInputGuest'),
-            subText: document.getElementById('subtitleText'),
             screenBtn: document.getElementById('shareScreenBtn'), urlIn: document.getElementById('urlInput'), urlBtn: document.getElementById('loadUrlBtn'),
             
             micBtn: document.getElementById('micBtn'), micIco: document.getElementById('iconMic'), micMut: document.getElementById('iconMicMuted'),
@@ -484,7 +464,6 @@
                 return h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}` : `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
             },
             
-            // Enhanced Sleek Toasts
             toast: (msg, type = 'info', rawHTML = false) => {
                 const cont = document.getElementById('toastContainer');
                 if(cont.children.length > 3) cont.firstChild.remove(); 
@@ -516,32 +495,7 @@
                 setTimeout(() => { 
                     t.classList.replace('animate-toast-in', 'animate-toast-out'); 
                     setTimeout(() => t.remove(), 300); 
-                }, 4000);
-            },
-            
-            toastAction: (msg, onApprove, onDeny) => {
-                const cont = document.getElementById('toastContainer');
-                if(cont.children.length > 2) cont.firstChild.remove();
-                
-                const t = document.createElement('div');
-                t.className = `px-5 py-4 rounded-2xl shadow-2xl border border-white/20 bg-zinc-900 backdrop-blur-xl flex flex-col gap-4 animate-toast-in w-full max-w-sm pointer-events-auto`;
-                
-                const txt = document.createElement('p'); txt.className = 'text-sm font-medium text-white text-left'; txt.innerHTML = msg;
-                const btnRow = document.createElement('div'); btnRow.className = "flex gap-3 w-full";
-                
-                const btnA = document.createElement('button'); btnA.className = "flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider btn-action-approve"; btnA.textContent = "Approve";
-                const btnD = document.createElement('button'); btnD.className = "flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider btn-action-deny"; btnD.textContent = "Deny";
-                
-                const close = () => { 
-                    t.classList.replace('animate-toast-in', 'animate-toast-out'); 
-                    setTimeout(() => t.remove(), 300); 
-                };
-                btnA.onclick = () => { if(onApprove) onApprove(); close(); }; btnD.onclick = () => { if(onDeny) onDeny(); close(); };
-                
-                btnRow.appendChild(btnA); btnRow.appendChild(btnD); t.appendChild(txt); t.appendChild(btnRow);
-                cont.appendChild(t);
-                
-                setTimeout(() => { if(t.parentElement) close(); }, 12000); 
+                }, 5000);
             },
             
             log: (sender, txt, sys = false) => {
@@ -558,13 +512,8 @@
                     const nameSpan = document.createElement('span'); 
                     nameSpan.className = "text-[10px] text-zinc-400 font-bold uppercase tracking-widest"; 
                     nameSpan.textContent = sender;
-                    const timeSpan = document.createElement('span');
-                    timeSpan.className = "text-[9px] text-zinc-600 font-medium";
-                    const dObj = new Date();
-                    timeSpan.textContent = `${dObj.getHours().toString().padStart(2,'0')}:${dObj.getMinutes().toString().padStart(2,'0')}`;
                     
-                    if (me) { meta.appendChild(timeSpan); meta.appendChild(nameSpan); }
-                    else { meta.appendChild(nameSpan); meta.appendChild(timeSpan); }
+                    meta.appendChild(nameSpan);
 
                     const bubble = document.createElement('div'); 
                     bubble.className = `px-4 py-2.5 max-w-[90%] text-sm rounded-2xl shadow-sm ${me ? 'bg-accent-600 text-white rounded-tr-sm' : 'bg-zinc-800 border border-white/5 text-zinc-100 rounded-tl-sm'}`;
@@ -572,7 +521,7 @@
                     d.appendChild(meta); d.appendChild(bubble);
                 }
                 UI.chatMsgs.appendChild(d); 
-                // Ensure scrolling fires after layout render
+                // Ensure reliable scrolling to bottom
                 requestAnimationFrame(() => {
                     UI.chatMsgs.scrollTop = UI.chatMsgs.scrollHeight;
                 });
@@ -594,11 +543,11 @@
                     AudioGraph.eq.connect(AudioGraph.gain); 
                     AudioGraph.gain.connect(AudioGraph.comp);
                     
-                    AudioGraph.comp.connect(AudioGraph.ctx.destination); // Play to local speakers
-                    AudioGraph.comp.connect(AudioGraph.dest); // Route to WebRTC Stream perfectly synced
+                    AudioGraph.comp.connect(AudioGraph.ctx.destination); // Play locally
+                    AudioGraph.comp.connect(AudioGraph.dest); // Route to WebRTC stream 
                     
                     AudioGraph.applyProfile();
-                } catch(e) { console.warn("AudioGraph init blocked by browser:", e); }
+                } catch(e) { console.warn("AudioGraph init failed:", e); }
             },
             resume: async () => { if(AudioGraph.ctx && AudioGraph.ctx.state === 'suspended') await AudioGraph.ctx.resume(); },
             applyProfile: () => {
@@ -659,8 +608,6 @@
                 State.aspectIdx = 0; UI.aspectBtn.textContent = 'FIT';
                 UI.ytCont.classList.add('hidden'); UI.video.classList.remove('hidden'); UI.video.className = aspectModes[State.aspectIdx];
                 UI.scrubFill.style.width = '0%'; UI.scrubThumb.style.left = '0%'; UI.time.textContent = '00:00 / 00:00';
-                
-                State.customSubs = []; UI.subText.classList.add('hidden'); UI.subText.innerHTML = '';
             },
             loadNative: (srcObj, isUrl = false, title = "Local File") => {
                 Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
@@ -740,6 +687,12 @@
             broadcastMediaAll: (title, mode) => {
                 if(!State.activeWebRTCStream) return;
                 State.connections.forEach(c => {
+                    // Close old connection if one exists
+                    if (State.mediaConns.has(c.peer)) {
+                        State.mediaConns.get(c.peer).close();
+                        State.mediaConns.delete(c.peer);
+                    }
+
                     const call = State.peer.call(c.peer, State.activeWebRTCStream, {metadata:{type: mode, name: title}});
                     State.mediaConns.set(c.peer, call);
                     const pc = call.peerConnection;
@@ -750,16 +703,9 @@
                             if(s.track && s.track.kind === 'video') { 
                                 const p = s.getParameters(); 
                                 if(!p.encodings) p.encodings=[{}]; 
-                                // FIX: 8 Mbps is the safe maximum for WebRTC. 50 Mbps causes complete encoder crash and black screens.
+                                // FIX: Restrict to 8 Mbps max to prevent complete encoder failures on network drops
                                 p.encodings[0].maxBitrate = 8000000; 
-                                // FIX: Balanced degradation prevents frame freezes on minor network drops
-                                p.degradationPreference = 'balanced';
-                                s.setParameters(p).catch(()=>{}); 
-                            }
-                            if(s.track && s.track.kind === 'audio') { 
-                                const p = s.getParameters(); 
-                                if(!p.encodings) p.encodings=[{}]; 
-                                p.encodings[0].maxBitrate = 256000; 
+                                p.degradationPreference = 'maintain-resolution'; // Don't turn into pixels
                                 s.setParameters(p).catch(()=>{}); 
                             }
                         }); 
@@ -839,8 +785,7 @@
                         c.send({ type: 'MASTER_STATE', payload: { mode: State.playMode, title: State.mediaTitle, url: State.mediaUrl, size: State.fileSize, time: Player.getTime() } });
                         if((State.playMode === 'local_stream' || State.playMode === 'screenshare') && State.activeWebRTCStream) {
                             setTimeout(() => {
-                                const call = State.peer.call(c.peer, State.activeWebRTCStream, {metadata:{type: State.playMode, name: State.mediaTitle}});
-                                State.mediaConns.set(c.peer, call);
+                                Net.broadcastMediaAll(State.mediaTitle, State.playMode);
                             }, 1000);
                         }
                     }
@@ -872,7 +817,6 @@
                         Player.purge(); UI.emptyState.style.opacity = '0';
                         UI.video.srcObject = s; 
                         
-                        // Small buffer to guarantee smoothness on arrival
                         UI.video.preservesPitch = true;
                         
                         State.mediaConns.set(call.peer, call);
@@ -925,7 +869,7 @@
                         if(p.mode === 'url') { App.loadUrl(p.url, p.title, false); setTimeout(()=>Player.seek(p.time), 1000); }
                         else if(p.mode === 'youtube') { Player.loadYT(p.url, p.title); setTimeout(()=>Player.seek(p.time), 1500); }
                         else if(p.mode === 'local_sync') { Utils.toast(`Host playing: ${p.title}. Mount identical file.`, 'info'); }
-                        else if(p.mode === 'local_stream' || p.mode === 'screenshare') { Utils.toast("Host is broadcasting...", 'info'); }
+                        else if(p.mode === 'local_stream' || p.mode === 'screenshare') { Utils.toast("Host is broadcasting stream...", 'info'); }
                         break;
                     case 'REQ_FILE': Utils.toast(`Host requested file match.`, 'info'); break;
                     case 'FILE_MOUNTED': 
@@ -942,20 +886,6 @@
                             State.connections.get(peerId)?.send({type:'STATE', s: {time: Player.getTime(), duration: Player.getDur(), paused: Player.isPaused(), timestamp: Date.now()}}); 
                         } 
                         break;
-                    case 'REQ_ACTION': 
-                        if(State.isHost) {
-                            const map = { 'play': "Play Video", 'pause': "Pause Video", 'seek': `Seek to ${Utils.time(d.val)}` };
-                            Utils.toastAction(`<b>${Utils.escapeHTML(d.name)}</b> requests to ${map[d.action]}`, 
-                                () => {
-                                    if(d.action === 'play') { Player.play(); Net.broadcastAll({type:'CMD_PLAY'}); }
-                                    else if(d.action === 'pause') { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); }
-                                    else if(d.action === 'seek') { Player.seek(d.val); Net.broadcastAll({type:'CMD_SEEK', t: d.val}); }
-                                },
-                                () => { State.connections.get(peerId)?.send({type:'REQ_DENIED', action: d.action}); }
-                            );
-                        }
-                        break;
-                    case 'REQ_DENIED': Utils.toast(`Host denied request to ${d.action}`, "error"); break;
                 }
             },
             enforce: (h) => {
@@ -1003,44 +933,6 @@
         };
 
         const App = {
-            parseVTT: (vttText) => {
-                const lines = vttText.split(/\r?\n/);
-                const subs = []; let i = 0;
-                while (i < lines.length) {
-                    if (lines[i].includes('-->')) {
-                        const parts = lines[i].split(' --> ');
-                        const parseTime = (str) => {
-                            const p = str.replace(',', '.').split(':');
-                            let sec = 0;
-                            if (p.length === 3) sec = parseInt(p[0])*3600 + parseInt(p[1])*60 + parseFloat(p[2]);
-                            else if (p.length === 2) sec = parseInt(p[0])*60 + parseFloat(p[1]);
-                            return sec;
-                        };
-                        const start = parseTime(parts[0]);
-                        const end = parseTime(parts[1]);
-                        let text = '';
-                        i++;
-                        while (i < lines.length && lines[i].trim() !== '') { text += lines[i] + '<br>'; i++; }
-                        subs.push({start, end, text: text.trim()});
-                    }
-                    i++;
-                }
-                return subs;
-            },
-
-            updateCustomSubtitles: () => {
-                if(State.customSubs && State.customSubs.length > 0) {
-                    const cTime = Player.getTime();
-                    const activeSub = State.customSubs.find(s => cTime >= s.start && cTime <= s.end);
-                    if(activeSub) {
-                        UI.subText.innerHTML = activeSub.text;
-                        UI.subText.classList.remove('hidden');
-                    } else {
-                        UI.subText.classList.add('hidden');
-                    }
-                }
-            },
-
             spawnReaction: (emoji) => {
                 const el = document.createElement('div');
                 el.textContent = emoji;
@@ -1077,31 +969,13 @@
                 });
             },
 
-            checkFormat: (file) => {
-                if(!file) return;
-                const name = file.name.toLowerCase();
-                if(name.endsWith('.avi') || name.endsWith('.mov')) {
-                    Utils.toast(`<b>Format Warning:</b> This browser may not decode <b>${name}</b> codecs locally. Use "WebRTC Stream" if it fails.`, 'info', true);
-                }
-            },
-
             enter: () => { UI.lobby.style.opacity = '0'; setTimeout(() => { UI.lobby.classList.add('hidden'); UI.theater.classList.remove('hidden'); }, 700); },
             
             addVoice: (stream, peerId, call) => {
-                const aud = new Audio();
-                aud.autoplay = true; 
-                aud.srcObject = stream; 
-                aud.volume = parseFloat(UI.voiceVol.value);
-                
+                const aud = new Audio(); aud.autoplay = true; aud.srcObject = stream; aud.volume = parseFloat(UI.voiceVol.value);
                 UI.remoteAudCont.appendChild(aud);
                 State.voiceConns.set(peerId, {call, aud});
-                
-                call.on('close', () => { 
-                    if(State.voiceConns.has(peerId)) { 
-                        State.voiceConns.get(peerId).aud.remove(); 
-                        State.voiceConns.delete(peerId); 
-                    } 
-                });
+                call.on('close', () => { if(State.voiceConns.has(peerId)) { State.voiceConns.get(peerId).aud.remove(); State.voiceConns.delete(peerId); } });
             },
 
             loadUrl: (url, title = "Remote Feed", broadcast = true) => {
@@ -1115,28 +989,10 @@
                     State.hls = new Hls({ enableWorker: true, maxBufferLength: 30, maxMaxBufferLength: 60 }); 
                     State.hls.attachMedia(UI.video);
                     State.hls.on(Hls.Events.MEDIA_ATTACHED, () => { State.hls.loadSource(url); });
-                } 
-                else if(url.includes('.mpd') && typeof dashjs !== 'undefined') { 
-                    Player.purge(); UI.emptyState.style.opacity = '0'; AudioGraph.init();
-                    State.playMode = 'url'; State.mediaTitle = title; UI.title.textContent = title;
-                    State.dash = dashjs.MediaPlayer().create(); 
-                    State.dash.initialize(UI.video, url, true); 
-                } 
-                else {
+                } else {
                     Player.loadNative(url, true, title);
                 }
                 Ambilight();
-            },
-            
-            startYTLoop: () => {
-                if(State.ytLoop) clearInterval(State.ytLoop);
-                State.ytLoop = setInterval(() => {
-                    App.updateCustomSubtitles();
-                    if(State.isScrubbing || !ytPlayer || !ytPlayer.getCurrentTime) return;
-                    const c = ytPlayer.getCurrentTime(), d = ytPlayer.getDuration();
-                    if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
-                    ytPlayer.getPlayerState() === 1 ? (UI.iconPlay.classList.add('hidden'), UI.iconPause.classList.remove('hidden')) : (UI.iconPlay.classList.remove('hidden'), UI.iconPause.classList.add('hidden'));
-                }, 100);
             },
             
             toggleSidebar: (force) => {
@@ -1169,7 +1025,6 @@
                     const m = document.getElementById('settingsModal');
                     m.classList.remove('hidden'); m.offsetHeight; m.classList.remove('opacity-0'); m.classList.add('opacity-100');
                     m.firstElementChild.classList.remove('scale-95'); m.firstElementChild.classList.add('scale-100');
-                    
                     if(State.isHost) { document.getElementById('hostDeck').classList.remove('hidden'); document.getElementById('guestDeck').classList.add('hidden'); }
                     else { document.getElementById('hostDeck').classList.add('hidden'); document.getElementById('guestDeck').classList.remove('hidden'); }
                 });
@@ -1204,61 +1059,37 @@
                 
                 UI.fileSync.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
-                    App.checkFormat(f);
                     State.fileSize = f.size; Player.loadNative(f, false, f.name); Ambilight();
                     if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
                     e.target.value = ''; 
                 });
-                
-                UI.guestSync.addEventListener('change', e => {
-                    const f = e.target.files[0]; if(!f) return;
-                    App.checkFormat(f);
-                    Player.loadNative(f, false, f.name); Ambilight();
-                    State.connections.values().next().value?.send({type:'FILE_MOUNTED'});
-                    e.target.value = '';
-                });
 
-                const loadSubtitles = (e) => {
-                    const f = e.target.files[0]; if(!f) return;
-                    const reader = new FileReader();
-                    reader.onload = (re) => {
-                        State.customSubs = App.parseVTT(re.target.result);
-                        Utils.toast(`Loaded custom subtitles: ${f.name}`, "success");
-                    };
-                    reader.readAsText(f);
-                    e.target.value = '';
-                };
-                UI.subInputHost.addEventListener('change', loadSubtitles);
-                UI.subInputGuest.addEventListener('change', loadSubtitles);
-
-                // --- THE DEFINITIVE FIX FOR MKV & MEDIA STREAMING (CANVAS OVERRIDE) ---
                 UI.fileStream.addEventListener('change', e => {
                     const f = e.target.files[0]; if(!f) return;
-                    App.checkFormat(f);
                     Player.loadNative(f, false, f.name); Ambilight();
                     
+                    // Alert the user if the browser cannot natively decode x265 MKV files
+                    UI.video.onerror = () => {
+                        Utils.toast("<b>Codec Error:</b> Your browser cannot play this file format (likely x265/HEVC). Please play it in VLC and use the 'Share Screen' button instead.", "error", true);
+                    };
+
                     UI.video.onplaying = () => { 
                         UI.video.onplaying = null; 
                         if (State.activeWebRTCStream) return;
                         
                         try {
-                            // 1. Ensure Audio Graph is live
                             AudioGraph.init(); 
 
-                            // 2. Hardware-accelerated Canvas with safe constraints
+                            // Define the hidden hardware-accelerated Canvas Transcoder
                             const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+                            const ctx = canvas.getContext('2d', { alpha: false }); // Drop desynchronized flag for better compatibility
                             State.isStreamingMedia = true;
-                            
-                            // Initialize with default safe dimensions to prevent 0x0 capture crash (another cause of black screens)
-                            canvas.width = UI.video.videoWidth || 1280;
-                            canvas.height = UI.video.videoHeight || 720;
                             
                             const drawFrame = () => {
                                 if (!State.isStreamingMedia) return;
                                 
-                                if (UI.video.videoWidth > 0 && UI.video.videoHeight > 0) {
-                                    // WebRTC heavily struggles with 4K. Downscale to max 1080p for stream stability.
+                                if (UI.video.readyState >= 2 && UI.video.videoWidth > 0) {
+                                    // Lock stream to max 1080p to prevent immediate WebRTC encoder crash on 4K/x265 streams
                                     const MAX_W = 1920, MAX_H = 1080;
                                     let w = UI.video.videoWidth, h = UI.video.videoHeight;
                                     if (w > MAX_W || h > MAX_H) {
@@ -1269,25 +1100,25 @@
                                     if (canvas.width !== w || canvas.height !== h) {
                                         canvas.width = w; canvas.height = h;
                                     }
+                                    // Paint frame to canvas
                                     ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
                                 }
                                 
+                                // Aggressive callback looping
                                 if ('requestVideoFrameCallback' in UI.video) {
                                     UI.video.requestVideoFrameCallback(drawFrame);
                                 } else {
                                     requestAnimationFrame(drawFrame);
                                 }
                             };
-                            
-                            // Draw immediately to populate buffer before capturing
                             drawFrame();
 
-                            // Capture at 30fps. 60fps causes severe encoder drops and black screens on most networks.
+                            // Capture strictly at 30fps. 60fps causes severe encoder drops for viewers.
                             const vs = canvas.captureStream(30); 
                             const videoTrack = vs.getVideoTracks()[0];
                             if (!videoTrack) throw new Error("Canvas refused to capture video track.");
 
-                            // Get Audio Track
+                            // Merge with flawless audiograph source
                             let audioTrack = null;
                             if (AudioGraph.dest && AudioGraph.dest.stream) {
                                 audioTrack = AudioGraph.dest.stream.getAudioTracks()[0];
@@ -1298,13 +1129,7 @@
 
                             State.activeWebRTCStream = new MediaStream(tracks);
                             Net.broadcastMediaAll(f.name, 'local_stream');
-                            Utils.toast("Broadcasting flawless transcode to peers...", "success");
-
-                            setTimeout(() => {
-                                if (UI.video.videoWidth > 0 && !audioTrack && State.playMode !== 'idle') {
-                                    Utils.toast("Warning: Browser blocked AC3/DTS audio decoding for this file. Use 'Share Screen' to capture audio via VLC instead.", "error", true);
-                                }
-                            }, 2500);
+                            Utils.toast("Transcoding active: Broadcasting stream to peers.", "success");
 
                         } catch(err) { 
                             console.error("Capture Failed:", err);
@@ -1314,12 +1139,11 @@
                     e.target.value = '';
                 });
 
-                // --- ROBUST SCREEN SHARE FIX ---
                 UI.screenBtn.addEventListener('click', async () => {
                     try {
-                        // Force requesting system audio directly
+                        // Force requesting audio directly and disabling echo cancellation for flawless movie audio
                         const stream = await navigator.mediaDevices.getDisplayMedia({
-                            video: { frameRate: 60, displaySurface: "browser" }, 
+                            video: { frameRate: 30 }, // 30 is much safer for peer-to-peer transmission
                             audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 48000 }
                         });
                         
@@ -1330,12 +1154,11 @@
                             if(State.isHost) Net.broadcastAll({type: 'MASTER_STATE', payload: { mode: 'idle' }});
                         };
                         
-                        // Critical logic: Warn if user forgot to check the audio box
-                        const hasAudio = stream.getAudioTracks().length > 0;
-                        if (!hasAudio) {
-                            Utils.toast("Notice: You did not share System Audio. Viewers will only see video.", "error");
+                        // Strict check to ensure the user didn't forget to share audio
+                        if (stream.getAudioTracks().length === 0) {
+                            Utils.toast("WARNING: You did not share System Audio. Viewers will only see video.", "error");
                         } else {
-                            Utils.toast("Screen and Audio captured perfectly.", "success");
+                            Utils.toast("Screen and Audio captured correctly.", "success");
                         }
 
                         State.activeWebRTCStream = stream;
@@ -1360,18 +1183,12 @@
                         else State.connections.values().next().value?.send({type:'CHAT', text: t, name: State.myName}); 
                     }
                     UI.chatIn.value = '';
-                    // Keep focus on input for rapid chatting
                     UI.chatIn.focus();
                 });
                 
                 UI.micBtn.addEventListener('click', Mic.toggle);
-                UI.voiceVol.addEventListener('input', e => { const vol = parseFloat(e.target.value); State.voiceConns.forEach(v => { if(v.aud) v.aud.volume = vol; }); });
                 
-                UI.eqSpk.addEventListener('click', () => { AudioGraph.isProfileSpeaker=true; AudioGraph.applyProfile(); });
-                UI.eqIem.addEventListener('click', () => { AudioGraph.isProfileSpeaker=false; AudioGraph.applyProfile(); });
-
                 UI.video.addEventListener('timeupdate', () => {
-                    App.updateCustomSubtitles();
                     if(State.isScrubbing || State.playMode === 'youtube') return;
                     const c = UI.video.currentTime, d = UI.video.duration;
                     if(d > 0) { UI.time.textContent = `${Utils.time(c)} / ${Utils.time(d)}`; UI.scrubFill.style.width = `${(c/d)*100}%`; UI.scrubThumb.style.left = `${(c/d)*100}%`; }
@@ -1382,9 +1199,6 @@
                     if (State.ambilight && !ambLoop) Ambilight();
                 });
                 UI.video.addEventListener('pause', () => { UI.iconPlay.classList.remove('hidden'); UI.iconPause.classList.add('hidden'); });
-                UI.video.addEventListener('waiting', () => Player.loading(true));
-                UI.video.addEventListener('playing', () => Player.loading(false));
-                UI.video.addEventListener('ended', () => { if(State.isHost) { Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'}); } }); 
 
                 const togPlay = () => {
                     if(State.playMode === 'idle' || (!State.isHost && State.playMode.includes('stream'))) return;
@@ -1393,149 +1207,8 @@
                     else { Sync.requestAction(p ? 'play' : 'pause'); } 
                 };
                 UI.playBtn.addEventListener('click', togPlay);
-                UI.viewport.addEventListener('click', e => { if(!e.target.closest('.controls-pill') && !e.target.closest('.top-bar') && !e.target.closest('.sidebar-container')) togPlay(); });
-
-                const scrubTooltip = document.getElementById('scrubTooltip');
-                const calcScrub = (e) => {
-                    const dur = State.isHost ? Player.getDur() : State.syncState.duration; if(!dur) return;
-                    const rect = UI.scrubTrack.getBoundingClientRect();
-                    
-                    let clientX;
-                    if (e.type.includes('touch')) {
-                        if (e.touches && e.touches.length > 0) {
-                            clientX = e.touches[0].clientX;
-                        } else if (e.changedTouches && e.changedTouches.length > 0) {
-                            clientX = e.changedTouches[0].clientX;
-                        } else {
-                            clientX = 0;
-                        }
-                    } else {
-                        clientX = e.clientX;
-                    }
-                    
-                    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    UI.scrubFill.style.width = `${pos*100}%`; UI.scrubThumb.style.left = `${pos*100}%`;
-                    
-                    scrubTooltip.textContent = Utils.time(pos * dur);
-                    scrubTooltip.style.left = `${pos * 100}%`;
-                    scrubTooltip.style.opacity = '1';
-                    
-                    return pos * dur;
-                };
-                const sStart = (e) => { State.isScrubbing = true; UI.scrubTrack.classList.add('scrubbing'); calcScrub(e); clearTimeout(State.uiTimeout); };
-                UI.scrubTrack.addEventListener('mousemove', (e) => { if(!State.isScrubbing) calcScrub(e); });
-                UI.scrubTrack.addEventListener('mouseleave', () => { if(!State.isScrubbing) scrubTooltip.style.opacity = '0'; });
-
-                const sMove = (e) => { if(State.isScrubbing) calcScrub(e); };
-                const sEnd = (e) => {
-                    if(State.isScrubbing) {
-                        State.isScrubbing = false; UI.scrubTrack.classList.remove('scrubbing');
-                        scrubTooltip.style.opacity = '0';
-                        const t = calcScrub(e);
-                        if(t !== undefined) {
-                            if(State.isHost) { Player.seek(t); Net.broadcastAll({type:'CMD_SEEK', t}); }
-                            else { 
-                                State.ignoreNextSeek = true;
-                                setTimeout(() => State.ignoreNextSeek = false, 2000);
-                                Sync.requestAction('seek', t); 
-                            }
-                        }
-                    }
-                };
-                UI.scrubTrack.addEventListener('mousedown', sStart); document.addEventListener('mousemove', sMove); document.addEventListener('mouseup', sEnd);
-                UI.scrubTrack.addEventListener('touchstart', sStart, {passive:true}); document.addEventListener('touchmove', sMove, {passive:true}); document.addEventListener('touchend', sEnd);
-
-                const skip = (fwd) => {
-                    const curr = Player.getTime(); const dur = Player.getDur() || State.syncState.duration;
-                    const nt = fwd ? Math.min(dur, curr+10) : Math.max(0, curr-10);
-                    if(State.isHost) { Player.seek(nt); Net.broadcastAll({type:'CMD_SEEK', t:nt}); }
-                    else { Sync.requestAction('seek', nt); }
-                };
-                UI.skipB.addEventListener('click', ()=>skip(false)); UI.skipF.addEventListener('click', ()=>skip(true));
                 
-                UI.volSlider.addEventListener('input', e => {
-                    const val = e.target.value;
-                    AudioGraph.setVolume(val);
-                    if(val === "0") {
-                        UI.volIco.classList.add('hidden');
-                        UI.volMut.classList.remove('hidden');
-                    } else {
-                        UI.volMut.classList.add('hidden');
-                        UI.volIco.classList.remove('hidden');
-                    }
-                });
-                UI.volBtn.addEventListener('click', () => {
-                    const currentV = parseFloat(UI.volSlider.value);
-                    if(currentV > 0) { 
-                        State.lastVolume = currentV; 
-                        AudioGraph.setVolume(0); 
-                        UI.volSlider.value = 0; 
-                        UI.volIco.classList.add('hidden'); 
-                        UI.volMut.classList.remove('hidden'); 
-                    } else { 
-                        const v = (State.lastVolume !== undefined && State.lastVolume > 0) ? State.lastVolume : 1; 
-                        AudioGraph.setVolume(v); 
-                        UI.volSlider.value = v; 
-                        UI.volMut.classList.add('hidden'); 
-                        UI.volIco.classList.remove('hidden'); 
-                    }
-                });
-
-                UI.aspectBtn.addEventListener('click', () => { State.aspectIdx = (State.aspectIdx + 1) % aspectModes.length; UI.video.className = aspectModes[State.aspectIdx]; UI.aspectBtn.textContent = aspectLabels[State.aspectIdx]; });
-                
-                UI.fsBtn.addEventListener('click', () => {
-                    if(!document.fullscreenElement && !document.webkitFullscreenElement) {
-                        if(UI.theater.requestFullscreen) UI.theater.requestFullscreen();
-                        else if(UI.theater.webkitRequestFullscreen) UI.theater.webkitRequestFullscreen();
-                        else if(UI.video.webkitEnterFullscreen) UI.video.webkitEnterFullscreen(); 
-                    } else {
-                        if(document.exitFullscreen) document.exitFullscreen();
-                        else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
-                    }
-                });
-                
-                UI.pipBtn.addEventListener('click', () => { 
-                    if(UI.video.readyState >= 2) {
-                        if(document.pictureInPictureEnabled) UI.video.requestPictureInPicture().catch(()=>{}); 
-                        else if(UI.video.webkitSetPresentationMode) UI.video.webkitSetPresentationMode('picture-in-picture'); 
-                    }
-                });
-
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'hidden') {
-                        if (!UI.video.paused && UI.video.readyState >= 2 && document.pictureInPictureEnabled) {
-                            UI.video.requestPictureInPicture().catch(()=>{});
-                        }
-                        if (State.isHost && !Player.isPaused()) {
-                            Player.pause(); Net.broadcastAll({type:'CMD_PAUSE'});
-                            Utils.toast("Playback paused due to inactive host tab to prevent desync.", "info");
-                        }
-                    }
-                });
-
-                const vp = UI.viewport;
-                const ddOverlay = document.getElementById('dragDropOverlay');
-                vp.addEventListener('dragover', (e) => { e.preventDefault(); ddOverlay.classList.remove('opacity-0'); });
-                vp.addEventListener('dragleave', (e) => { e.preventDefault(); ddOverlay.classList.add('opacity-0'); });
-                vp.addEventListener('drop', (e) => {
-                    e.preventDefault(); ddOverlay.classList.add('opacity-0');
-                    if(e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                        const f = e.dataTransfer.files[0];
-                        Player.loadNative(f, false, f.name); Ambilight();
-                        if(State.isHost) Net.broadcastAll({type:'REQ_FILE', name: f.name});
-                        else State.connections.values().next().value?.send({type:'FILE_MOUNTED'});
-                    }
-                });
-                
-                UI.ambilightBtn.addEventListener('click', () => { State.ambilight = !State.ambilight; State.ambilight ? UI.ambilightBtn.classList.add('active') : UI.ambilightBtn.classList.remove('active'); Ambilight(); });
-                let lastSyncReq = 0;
-                UI.reqSyncBtn.addEventListener('click', () => { 
-                    if(Date.now() - lastSyncReq < 2000) return;
-                    lastSyncReq = Date.now();
-                    Utils.toast("Syncing...", "info"); 
-                    State.connections.values().next().value?.send({type:'REQ_SYNC', name: State.myName}); 
-                }); 
-
+                // Keep the viewport hover fade logic
                 let lastFadeTime = 0;
                 const resetFade = () => {
                     const now = Date.now();
@@ -1545,17 +1218,7 @@
                         lastFadeTime = now;
                     }
                 };
-                UI.viewport.addEventListener('mousemove', resetFade); UI.viewport.addEventListener('touchstart', resetFade, {passive:true}); UI.chatIn.addEventListener('focus', resetFade);
-                
-                document.addEventListener('keydown', (e) => {
-                    if(['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-                    if(e.code === 'Space') { e.preventDefault(); togPlay(); resetFade(); }
-                    if(e.code === 'ArrowRight') { skip(true); resetFade(); }
-                    if(e.code === 'ArrowLeft') { skip(false); resetFade(); }
-                    if(e.code === 'KeyM') { UI.volBtn.click(); resetFade(); }
-                    if(e.code === 'KeyF') { UI.fsBtn.click(); resetFade(); }
-                    if(e.code === 'Escape' && State.sidebarOpen) App.toggleSidebar(false);
-                });
+                UI.viewport.addEventListener('mousemove', resetFade); UI.viewport.addEventListener('touchstart', resetFade, {passive:true});
             }
         };
 
