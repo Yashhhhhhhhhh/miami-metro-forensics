@@ -188,11 +188,13 @@ class PeerEngine {
           break
 
         case 'ACTION_PLAY':
+          store.updatePlayback(store.currentTime, store.duration, false)
           if (!store.isHost && this.onPlay) this.onPlay()
           if (store.isHost) this.broadcast(msg, c.peer)
           break
 
         case 'ACTION_PAUSE':
+          store.updatePlayback(store.currentTime, store.duration, true)
           if (!store.isHost && this.onPause) this.onPause()
           if (store.isHost) this.broadcast(msg, c.peer)
           break

@@ -28,6 +28,10 @@ import { type EQPreset } from '../lib/AudioEngine'
 import { parseSubtitles } from '../lib/SubtitleEngine'
 import Scrubber from './Scrubber'
 import AudioVisualizer from './AudioVisualizer'
+import AnimeWorkstation from './workstations/AnimeWorkstation'
+import CinemaWorkstation from './workstations/CinemaWorkstation'
+import CyberWorkstation from './workstations/CyberWorkstation'
+import SonicWorkstation from './workstations/SonicWorkstation'
 
 interface ControlsProps {
   onPlayPause: () => void
@@ -347,6 +351,14 @@ export default function Controls({
           </div>
         </div>
       )}
+
+      {/* Active Dedicated Workstation Suite */}
+      <div className="mb-2.5">
+        {theme === 'anime' && <AnimeWorkstation onSeek={onSeek} />}
+        {theme === 'cinema' && <CinemaWorkstation onSeek={onSeek} />}
+        {theme === 'cyberpunk' && <CyberWorkstation />}
+        {theme === 'music' && <SonicWorkstation />}
+      </div>
 
       {/* Floating Control Dock */}
       <div className={

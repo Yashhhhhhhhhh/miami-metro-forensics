@@ -66,7 +66,12 @@ export default function Theater() {
   }
 
   const handlePlayPause = () => {
-    if (isPaused) {
+    const curTime = window.getExactCurrentTime?.() || useStore.getState().currentTime
+    const curDur = useStore.getState().duration
+    const nextPaused = !isPaused
+    useStore.getState().updatePlayback(curTime, curDur, nextPaused)
+
+    if (!nextPaused) {
       peerEngine.broadcast({ type: 'ACTION_PLAY' })
       if (peerEngine.onPlay) peerEngine.onPlay()
     } else {

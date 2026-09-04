@@ -79,7 +79,30 @@ export default function Sidebar() {
     e.preventDefault()
     if (!torrentInput.trim()) return
 
-    const magnet = torrentInput.trim()
+    const input = torrentInput.trim()
+
+    // Auto-detect if user pasted a YouTube or direct HTTP link into the Torrent box
+    if (input.startsWith('http://') || input.startsWith('https://')) {
+      const isYt = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i.test(input)
+      const mode = isYt ? 'youtube' : 'url'
+      const title = isYt ? 'YouTube Stream' : 'Web Stream'
+      setMedia(mode, title, input)
+      if (isHost) {
+        peerEngine.broadcast({
+          type: 'STATE',
+          mode,
+          title,
+          url: input,
+          time: 0,
+          paused: false,
+          serverTime: Date.now()
+        })
+      }
+      setTorrentInput('')
+      return
+    }
+
+    const magnet = input
     setMedia('torrent', 'P2P BitTorrent Stream', magnet)
     if (isHost) {
       peerEngine.broadcast({
@@ -117,16 +140,36 @@ export default function Sidebar() {
     e.preventDefault()
     if (!urlInput.trim()) return
 
-    const isYt = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i.test(urlInput)
+    const input = urlInput.trim()
+
+    // Auto-detect if user pasted a magnet link into the Web Stream / YouTube box
+    if (input.startsWith('magnet:')) {
+      setMedia('torrent', 'P2P BitTorrent Stream', input)
+      if (isHost) {
+        peerEngine.broadcast({
+          type: 'STATE',
+          mode: 'torrent',
+          title: 'P2P BitTorrent Stream',
+          url: input,
+          time: 0,
+          paused: false,
+          serverTime: Date.now()
+        })
+      }
+      setUrlInput('')
+      return
+    }
+
+    const isYt = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i.test(input)
     const mode = isYt ? 'youtube' : 'url'
     const title = isYt ? 'YouTube Stream' : 'Web Stream'
 
-    setMedia(mode, title, urlInput.trim())
+    setMedia(mode, title, input)
     peerEngine.broadcast({
       type: 'STATE',
       mode,
       title,
-      url: urlInput.trim(),
+      url: input,
       time: 0,
       paused: false,
       serverTime: Date.now()

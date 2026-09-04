@@ -28,6 +28,7 @@ export default function Player() {
     isHost,
     mediaTitle,
     aspectRatio,
+    isPaused,
     updatePlayback,
     setMedia,
     theme,
@@ -247,7 +248,7 @@ export default function Player() {
   const handleReactPlayerProgress = (state: { playedSeconds: number; loadedSeconds: number }) => {
     const p = reactPlayerRef.current as any
     const dur = (p && typeof p.getDuration === 'function') ? p.getDuration() : useStore.getState().duration || 0
-    updatePlayback(state.playedSeconds, dur, false, state.loadedSeconds)
+    updatePlayback(state.playedSeconds, dur, isPaused, state.loadedSeconds)
   }
 
   const isUrlMode = playMode === 'youtube' || playMode === 'url'
@@ -358,9 +359,11 @@ export default function Player() {
             url={mediaUrl}
             width="100%"
             height="100%"
-            playing={true}
+            playing={!isPaused}
             volume={isMuted ? 0 : Math.min(1.0, volume)}
             controls={false}
+            onPlay={() => updatePlayback(getCurrentTime(), getDuration(), false)}
+            onPause={() => updatePlayback(getCurrentTime(), getDuration(), true)}
             onProgress={handleReactPlayerProgress as any}
             onEnded={() => {
               if (isHost) peerEngine.broadcast({ type: 'ACTION_PAUSE' })

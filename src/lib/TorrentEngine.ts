@@ -36,6 +36,33 @@ class TorrentEngine {
     return this.client
   }
 
+  public sanitizeMagnet(source: string | File): string | File {
+    if (typeof source !== 'string' || !source.startsWith('magnet:')) return source
+
+    // 1. Remove malformed "tracker:" prefixes often created by indexers or scrapers
+    let cleaned = source
+      .replace(/([&?]tr=)tracker%3A/gi, '$1')
+      .replace(/([&?]tr=)tracker:/gi, '$1')
+      .replace(/%0A/gi, ' ') // Replace newlines in dn with space
+
+    // 2. Ensure vital WebRTC browser-compatible trackers are present
+    const webrtcTrackers = [
+      'wss://tracker.openwebtorrent.com',
+      'wss://tracker.btorrent.xyz',
+      'wss://tracker.files.fm:7073/announce',
+      'wss://tracker.fastcast.nz'
+    ]
+
+    for (const tr of webrtcTrackers) {
+      const encoded = encodeURIComponent(tr)
+      if (!cleaned.includes(encoded) && !cleaned.includes(tr)) {
+        cleaned += `&tr=${encoded}`
+      }
+    }
+
+    return cleaned
+  }
+
   public async stream(
     source: string | File,
     videoEl: HTMLVideoElement,
@@ -50,6 +77,7 @@ class TorrentEngine {
 
     return new Promise((resolve, reject) => {
       try {
+        const cleanSource = this.sanitizeMagnet(source)
         const opts = {
           announce: [
             'wss://tracker.openwebtorrent.com',
@@ -59,7 +87,7 @@ class TorrentEngine {
           ]
         }
 
-        client.add(source, opts, (torrent: any) => {
+        client.add(cleanSource, opts, (torrent: any) => {
           this.currentTorrent = torrent
 
           // Find the largest playable video file
