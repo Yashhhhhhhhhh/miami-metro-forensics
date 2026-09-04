@@ -14,7 +14,7 @@ export default function Scrubber({ onSeek }: ScrubberProps) {
   const [isDragging, setIsDragging] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
 
-  const isLiveStream = playMode === 'local_stream' || playMode === 'screenshare'
+  const isLiveStream = playMode === 'screenshare' || (duration <= 0 && playMode === 'url')
 
   const calculateTimeFromEvent = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!trackRef.current || duration <= 0) return 0

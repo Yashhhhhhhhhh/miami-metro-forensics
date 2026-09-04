@@ -9,6 +9,7 @@ import Ambilight from './Ambilight'
 import Reactions from './Reactions'
 import SubtitlesOverlay from './SubtitlesOverlay'
 import { parseSubtitles } from '../lib/SubtitleEngine'
+import { AnimeSpeedlines, MangaDoodles, AnimeMascot } from './AnimeElements'
 
 export default function Player() {
   const {
@@ -341,21 +342,6 @@ export default function Player() {
         </div>
       )}
 
-      {/* Sonic Space (Music Mode) Turntable Backdrop */}
-      {theme === 'music' && (
-        <div className="absolute inset-0 z-15 pointer-events-none flex items-center justify-center opacity-30">
-          <div className="w-80 h-80 rounded-full border-4 border-emerald-500/20 flex items-center justify-center animate-spin-slow">
-            <div className="w-72 h-72 rounded-full border border-emerald-500/30 flex items-center justify-center">
-              <div className="w-48 h-48 rounded-full border border-emerald-500/40 flex items-center justify-center">
-                <div className="w-24 h-24 rounded-full bg-emerald-500/30 flex items-center justify-center text-[10px] font-black text-emerald-300 font-mono tracking-widest">
-                  SONIC
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* URL / YouTube Streaming Engine */}
       {isUrlMode && (
         <div className="w-full h-full relative z-10 flex items-center justify-center">
@@ -401,60 +387,114 @@ export default function Player() {
 
       {/* Idle Standby Screen */}
       {playMode === 'idle' && (
-        <div className="relative z-10 text-center max-w-lg px-6 select-none animate-fade-in flex flex-col items-center">
-          {/* Projector Lens Hologram */}
-          <div className="relative w-28 h-28 mb-5 flex items-center justify-center">
-            {/* Outer Ray Blur */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[var(--primary)] to-amber-400 opacity-25 blur-2xl animate-pulse" />
-            
-            {/* Concentric Lens Rings */}
-            <div className="w-24 h-24 rounded-full border border-white/15 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_var(--primary-glow)]">
-              <div className="w-16 h-16 rounded-full border border-[var(--primary)]/30 flex items-center justify-center">
-                <div className="w-10 h-10 rounded-full border border-white/20 bg-gradient-to-tr from-[var(--primary)] to-rose-500 flex items-center justify-center shadow-lg shadow-[var(--primary)]/40">
-                  <Film className="w-4 h-4 text-white" />
+        <>
+          {theme === 'anime' ? (
+            /* Bespoke Anime / Manga Studio Standby */
+            <div className="relative z-10 text-center max-w-xl px-6 select-none animate-fade-in flex flex-col items-center">
+              <AnimeSpeedlines />
+              <MangaDoodles />
+
+              {/* Japanese Episode Title Banner */}
+              <div className="mb-4 inline-flex items-center gap-2 bg-[#ffe600] text-black border-2 border-black px-4 py-1.5 font-black text-xs uppercase tracking-widest shadow-[3px_3px_0px_#ff2a5f] -rotate-1">
+                <span className="w-2 h-2 rounded-full bg-[#ff2a5f] animate-ping" />
+                <span>第01話：上映準備完了 // EPISODE 01: ROOM SYNC READY</span>
+              </div>
+
+              <h2 className="text-4xl lg:text-5xl font-black tracking-tight text-white mb-3 font-syne uppercase drop-shadow-[4px_4px_0px_#000000]">
+                ANIME DIMENSION
+              </h2>
+
+              <p className="text-sm text-yellow-100/80 leading-relaxed font-medium max-w-md mb-6 bg-black/60 border border-white/10 p-3 rounded-none">
+                {isHost
+                  ? '仲間と一緒に観よう！ Select an anime file, stream URL, or BitTorrent magnet to begin synchronized screening.'
+                  : '暗号化通信接続中... Connected to Room. Waiting for the Host to trigger stream.'}
+              </p>
+
+              {/* Chibi Companion */}
+              <div className="mb-6">
+                <AnimeMascot message={isHost ? "IKUZO! READY TO PLAY!" : "WAITING FOR HOST!"} />
+              </div>
+
+              {/* Manga Action Trigger Buttons */}
+              {isHost && (
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setActiveSidebarTab('media')
+                      setSidebarOpen(true)
+                    }}
+                    className="manga-btn px-5 py-3 bg-[#ff2a5f] text-white font-black text-xs uppercase tracking-wider flex items-center gap-2.5 font-syne"
+                  >
+                    <Upload className="w-4 h-4 text-[#ffe600]" />
+                    <span>メディア選択 LOAD MEDIA</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSidebarTab('media')
+                      setSidebarOpen(true)
+                    }}
+                    className="manga-btn px-5 py-3 bg-[#ffe600] text-black font-black text-xs uppercase tracking-wider flex items-center gap-2.5 font-syne"
+                  >
+                    <HardDrive className="w-4 h-4 text-black" />
+                    <span>P2P TORRENT 発信</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Classic Cinema / Standard Standby */
+            <div className="relative z-10 text-center max-w-lg px-6 select-none animate-fade-in flex flex-col items-center">
+              {/* Projector Lens Hologram */}
+              <div className="relative w-28 h-28 mb-5 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[var(--primary)] to-amber-400 opacity-25 blur-2xl animate-pulse" />
+                <div className="w-24 h-24 rounded-full border border-white/15 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_var(--primary-glow)]">
+                  <div className="w-16 h-16 rounded-full border border-[var(--primary)]/30 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full border border-white/20 bg-gradient-to-tr from-[var(--primary)] to-rose-500 flex items-center justify-center shadow-lg shadow-[var(--primary)]/40">
+                      <Film className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[var(--primary)] font-bold mb-1.5 block">
-            SCREEN AUDITORIUM // READY
-          </span>
-          <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-white mb-2 font-cinema uppercase">
-            Theater Standby
-          </h2>
-          <p className="text-xs text-white/50 leading-relaxed font-light max-w-sm mb-6">
-            {isHost
-              ? 'Select a source from the Media Deck to begin your shared screening. Direct torrents, 4K local files, or web streams.'
-              : 'Connected to the encrypted peer link. Waiting for the Host Director to initiate playback...'}
-          </p>
+              <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[var(--primary)] font-bold mb-1.5 block">
+                SCREEN AUDITORIUM // READY
+              </span>
+              <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-white mb-2 font-cinema uppercase">
+                Theater Standby
+              </h2>
+              <p className="text-xs text-white/50 leading-relaxed font-light max-w-sm mb-6">
+                {isHost
+                  ? 'Select a source from the Media Deck to begin your shared screening. Direct torrents, 4K local files, or web streams.'
+                  : 'Connected to the encrypted peer link. Waiting for the Host Director to initiate playback...'}
+              </p>
 
-          {/* Host Quick-Action Chips */}
-          {isHost && (
-            <div className="flex flex-wrap items-center justify-center gap-2.5">
-              <button
-                onClick={() => {
-                  setActiveSidebarTab('media')
-                  setSidebarOpen(true)
-                }}
-                className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-white flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl font-syne"
-              >
-                <Upload className="w-3.5 h-3.5 text-[var(--primary)]" />
-                <span>Open Media Deck</span>
-              </button>
-              <button
-                onClick={() => {
-                  setActiveSidebarTab('media')
-                  setSidebarOpen(true)
-                }}
-                className="px-4 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-xs font-bold text-cyan-300 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg"
-              >
-                <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Stream BitTorrent</span>
-              </button>
+              {isHost && (
+                <div className="flex flex-wrap items-center justify-center gap-2.5">
+                  <button
+                    onClick={() => {
+                      setActiveSidebarTab('media')
+                      setSidebarOpen(true)
+                    }}
+                    className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-white flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl font-syne"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    <span>Open Media Deck</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSidebarTab('media')
+                      setSidebarOpen(true)
+                    }}
+                    className="px-4 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-xs font-bold text-cyan-300 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  >
+                    <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Stream BitTorrent</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   )

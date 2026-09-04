@@ -7,13 +7,15 @@ import {
   Film,
   Wifi,
   Activity,
-  Maximize2
+  Maximize2,
+  Tv
 } from 'lucide-react'
 import { useStore, type Theme } from '../store/useStore'
 import { peerEngine } from '../lib/PeerEngine'
 import Player from './Player'
 import Controls from './Controls'
 import Sidebar from './Sidebar'
+import Catalog from './Catalog'
 
 export default function Theater() {
   const {
@@ -28,7 +30,9 @@ export default function Theater() {
     setTheme,
     ping,
     syncDrift,
-    chatMessages
+    chatMessages,
+    viewMode,
+    setViewMode
   } = useStore()
 
   const [copied, setCopied] = useState(false)
@@ -136,9 +140,13 @@ export default function Theater() {
       onMouseMove={handleMouseMove}
       className="w-full h-full relative overflow-hidden bg-black flex select-none"
     >
-      {/* Central Screen / Cinema Viewport */}
+      {/* Central Viewport: Auditorium Cinema Screen OR Streaming Catalog */}
       <div className="flex-1 h-full relative overflow-hidden flex flex-col justify-between">
-        <Player />
+        {viewMode === 'catalog' ? (
+          <Catalog />
+        ) : (
+          <Player />
+        )}
 
         {/* Top Floating Cinema HUD */}
         <header
@@ -148,10 +156,12 @@ export default function Theater() {
         >
           {/* Left: Host/Viewer Badge & Room Code */}
           <div className="flex items-center gap-3 pointer-events-auto">
-            <div className="px-4 py-2 rounded-2xl bg-zinc-950/85 border border-white/10 backdrop-blur-xl shadow-xl flex items-center gap-3">
-              <span className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
+            <div className={theme === 'anime'
+              ? "px-4 py-2 bg-[#0e0a17] border-2 border-black shadow-[3px_3px_0px_#ff2a5f] flex items-center gap-3"
+              : "px-4 py-2 rounded-2xl bg-zinc-950/85 border border-white/10 backdrop-blur-xl shadow-xl flex items-center gap-3"}>
+              <span className="text-xs font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2 font-syne">
                 <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
-                {isHost ? 'Host Director' : 'Viewer'}
+                {isHost ? (theme === 'anime' ? '主催 HOST' : 'Host Director') : (theme === 'anime' ? '観客 VIEWER' : 'Viewer')}
               </span>
               <div className="w-px h-4 bg-white/20" />
               <span className="font-mono text-base font-black tracking-[0.2em] text-white">
@@ -159,25 +169,21 @@ export default function Theater() {
               </span>
               <button
                 onClick={copyRoomCode}
-                className="px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white/70 hover:text-white transition-all flex items-center gap-1.5"
+                className={theme === 'anime'
+                  ? "manga-btn px-2.5 py-1 bg-[#ffe600] text-black font-black text-xs uppercase"
+                  : "px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white/70 hover:text-white transition-all flex items-center gap-1.5"}
                 title="Copy Direct Invite Link"
               >
                 {copied ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold">COPIED</span>
-                  </>
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold">COPIED</span>
                 ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-mono font-bold">INVITE</span>
-                  </>
+                  <span className="text-[10px] font-mono font-bold">INVITE</span>
                 )}
               </button>
             </div>
 
             {/* Sync Diagnostics Pill */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950/70 border border-white/5 backdrop-blur-xl text-[11px] font-mono font-medium text-white/70">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-none bg-black border border-white/10 text-[11px] font-mono font-medium text-white/70">
               <Activity className="w-3.5 h-3.5 text-emerald-400" />
               <span>{ping > 0 ? `${ping}ms` : 'Direct Link'}</span>
               <span className="text-white/20">•</span>
@@ -185,42 +191,64 @@ export default function Theater() {
             </div>
           </div>
 
+          {/* Center: Top View Switcher (Auditorium Screen vs Streaming Catalog) */}
+          <div className="pointer-events-auto flex items-center p-1 bg-black/90 border-2 border-black shadow-[3px_3px_0px_#ff2a5f]">
+            <button
+              onClick={() => setViewMode('auditorium')}
+              className={`px-3.5 py-1.5 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all font-syne ${
+                viewMode === 'auditorium'
+                  ? 'bg-[#ffe600] text-black shadow-[2px_2px_0px_#000000]'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Tv className="w-3.5 h-3.5" />
+              <span>{theme === 'anime' ? 'スクリーン AUDITORIUM' : 'Screen'}</span>
+            </button>
+            <button
+              onClick={() => setViewMode('catalog')}
+              className={`px-3.5 py-1.5 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all font-syne ${
+                viewMode === 'catalog'
+                  ? 'bg-[#ff2a5f] text-white shadow-[2px_2px_0px_#000000]'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>{theme === 'anime' ? 'カタログ CATALOG' : 'Catalog'}</span>
+            </button>
+          </div>
+
           {/* Floating Ambient HUD Notification */}
           {hudToast && (
             <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-fade-in">
-              <div className="px-4 py-2 rounded-2xl bg-zinc-950/90 border border-[var(--primary)]/50 backdrop-blur-2xl text-xs font-mono text-white shadow-[0_0_30px_var(--primary-glow)] flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-ping" />
-                <span className="text-[10px] text-white/50 uppercase tracking-widest font-bold">EVENT //</span>
+              <div className="px-4 py-2 bg-[#0e0a17] border-2 border-black shadow-[4px_4px_0px_#ff2a5f] text-xs font-mono text-white flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-[#ff2a5f] animate-ping" />
+                <span className="text-[10px] text-yellow-300 uppercase tracking-widest font-bold">EVENT //</span>
                 <span className="font-semibold text-white/90">{hudToast}</span>
               </div>
             </div>
           )}
 
-          {/* Right: Media Title & Quick Actions */}
+          {/* Right: Mode Selector & Sidebar Toggle */}
           <div className="flex items-center gap-3 pointer-events-auto">
-            <span className="hidden md:block text-xs font-bold text-white/80 max-w-xs truncate bg-zinc-950/70 px-4 py-2 rounded-xl border border-white/5 backdrop-blur-xl">
-              {mediaTitle}
-            </span>
-
-            {/* Quick Theme Switcher */}
-            <div className="hidden sm:flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/80 border border-white/10 backdrop-blur-xl">
-              {(['cinema', 'anime', 'music', 'cyberpunk'] as Theme[]).map((t) => (
+            {/* Thematic Dimension Switcher */}
+            <div className="hidden lg:flex items-center p-0.5 bg-black border border-white/20 text-[10px] font-mono font-bold">
+              {[
+                { id: 'anime', label: '🌸 ANIME' },
+                { id: 'cinema', label: '🎞️ CINEMA' },
+                { id: 'cyberpunk', label: '⚡ CYBER' },
+                { id: 'music', label: '🎛️ HI-FI' }
+              ].map((m) => (
                 <button
-                  key={t}
-                  onClick={() => setTheme(t)}
-                  className={`w-6 h-6 rounded-xl transition-all ${
-                    theme === t ? 'scale-110 ring-2 ring-white' : 'opacity-60 hover:opacity-100'
-                  } ${
-                    t === 'cinema'
-                      ? 'bg-rose-600'
-                      : t === 'anime'
-                      ? 'bg-fuchsia-500'
-                      : t === 'music'
-                      ? 'bg-emerald-500'
-                      : 'bg-cyan-500'
+                  key={m.id}
+                  onClick={() => setTheme(m.id as Theme)}
+                  className={`px-2 py-1 transition-all uppercase ${
+                    theme === m.id
+                      ? 'bg-[#ff2a5f] text-white font-black'
+                      : 'text-white/50 hover:text-white'
                   }`}
-                  title={`${t.toUpperCase()} Theme`}
-                />
+                >
+                  {m.label}
+                </button>
               ))}
             </div>
 
@@ -231,21 +259,25 @@ export default function Theater() {
                   setActiveSidebarTab('media')
                   setSidebarOpen(true)
                 }}
-                className="px-3 py-2 rounded-xl bg-zinc-950/80 border border-white/10 backdrop-blur-xl text-white/80 hover:text-white flex items-center gap-2 text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors"
+                className={theme === 'anime'
+                  ? "manga-btn px-3 py-1.5 bg-[#0e0a17] text-white flex items-center gap-2 text-xs font-black uppercase tracking-wider"
+                  : "px-3 py-2 rounded-xl bg-zinc-950/80 border border-white/10 backdrop-blur-xl text-white/80 hover:text-white flex items-center gap-2 text-xs font-bold uppercase tracking-wider"}
               >
                 <Film className="w-4 h-4 text-[var(--primary)]" />
-                <span>Media Deck</span>
+                <span>{theme === 'anime' ? 'デッキ DECK' : 'Media Deck'}</span>
               </button>
             )}
 
             {/* Open Sidebar (Chat / Roster) */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-2.5 rounded-xl border transition-all ${
-                sidebarOpen
-                  ? 'bg-[var(--primary)] border-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/30'
-                  : 'bg-zinc-950/80 border-white/10 text-white/80 hover:text-white hover:bg-white/10 backdrop-blur-xl'
-              }`}
+              className={theme === 'anime'
+                ? "manga-btn p-2 bg-[#ffe600] text-black font-black"
+                : `p-2.5 rounded-xl border transition-all ${
+                    sidebarOpen
+                      ? 'bg-[var(--primary)] border-[var(--primary)] text-white shadow-lg'
+                      : 'bg-zinc-950/80 border-white/10 text-white/80 hover:text-white backdrop-blur-xl'
+                  }`}
               title="Toggle Sidebar"
             >
               <MessageSquare className="w-4 h-4" />
@@ -253,19 +285,21 @@ export default function Theater() {
           </div>
         </header>
 
-        {/* Bottom Cinema Controls Pill */}
-        <div
-          className={`absolute bottom-6 left-0 right-0 z-30 transition-all duration-300 pointer-events-auto ${
-            controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
-          }`}
-        >
-          <Controls
-            onPlayPause={handlePlayPause}
-            onSeek={handleSeek}
-            onToggleFullscreen={toggleFullscreen}
-            isFullscreen={isFullscreen}
-          />
-        </div>
+        {/* Bottom Cinema Controls Pill (Only visible in auditorium view) */}
+        {viewMode === 'auditorium' && (
+          <div
+            className={`absolute bottom-6 left-0 right-0 z-30 transition-all duration-300 pointer-events-auto ${
+              controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
+            }`}
+          >
+            <Controls
+              onPlayPause={handlePlayPause}
+              onSeek={handleSeek}
+              onToggleFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
+            />
+          </div>
+        )}
       </div>
 
       {/* Slide-out Cinema Sidebar */}

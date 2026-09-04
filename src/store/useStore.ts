@@ -111,13 +111,17 @@ interface AppState {
   setSidebarOpen: (open: boolean) => void
   setActiveSidebarTab: (tab: 'chat' | 'roster' | 'media' | 'audio') => void
 
+  // View Mode (Auditorium vs Streaming Catalog)
+  viewMode: 'auditorium' | 'catalog'
+  setViewMode: (mode: 'auditorium' | 'catalog') => void
+
   // Chat
   chatMessages: ChatMessage[]
   addMessage: (msg: Omit<ChatMessage, 'timestamp'>) => void
 }
 
 export const useStore = create<AppState>((set, get) => ({
-  theme: 'cinema',
+  theme: 'anime',
   setTheme: (t) => {
     // Auto-tune DSP and Visual Experience according to medium
     if (t === 'cinema') {
@@ -264,6 +268,9 @@ export const useStore = create<AppState>((set, get) => ({
   activeSidebarTab: 'chat',
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
+
+  viewMode: 'auditorium',
+  setViewMode: (mode) => set({ viewMode: mode }),
 
   chatMessages: [],
   addMessage: (msg) => {

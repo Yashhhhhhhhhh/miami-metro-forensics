@@ -348,29 +348,31 @@ export default function Controls({
         </div>
       )}
 
-      {/* Floating Cinema Control Dock */}
-      <div className="rounded-[2.5rem] p-4 lg:p-5 bg-zinc-950/85 border border-white/10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col gap-2.5">
+      {/* Floating Control Dock */}
+      <div className={theme === 'anime'
+        ? "p-4 lg:p-5 bg-[#0e0a17] border-2 border-black shadow-[6px_6px_0px_#ff2a5f] manga-screentone flex flex-col gap-2.5"
+        : "rounded-[2.5rem] p-4 lg:p-5 bg-zinc-950/85 border border-white/10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col gap-2.5"}>
         {/* Theme-Specific Experience Ribbon */}
         <div className="flex items-center justify-between px-2 pb-1 border-b border-white/5">
           <div className="flex items-center gap-2">
             {theme === 'anime' && (
               <>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-fuchsia-400 font-bold flex items-center gap-1.5 mr-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400 animate-pulse" /> アニメ VAULT
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#ffe600] font-black flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ff2a5f] animate-ping" /> アニメ・スタジオ
                 </span>
                 <button
                   onClick={() => handleSkip(85)}
-                  className="px-2.5 py-1 rounded-xl bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/30 text-[10px] font-bold text-fuchsia-300 uppercase tracking-wider transition-all"
+                  className="manga-btn px-3 py-1 bg-[#ff2a5f] text-white text-[10px] font-black uppercase tracking-wider font-syne"
                   title="Skip 85s Opening Song"
                 >
-                  Skip OP (+85s)
+                  ▶▶ OP スキップ (+85s)
                 </button>
                 <button
                   onClick={() => handleSkip(90)}
-                  className="px-2.5 py-1 rounded-xl bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/30 text-[10px] font-bold text-fuchsia-300 uppercase tracking-wider transition-all"
+                  className="manga-btn px-3 py-1 bg-[#ffe600] text-black text-[10px] font-black uppercase tracking-wider font-syne"
                   title="Skip 90s Ending Song"
                 >
-                  Skip ED (+90s)
+                  ▶▶ ED スキップ (+90s)
                 </button>
               </>
             )}
@@ -470,22 +472,38 @@ export default function Controls({
           <div className="flex items-center gap-3 lg:gap-4">
             <button
               onClick={onPlayPause}
-              className="p-3 lg:p-3.5 rounded-full bg-white text-zinc-950 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"
+              className={theme === 'anime'
+                ? "manga-btn px-4 py-2 bg-[#ffe600] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 font-syne"
+                : "p-3 lg:p-3.5 rounded-full bg-white text-zinc-950 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"}
               title={isPaused ? 'Play (Space)' : 'Pause (Space)'}
             >
-              {isPaused ? <Play className="w-5 h-5 fill-current ml-0.5" /> : <Pause className="w-5 h-5 fill-current" />}
+              {isPaused ? (
+                <>
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                  {theme === 'anime' && <span>再生 PLAY</span>}
+                </>
+              ) : (
+                <>
+                  <Pause className="w-4 h-4 fill-current" />
+                  {theme === 'anime' && <span>停止 PAUSE</span>}
+                </>
+              )}
             </button>
 
             <button
               onClick={() => handleSkip(-10)}
-              className="p-2.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+              className={theme === 'anime'
+                ? "manga-btn p-2 bg-[#120c1f] text-white"
+                : "p-2.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"}
               title="Rewind 10s"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleSkip(10)}
-              className="p-2.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+              className={theme === 'anime'
+                ? "manga-btn p-2 bg-[#120c1f] text-white"
+                : "p-2.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"}
               title="Fast-forward 10s"
             >
               <RotateCw className="w-4 h-4" />
