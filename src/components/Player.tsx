@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player'
 import { useStore } from '../store/useStore'
 import { peerEngine } from '../lib/PeerEngine'
 import { audioEngine } from '../lib/AudioEngine'
+import { torrentEngine } from '../lib/TorrentEngine'
 import Ambilight from './Ambilight'
 import Reactions from './Reactions'
 
@@ -22,7 +23,9 @@ export default function Player() {
     cinemascopeMode,
     showTelemetry,
     ping,
-    syncDrift
+    syncDrift,
+    torrentStats,
+    setTorrentStats
   } = useStore()
 
   const nativeVideoRef = useRef<HTMLVideoElement>(null)
@@ -162,6 +165,53 @@ export default function Player() {
     }
   }, [isHost, playMode, mediaUrl, mediaTitle])
 
+  // In-Browser WebTorrent Streaming Hook
+  useEffect(() => {
+    if (playMode === 'torrent' && mediaUrl && nativeVideoRef.current) {
+      const video = nativeVideoRef.current
+      audioEngine.init(video)
+
+      torrentEngine.stream(mediaUrl, video, (stats) => {
+        setTorrentStats(stats)
+      }).then((fileName) => {
+        // If Host, start canvas WebRTC broadcast so mobile peers can watch
+        if (isHost) {
+          setTimeout(() => {
+            if (video && !video.paused) {
+              try {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d', { alpha: false })
+                canvas.width = 1280
+                canvas.height = 720
+                const renderFrame = () => {
+                  if (video.readyState >= 2 && ctx) {
+                    ctx.drawImage(video, 0, 0, 1280, 720)
+                  }
+                  requestAnimationFrame(renderFrame)
+                }
+                renderFrame()
+                const stream = canvas.captureStream(30)
+                const audioTrack = audioEngine.getAudioTrack()
+                const tracks = [...stream.getVideoTracks()]
+                if (audioTrack) tracks.push(audioTrack)
+                peerEngine.broadcastMediaStream(new MediaStream(tracks), fileName)
+              } catch (e) {
+                console.warn('Torrent WebRTC broadcast notice:', e)
+              }
+            }
+          }, 1500)
+        }
+      }).catch((err) => {
+        console.warn('Torrent streaming error:', err)
+      })
+
+      return () => {
+        torrentEngine.stop()
+        setTorrentStats(null)
+      }
+    }
+  }, [playMode, mediaUrl, isHost])
+
   // Native Video Time Update Listener
   const handleNativeTimeUpdate = () => {
     if (!nativeVideoRef.current) return
@@ -185,7 +235,7 @@ export default function Player() {
   }
 
   const isUrlMode = playMode === 'youtube' || playMode === 'url'
-  const isNativeMode = playMode === 'local_stream' || playMode === 'local_sync' || playMode === 'screenshare'
+  const isNativeMode = playMode === 'local_stream' || playMode === 'local_sync' || playMode === 'screenshare' || playMode === 'torrent'
 
   // Dynamic aspect ratio class
   const aspectClass =
@@ -231,6 +281,20 @@ export default function Player() {
           <div className="absolute top-0 left-0 right-0 h-10 lg:h-14 bg-black z-20 pointer-events-none shadow-2xl transition-all" />
           <div className="absolute bottom-0 left-0 right-0 h-10 lg:h-14 bg-black z-20 pointer-events-none shadow-2xl transition-all" />
         </>
+      )}
+
+      {/* Live P2P BitTorrent Swarm Telemetry HUD */}
+      {playMode === 'torrent' && torrentStats && (
+        <div className="absolute top-20 right-6 z-30 pointer-events-none p-3.5 rounded-2xl bg-black/85 border border-emerald-500/40 text-[10px] font-mono text-emerald-300 backdrop-blur-xl space-y-1 shadow-[0_0_25px_rgba(16,185,129,0.2)] animate-fade-in">
+          <div className="flex items-center gap-2 font-bold border-b border-emerald-500/20 pb-1 text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>BITTORRENT SWARM // P2P</span>
+          </div>
+          <p>FILE: <span className="text-white font-bold max-w-[180px] truncate inline-block align-bottom">{torrentStats.name}</span></p>
+          <p>CONNECTED PEERS: <span className="text-white font-bold">{torrentStats.numPeers} seeders</span></p>
+          <p>DOWNLOAD SPEED: <span className="text-white font-bold">{(torrentStats.downloadSpeed / (1024 * 1024)).toFixed(2)} MB/s</span></p>
+          <p>BUFFER PROGRESS: <span className="text-emerald-400 font-bold">{(torrentStats.progress * 100).toFixed(1)}%</span></p>
+        </div>
       )}
 
       {/* Sonic Space (Music Mode) Turntable Backdrop */}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   MonitorPlay,
@@ -18,6 +18,14 @@ import { peerEngine } from '../lib/PeerEngine'
 export default function Lobby() {
   const { alias, setAlias, setRoom, theme, setTheme } = useStore()
   const [joinCode, setJoinCode] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('room')
+    if (code && code.trim().length >= 4) {
+      setJoinCode(code.trim().toUpperCase())
+    }
+  }, [])
 
   const handleHost = () => {
     const code = generateRoomCode()

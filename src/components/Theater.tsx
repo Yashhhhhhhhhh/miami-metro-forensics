@@ -38,7 +38,8 @@ export default function Theater() {
 
   const copyRoomCode = () => {
     if (roomCode) {
-      navigator.clipboard.writeText(roomCode)
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`
+      navigator.clipboard.writeText(inviteUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }

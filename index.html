@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#09090b" />
     <title>Lumière Studio V4</title>
-    <!-- Compiled Production Stylesheet for GitHub Pages -->
+    <!-- WebTorrent in-browser P2P Streaming Client -->
+    <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index.css">
     <script>
-      // If deployed on GitHub Pages or static host, load the production bundle
-      if (window.location.hostname.includes('github.io')) {
+      // Load bundled script on static hosts (GitHub Pages, etc.)
+      if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
         const script = document.createElement('script');
         script.type = 'module';
         script.crossOrigin = 'anonymous';

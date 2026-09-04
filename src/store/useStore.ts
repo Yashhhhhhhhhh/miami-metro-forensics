@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { audioEngine, type EQPreset } from '../lib/AudioEngine'
+import { type TorrentStats } from '../lib/TorrentEngine'
 
 export type Theme = 'cinema' | 'anime' | 'music' | 'cyberpunk'
-export type PlayMode = 'idle' | 'youtube' | 'url' | 'local_stream' | 'local_sync' | 'screenshare'
+export type PlayMode = 'idle' | 'youtube' | 'url' | 'local_stream' | 'local_sync' | 'screenshare' | 'torrent'
 export type AspectRatio = 'contain' | 'cover' | 'fill'
 
 export interface PeerUser {
@@ -68,6 +69,10 @@ interface AppState {
   syncDrift: number
   ping: number
   setSyncStats: (drift: number, ping: number) => void
+
+  // Torrent P2P Swarm Diagnostics
+  torrentStats: TorrentStats | null
+  setTorrentStats: (s: TorrentStats | null) => void
 
   // Audio DSP & Studio
   volume: number // 0 to 2.5
@@ -181,6 +186,9 @@ export const useStore = create<AppState>((set, get) => ({
   syncDrift: 0,
   ping: 0,
   setSyncStats: (drift, ping) => set({ syncDrift: drift, ping }),
+
+  torrentStats: null,
+  setTorrentStats: (stats) => set({ torrentStats: stats }),
 
   volume: 1.0,
   isMuted: false,

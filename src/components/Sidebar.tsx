@@ -36,9 +36,39 @@ export default function Sidebar() {
 
   const [chatInput, setChatInput] = useState('')
   const [urlInput, setUrlInput] = useState('')
+  const [torrentInput, setTorrentInput] = useState('')
   const [copied, setCopied] = useState(false)
   const localFileInputRef = useRef<HTMLInputElement>(null)
   const dualSyncInputRef = useRef<HTMLInputElement>(null)
+  const torrentFileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleTorrentSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!torrentInput.trim()) return
+
+    const magnet = torrentInput.trim()
+    setMedia('torrent', 'P2P BitTorrent Stream', magnet)
+    if (isHost) {
+      peerEngine.broadcast({
+        type: 'STATE',
+        mode: 'torrent',
+        title: 'P2P BitTorrent Stream',
+        url: magnet,
+        time: 0,
+        paused: false,
+        serverTime: Date.now()
+      })
+    }
+    setTorrentInput('')
+  }
+
+  const handleTorrentFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const fileUrl = URL.createObjectURL(file)
+    setMedia('torrent', file.name, fileUrl)
+  }
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -120,7 +150,8 @@ export default function Sidebar() {
 
   const copyCode = () => {
     if (roomCode) {
-      navigator.clipboard.writeText(roomCode)
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`
+      navigator.clipboard.writeText(inviteUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
@@ -336,6 +367,46 @@ export default function Sidebar() {
                   Play
                 </button>
               </form>
+            </div>
+
+            <div className="w-full border-t border-white/10" />
+
+            {/* P2P BitTorrent & Magnet Streamer */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
+                <HardDrive className="w-4 h-4" /> BitTorrent / Magnet P2P Streamer
+              </label>
+              <p className="text-[11px] text-white/50">
+                Streams video directly from P2P torrent swarms using in-browser WebTorrent. Transcodes live to room viewers.
+              </p>
+              <form onSubmit={handleTorrentSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={torrentInput}
+                  onChange={(e) => setTorrentInput(e.target.value)}
+                  placeholder="magnet:?xt=urn:btih:..."
+                  className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-400 font-mono text-[11px]"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-2 rounded-xl bg-cyan-500 text-black text-xs font-bold hover:bg-cyan-400 transition-colors"
+                >
+                  Stream
+                </button>
+              </form>
+              <input
+                ref={torrentFileInputRef}
+                type="file"
+                accept=".torrent"
+                onChange={handleTorrentFileUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => torrentFileInputRef.current?.click()}
+                className="w-full py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-300 font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Or Load .torrent File
+              </button>
             </div>
 
             <div className="w-full border-t border-white/10" />
