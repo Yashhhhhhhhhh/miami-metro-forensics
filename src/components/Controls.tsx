@@ -53,10 +53,23 @@ export default function Controls({
     setAmbilight,
     isHost,
     triggerReaction,
-    theme
+    theme,
+    crtScanlines,
+    toggleCrtScanlines,
+    cinemascopeMode,
+    toggleCinemascopeMode,
+    showTelemetry,
+    toggleTelemetry
   } = useStore()
 
   const [showAudioStudio, setShowAudioStudio] = useState(false)
+
+  const themeEmojis = {
+    anime: ['🌸', '⚡', '🍙', '💢', '✨', '🦊'],
+    music: ['🎵', '🎶', '🎸', '🎹', '🎧', '🔥'],
+    cyberpunk: ['🤖', '⚡', '💻', '🛸', '👾', '💣'],
+    cinema: ['🍿', '🎬', '❤️', '👏', '🏆', '🔥']
+  }[theme] || ['❤️', '🔥', '😂', '🍿', '👏']
 
   const handleSkip = (delta: number) => {
     const target = Math.max(0, Math.min(duration, currentTime + delta))
@@ -141,7 +154,108 @@ export default function Controls({
       )}
 
       {/* Floating Cinema Control Dock */}
-      <div className="rounded-[2.5rem] p-4 lg:p-5 bg-zinc-950/85 border border-white/10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col gap-3">
+      <div className="rounded-[2.5rem] p-4 lg:p-5 bg-zinc-950/85 border border-white/10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col gap-2.5">
+        {/* Theme-Specific Experience Ribbon */}
+        <div className="flex items-center justify-between px-2 pb-1 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            {theme === 'anime' && (
+              <>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-fuchsia-400 font-bold flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400 animate-pulse" /> アニメ VAULT
+                </span>
+                <button
+                  onClick={() => handleSkip(85)}
+                  className="px-2.5 py-1 rounded-xl bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/30 text-[10px] font-bold text-fuchsia-300 uppercase tracking-wider transition-all"
+                  title="Skip 85s Opening Song"
+                >
+                  Skip OP (+85s)
+                </button>
+                <button
+                  onClick={() => handleSkip(90)}
+                  className="px-2.5 py-1 rounded-xl bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/30 text-[10px] font-bold text-fuchsia-300 uppercase tracking-wider transition-all"
+                  title="Skip 90s Ending Song"
+                >
+                  Skip ED (+90s)
+                </button>
+              </>
+            )}
+
+            {theme === 'music' && (
+              <>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> SONIC LOUNGE
+                </span>
+                <button
+                  onClick={() => setEQPreset(eqPreset === 'bass' ? 'flat' : 'bass')}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    eqPreset === 'bass'
+                      ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-lg shadow-emerald-500/30'
+                      : 'bg-white/5 text-white/60 border-white/10'
+                  }`}
+                >
+                  Sub-Bass Overdrive
+                </button>
+                <button
+                  onClick={() => setEQPreset(eqPreset === 'vocal' ? 'flat' : 'vocal')}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    eqPreset === 'vocal'
+                      ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-lg shadow-emerald-500/30'
+                      : 'bg-white/5 text-white/60 border-white/10'
+                  }`}
+                >
+                  Vocal Focus
+                </button>
+              </>
+            )}
+
+            {theme === 'cyberpunk' && (
+              <>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" /> CYBER // DECK
+                </span>
+                <button
+                  onClick={toggleCrtScanlines}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all border ${
+                    crtScanlines
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-lg shadow-cyan-500/20'
+                      : 'bg-white/5 text-white/50 border-white/10'
+                  }`}
+                >
+                  CRT Scanlines: {crtScanlines ? 'ACTIVE' : 'OFF'}
+                </button>
+                <button
+                  onClick={toggleTelemetry}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all border ${
+                    showTelemetry
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-lg shadow-cyan-500/20'
+                      : 'bg-white/5 text-white/50 border-white/10'
+                  }`}
+                >
+                  HUD Telemetry: {showTelemetry ? 'VISIBLE' : 'OFF'}
+                </button>
+              </>
+            )}
+
+            {theme === 'cinema' && (
+              <>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-rose-400 font-bold flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> IMAX DCI-P3
+                </span>
+                <button
+                  onClick={toggleCinemascopeMode}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    cinemascopeMode
+                      ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-500/20'
+                      : 'bg-white/5 text-white/50 border-white/10'
+                  }`}
+                >
+                  2.39:1 Cinemascope: {cinemascopeMode ? 'ENGAGED' : 'OFF'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Scrubber Line */}
         <Scrubber onSeek={onSeek} />
 
@@ -191,7 +305,7 @@ export default function Controls({
           <div className="flex items-center gap-2 lg:gap-3">
             {/* Quick Reactions Bar */}
             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-2xl bg-white/5 border border-white/5">
-              {['❤️', '🔥', '😂', '🍿', '👏'].map((emoji) => (
+              {themeEmojis.map((emoji) => (
                 <button
                   key={emoji}
                   onClick={() => sendReaction(emoji)}

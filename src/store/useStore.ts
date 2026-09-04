@@ -35,6 +35,12 @@ interface AppState {
   setAmbilight: (v: boolean) => void
   aspectRatio: AspectRatio
   setAspectRatio: (ar: AspectRatio) => void
+  crtScanlines: boolean
+  toggleCrtScanlines: () => void
+  cinemascopeMode: boolean
+  toggleCinemascopeMode: () => void
+  showTelemetry: boolean
+  toggleTelemetry: () => void
 
   // User & Room
   alias: string
@@ -95,11 +101,34 @@ interface AppState {
 
 export const useStore = create<AppState>((set, get) => ({
   theme: 'cinema',
-  setTheme: (t) => set({ theme: t }),
+  setTheme: (t) => {
+    // Auto-tune DSP and Visual Experience according to medium
+    if (t === 'cinema') {
+      audioEngine.applyPreset('cinema')
+      set({ theme: t, eqPreset: 'cinema', crtScanlines: false, cinemascopeMode: true })
+    } else if (t === 'anime') {
+      audioEngine.applyPreset('vocal')
+      set({ theme: t, eqPreset: 'vocal', crtScanlines: false, cinemascopeMode: false })
+    } else if (t === 'music') {
+      audioEngine.applyPreset('bass')
+      set({ theme: t, eqPreset: 'bass', crtScanlines: false, cinemascopeMode: false })
+    } else if (t === 'cyberpunk') {
+      audioEngine.applyPreset('laptop')
+      set({ theme: t, eqPreset: 'laptop', crtScanlines: true, showTelemetry: true, cinemascopeMode: false })
+    } else {
+      set({ theme: t })
+    }
+  },
   ambilight: true,
   setAmbilight: (v) => set({ ambilight: v }),
   aspectRatio: 'contain',
   setAspectRatio: (ar) => set({ aspectRatio: ar }),
+  crtScanlines: false,
+  toggleCrtScanlines: () => set((s) => ({ crtScanlines: !s.crtScanlines })),
+  cinemascopeMode: true,
+  toggleCinemascopeMode: () => set((s) => ({ cinemascopeMode: !s.cinemascopeMode })),
+  showTelemetry: false,
+  toggleTelemetry: () => set((s) => ({ showTelemetry: !s.showTelemetry })),
 
   alias: localStorage.getItem('lum_alias') || 'Director',
   setAlias: (a) => {

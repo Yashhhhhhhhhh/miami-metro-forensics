@@ -16,7 +16,13 @@ export default function Player() {
     mediaTitle,
     aspectRatio,
     updatePlayback,
-    setMedia
+    setMedia,
+    theme,
+    crtScanlines,
+    cinemascopeMode,
+    showTelemetry,
+    ping,
+    syncDrift
   } = useStore()
 
   const nativeVideoRef = useRef<HTMLVideoElement>(null)
@@ -28,14 +34,22 @@ export default function Player() {
   // Global window time getters for P2P sync
   const getCurrentTime = useCallback(() => {
     if (playMode === 'youtube' || playMode === 'url') {
-      return reactPlayerRef.current?.getCurrentTime() || 0
+      const p = reactPlayerRef.current as any
+      if (p && typeof p.getCurrentTime === 'function') {
+        try { return p.getCurrentTime() || 0 } catch {}
+      }
+      return useStore.getState().currentTime || 0
     }
     return nativeVideoRef.current?.currentTime || 0
   }, [playMode])
 
   const getDuration = useCallback(() => {
     if (playMode === 'youtube' || playMode === 'url') {
-      return reactPlayerRef.current?.getDuration() || 0
+      const p = reactPlayerRef.current as any
+      if (p && typeof p.getDuration === 'function') {
+        try { return p.getDuration() || 0 } catch {}
+      }
+      return useStore.getState().duration || 0
     }
     return nativeVideoRef.current?.duration || 0
   }, [playMode])
@@ -53,7 +67,10 @@ export default function Player() {
 
     peerEngine.onSeek = (time: number) => {
       if (playMode === 'youtube' || playMode === 'url') {
-        reactPlayerRef.current?.seekTo(time, 'seconds')
+        const p = reactPlayerRef.current as any
+        if (p && typeof p.seekTo === 'function') {
+          try { p.seekTo(time, 'seconds') } catch {}
+        }
       } else if (nativeVideoRef.current && playMode !== 'screenshare') {
         nativeVideoRef.current.currentTime = time
       }
@@ -162,7 +179,8 @@ export default function Player() {
 
   // ReactPlayer Time Update Listener
   const handleReactPlayerProgress = (state: { playedSeconds: number; loadedSeconds: number }) => {
-    const dur = reactPlayerRef.current?.getDuration() || 0
+    const p = reactPlayerRef.current as any
+    const dur = (p && typeof p.getDuration === 'function') ? p.getDuration() : useStore.getState().duration || 0
     updatePlayback(state.playedSeconds, dur, false, state.loadedSeconds)
   }
 
@@ -184,6 +202,49 @@ export default function Player() {
 
       {/* Floating Reactions Burst Layer */}
       <Reactions />
+
+      {/* Cyberpunk CRT Scanline Layer */}
+      {theme === 'cyberpunk' && crtScanlines && (
+        <div className="absolute inset-0 z-20 pointer-events-none crt-scanlines opacity-50" />
+      )}
+
+      {/* Cyberpunk Live Neural Telemetry HUD */}
+      {theme === 'cyberpunk' && showTelemetry && (
+        <div className="absolute top-20 left-6 z-30 pointer-events-none p-3.5 rounded-2xl bg-black/85 border border-cyan-500/50 text-[10px] font-mono text-cyan-300 backdrop-blur-xl space-y-1 shadow-[0_0_25px_rgba(6,182,212,0.2)] animate-fade-in">
+          <div className="flex items-center gap-2 font-bold border-b border-cyan-500/30 pb-1 text-cyan-400">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span>NEURAL // TELEMETRY HUD</span>
+          </div>
+          <p>FEED: <span className="text-white font-bold">{playMode.toUpperCase()}</span></p>
+          <p>CODEC: <span className="text-white font-bold">VP8 / OPUS 48kHz</span></p>
+          <p>RES: <span className="text-white font-bold">1280x720 (30 FPS)</span></p>
+          <p>LATENCY: <span className="text-emerald-400 font-bold">{ping > 0 ? `${ping}ms` : '<10ms DIRECT'}</span></p>
+          <p>DRIFT OFFSET: <span className="text-white font-bold">{syncDrift}ms</span></p>
+        </div>
+      )}
+
+      {/* Cinema 2.39:1 IMAX Anamorphic Letterbox Bars */}
+      {theme === 'cinema' && cinemascopeMode && (
+        <>
+          <div className="absolute top-0 left-0 right-0 h-10 lg:h-14 bg-black z-20 pointer-events-none shadow-2xl transition-all" />
+          <div className="absolute bottom-0 left-0 right-0 h-10 lg:h-14 bg-black z-20 pointer-events-none shadow-2xl transition-all" />
+        </>
+      )}
+
+      {/* Sonic Space (Music Mode) Turntable Backdrop */}
+      {theme === 'music' && (
+        <div className="absolute inset-0 z-15 pointer-events-none flex items-center justify-center opacity-30">
+          <div className="w-80 h-80 rounded-full border-4 border-emerald-500/20 flex items-center justify-center animate-spin-slow">
+            <div className="w-72 h-72 rounded-full border border-emerald-500/30 flex items-center justify-center">
+              <div className="w-48 h-48 rounded-full border border-emerald-500/40 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full bg-emerald-500/30 flex items-center justify-center text-[10px] font-black text-emerald-300 font-mono tracking-widest">
+                  SONIC
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* URL / YouTube Streaming Engine */}
       {isUrlMode && (
