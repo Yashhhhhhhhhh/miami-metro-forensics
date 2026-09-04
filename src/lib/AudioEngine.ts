@@ -73,14 +73,16 @@ class AudioEngine {
       this.streamDest = this.ctx.createMediaStreamDestination()
 
       // Wire up graph: Source -> Low -> Mid -> High -> Compressor -> Gain -> Analyser -> Output & Dest
-      this.source.connect(this.lowFilter)
-      this.lowFilter.connect(this.midFilter)
-      this.midFilter.connect(this.highFilter)
-      this.highFilter.connect(this.compressor)
-      this.compressor.connect(this.gainNode)
-      this.gainNode.connect(this.analyserNode)
-      this.analyserNode.connect(this.ctx.destination)
-      this.analyserNode.connect(this.streamDest)
+      if (this.source && this.lowFilter && this.midFilter && this.highFilter && this.compressor && this.gainNode && this.analyserNode && this.streamDest && this.ctx) {
+        this.source.connect(this.lowFilter)
+        this.lowFilter.connect(this.midFilter)
+        this.midFilter.connect(this.highFilter)
+        this.highFilter.connect(this.compressor)
+        this.compressor.connect(this.gainNode)
+        this.gainNode.connect(this.analyserNode)
+        this.analyserNode.connect(this.ctx.destination)
+        this.analyserNode.connect(this.streamDest)
+      }
 
       this.applyPreset('cinema')
     } catch (err) {

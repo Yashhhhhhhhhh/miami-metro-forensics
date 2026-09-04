@@ -5,9 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#09090b" />
     <title>Lumière Studio V4</title>
+    <!-- Compiled Production Stylesheet for GitHub Pages -->
+    <link rel="stylesheet" crossorigin href="./assets/index.css">
+    <script>
+      // If deployed on GitHub Pages or static host, load the production bundle
+      if (window.location.hostname.includes('github.io')) {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.crossOrigin = 'anonymous';
+        script.src = './assets/index.js';
+        document.head.appendChild(script);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Local Vite Development Server Module -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

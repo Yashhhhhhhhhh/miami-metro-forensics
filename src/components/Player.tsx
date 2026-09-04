@@ -26,7 +26,7 @@ export default function Player() {
   } = useStore()
 
   const nativeVideoRef = useRef<HTMLVideoElement>(null)
-  const reactPlayerRef = useRef<ReactPlayer>(null)
+  const reactPlayerRef = useRef<any>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const transcodeCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const transcodeAnimRef = useRef<number | null>(null)
@@ -195,6 +195,8 @@ export default function Player() {
       ? 'object-fill'
       : 'object-contain'
 
+  const PlayerComponent = ReactPlayer as any
+
   return (
     <div className="absolute inset-0 z-10 bg-black flex items-center justify-center overflow-hidden">
       {/* 360° Dynamic Ambilight Lighting */}
@@ -249,7 +251,7 @@ export default function Player() {
       {/* URL / YouTube Streaming Engine */}
       {isUrlMode && (
         <div className="w-full h-full relative z-10 flex items-center justify-center">
-          <ReactPlayer
+          <PlayerComponent
             ref={reactPlayerRef}
             url={mediaUrl}
             width="100%"
@@ -257,7 +259,7 @@ export default function Player() {
             playing={true}
             volume={isMuted ? 0 : Math.min(1.0, volume)}
             controls={false}
-            onProgress={handleReactPlayerProgress}
+            onProgress={handleReactPlayerProgress as any}
             onEnded={() => {
               if (isHost) peerEngine.broadcast({ type: 'ACTION_PAUSE' })
             }}
@@ -272,7 +274,7 @@ export default function Player() {
                   origin: window.location.origin
                 }
               }
-            }}
+            } as any}
           />
         </div>
       )}
