@@ -172,19 +172,36 @@ export default function Catalog() {
           <div className="flex flex-wrap items-center gap-3.5 pt-2">
             <button
               onClick={() => handleWatchWithRoom(activeHero)}
-              className={theme === 'anime'
-                ? "manga-btn px-6 py-3.5 bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider flex items-center gap-2.5 font-syne"
-                : "px-6 py-3.5 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-wider flex items-center gap-2.5 hover:scale-105 active:scale-95 transition-all shadow-xl"}
+              className={
+                theme === 'anime'
+                  ? "manga-btn px-6 py-3.5 bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider flex items-center gap-2.5 font-syne"
+                  : theme === 'cinema'
+                  ? "cinema-btn px-6 py-3.5 text-sm font-bold uppercase tracking-widest font-cinema flex items-center gap-2.5"
+                  : theme === 'cyberpunk'
+                  ? "cyber-btn px-6 py-3.5 text-sm font-bold uppercase tracking-wider font-mono flex items-center gap-2.5"
+                  : "hifi-btn px-6 py-3.5 text-sm font-bold uppercase tracking-wider font-mono flex items-center gap-2.5"
+              }
             >
               <Play className="w-5 h-5 fill-current" />
-              <span>{theme === 'anime' ? '▶ 同期上映開始 WATCH WITH ROOM' : 'Watch with Room'}</span>
+              <span>
+                {theme === 'anime' && '▶ 同期上映開始 WATCH WITH ROOM'}
+                {theme === 'cinema' && '▶ PROJECT TO AUDITORIUM'}
+                {theme === 'cyberpunk' && '▶ EXECUTE P2P BROADCAST'}
+                {theme === 'music' && '▶ STREAM MASTER TAPE'}
+              </span>
             </button>
 
             <button
               onClick={() => setShowServerModal(true)}
-              className={theme === 'anime'
-                ? "manga-btn px-5 py-3.5 bg-[#120c1f] text-white font-black text-sm uppercase tracking-wider flex items-center gap-2 font-syne"
-                : "px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-sm uppercase tracking-wider flex items-center gap-2 transition-all"}
+              className={
+                theme === 'anime'
+                  ? "manga-btn px-5 py-3.5 bg-[#120c1f] text-white font-black text-sm uppercase tracking-wider flex items-center gap-2 font-syne"
+                  : theme === 'cinema'
+                  ? "cinema-btn px-5 py-3.5 text-sm font-bold uppercase tracking-widest font-cinema flex items-center gap-2"
+                  : theme === 'cyberpunk'
+                  ? "cyber-btn px-5 py-3.5 text-sm font-bold uppercase tracking-wider font-mono flex items-center gap-2"
+                  : "hifi-btn px-5 py-3.5 text-sm font-bold uppercase tracking-wider font-mono flex items-center gap-2"
+              }
             >
               <Server className="w-4 h-4 text-[#ffe600]" />
               <span>Connect Server / HLS</span>
@@ -436,7 +453,11 @@ function MovieCard({
       className={`flex-shrink-0 w-48 sm:w-56 cursor-pointer group relative transition-all duration-200 ${
         theme === 'anime'
           ? 'manga-box hover:-translate-y-1.5'
-          : 'rounded-2xl overflow-hidden border border-white/10 hover:border-white/40 hover:scale-105'
+          : theme === 'cinema'
+          ? 'cinema-box hover:-translate-y-1'
+          : theme === 'cyberpunk'
+          ? 'cyber-chamfer bg-[#020612] border border-cyan-500/60 hover:border-cyan-400'
+          : 'hifi-faceplate border border-[#383e4a] hover:-translate-y-1'
       }`}
     >
       {/* Poster Aspect Ratio Container */}
@@ -450,7 +471,15 @@ function MovieCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
 
         {/* Quality Badge */}
-        <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/80 border border-white/20 text-[9px] font-mono font-bold text-white">
+        <div className={`absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-mono font-bold ${
+          theme === 'anime'
+            ? 'bg-black text-[#ffe600] border border-black'
+            : theme === 'cinema'
+            ? 'bg-black/90 text-[#d4af37] border border-[#d4af37]/40'
+            : theme === 'cyberpunk'
+            ? 'bg-black/90 text-cyan-400 border border-cyan-400'
+            : 'bg-black/90 text-white border border-white/20'
+        }`}>
           {item.quality}
         </div>
 
@@ -460,7 +489,15 @@ function MovieCard({
             e.stopPropagation()
             onPlay()
           }}
-          className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-[#ffe600] text-black border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:scale-110 active:scale-95 transition-all shadow-[3px_3px_0px_#ff2a5f]"
+          className={`absolute inset-0 m-auto w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:scale-110 active:scale-95 transition-all ${
+            theme === 'anime'
+              ? 'bg-[#ffe600] text-black border-2 border-black shadow-[3px_3px_0px_#ff2a5f]'
+              : theme === 'cinema'
+              ? 'bg-[#d4af37] text-black shadow-[0_0_20px_rgba(212,175,55,0.6)]'
+              : theme === 'cyberpunk'
+              ? 'bg-cyan-500 text-black shadow-[0_0_20px_rgba(6,182,212,0.8)]'
+              : 'bg-white text-black shadow-xl'
+          }`}
           title="Stream with Room Now"
         >
           <Play className="w-5 h-5 fill-current ml-0.5" />
@@ -468,7 +505,9 @@ function MovieCard({
       </div>
 
       {/* Card Details */}
-      <div className="p-3 bg-[#0e0a17]">
+      <div className={`p-3 ${
+        theme === 'cinema' ? 'bg-[#0a090e] font-cinema' : theme === 'cyberpunk' ? 'bg-[#020612] font-mono' : 'bg-[#0e0a17]'
+      }`}>
         {item.japaneseTitle && (
           <span className="text-[10px] text-[#ffe600] font-black truncate block">
             {item.japaneseTitle}

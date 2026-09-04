@@ -349,9 +349,15 @@ export default function Controls({
       )}
 
       {/* Floating Control Dock */}
-      <div className={theme === 'anime'
-        ? "p-4 lg:p-5 bg-[#0e0a17] border-2 border-black shadow-[6px_6px_0px_#ff2a5f] manga-screentone flex flex-col gap-2.5"
-        : "rounded-[2.5rem] p-4 lg:p-5 bg-zinc-950/85 border border-white/10 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col gap-2.5"}>
+      <div className={
+        theme === 'anime'
+          ? "p-4 lg:p-5 bg-[#0e0a17] border-2 border-black shadow-[6px_6px_0px_#ff2a5f] manga-screentone flex flex-col gap-2.5"
+          : theme === 'cinema'
+          ? "p-4 lg:p-5 bg-[#0b0a0e] border-2 border-[#d4af37] shadow-[0_0_35px_rgba(212,175,55,0.18)] flex flex-col gap-2.5 font-cinema"
+          : theme === 'cyberpunk'
+          ? "p-4 lg:p-5 bg-[#020612] border border-cyan-400 cyber-chamfer shadow-[0_0_25px_rgba(6,182,212,0.25)] flex flex-col gap-2.5 font-mono"
+          : "p-4 lg:p-5 hifi-faceplate border-2 border-[#383e4a] flex flex-col gap-2.5 font-mono shadow-2xl"
+      }>
         {/* Theme-Specific Experience Ribbon */}
         <div className="flex items-center justify-between px-2 pb-1 border-b border-white/5">
           <div className="flex items-center gap-2">
@@ -379,28 +385,24 @@ export default function Controls({
 
             {theme === 'music' && (
               <>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold flex items-center gap-1.5 mr-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> SONIC LOUNGE
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#a8926b] font-bold flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#e5b869] animate-ping" /> STUDER TAPE DESK
                 </span>
                 <button
                   onClick={() => setEQPreset(eqPreset === 'bass' ? 'flat' : 'bass')}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    eqPreset === 'bass'
-                      ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-lg shadow-emerald-500/30'
-                      : 'bg-white/5 text-white/60 border-white/10'
+                  className={`hifi-btn px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    eqPreset === 'bass' ? 'bg-[#3b4252] text-[#e5b869] border-[#e5b869]' : ''
                   }`}
                 >
                   Sub-Bass Overdrive
                 </button>
                 <button
                   onClick={() => setEQPreset(eqPreset === 'vocal' ? 'flat' : 'vocal')}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    eqPreset === 'vocal'
-                      ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-lg shadow-emerald-500/30'
-                      : 'bg-white/5 text-white/60 border-white/10'
+                  className={`hifi-btn px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    eqPreset === 'vocal' ? 'bg-[#3b4252] text-[#e5b869] border-[#e5b869]' : ''
                   }`}
                 >
-                  Vocal Focus
+                  Vocal Focus (Mid-Boost)
                 </button>
               </>
             )}
@@ -408,24 +410,20 @@ export default function Controls({
             {theme === 'cyberpunk' && (
               <>
                 <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold flex items-center gap-1.5 mr-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" /> CYBER // DECK
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" /> NERV TACTICAL HUD
                 </span>
                 <button
                   onClick={toggleCrtScanlines}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all border ${
-                    crtScanlines
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-lg shadow-cyan-500/20'
-                      : 'bg-white/5 text-white/50 border-white/10'
+                  className={`cyber-btn px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    crtScanlines ? 'bg-cyan-500 text-black' : ''
                   }`}
                 >
                   CRT Scanlines: {crtScanlines ? 'ACTIVE' : 'OFF'}
                 </button>
                 <button
                   onClick={toggleTelemetry}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all border ${
-                    showTelemetry
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-lg shadow-cyan-500/20'
-                      : 'bg-white/5 text-white/50 border-white/10'
+                  className={`cyber-btn px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    showTelemetry ? 'bg-cyan-500 text-black' : ''
                   }`}
                 >
                   HUD Telemetry: {showTelemetry ? 'VISIBLE' : 'OFF'}
@@ -435,25 +433,21 @@ export default function Controls({
 
             {theme === 'cinema' && (
               <>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-rose-400 font-bold flex items-center gap-1.5 mr-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> IMAX DCI-P3
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#d4af37] font-bold flex items-center gap-1.5 mr-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37] animate-pulse" /> 35MM PANAVISION
                 </span>
                 <button
                   onClick={toggleCinemascopeMode}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    cinemascopeMode
-                      ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-500/20'
-                      : 'bg-white/5 text-white/50 border-white/10'
+                  className={`cinema-btn px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    cinemascopeMode ? 'bg-[#d4af37] text-black font-black' : ''
                   }`}
                 >
-                  2.39:1 Cinemascope: {cinemascopeMode ? 'ENGAGED' : 'OFF'}
+                  2.39:1 Anamorphic: {cinemascopeMode ? 'ENGAGED' : 'OFF'}
                 </button>
                 <button
                   onClick={toggleFilmGrain}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    filmGrain
-                      ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-500/20'
-                      : 'bg-white/5 text-white/50 border-white/10'
+                  className={`cinema-btn px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    filmGrain ? 'bg-[#d4af37] text-black font-black' : ''
                   }`}
                 >
                   35mm Film Grain: {filmGrain ? 'ACTIVE' : 'OFF'}
@@ -472,38 +466,62 @@ export default function Controls({
           <div className="flex items-center gap-3 lg:gap-4">
             <button
               onClick={onPlayPause}
-              className={theme === 'anime'
-                ? "manga-btn px-4 py-2 bg-[#ffe600] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 font-syne"
-                : "p-3 lg:p-3.5 rounded-full bg-white text-zinc-950 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"}
+              className={
+                theme === 'anime'
+                  ? "manga-btn px-4 py-2 bg-[#ffe600] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 font-syne"
+                  : theme === 'cinema'
+                  ? "cinema-btn px-4 py-2 text-xs font-bold uppercase tracking-widest font-cinema flex items-center gap-1.5"
+                  : theme === 'cyberpunk'
+                  ? "cyber-btn px-4 py-2 text-xs font-bold uppercase tracking-wider font-mono flex items-center gap-1.5"
+                  : "hifi-btn px-4 py-2 text-xs font-bold uppercase tracking-wider font-mono flex items-center gap-1.5"
+              }
               title={isPaused ? 'Play (Space)' : 'Pause (Space)'}
             >
               {isPaused ? (
                 <>
                   <Play className="w-4 h-4 fill-current ml-0.5" />
                   {theme === 'anime' && <span>再生 PLAY</span>}
+                  {theme === 'cinema' && <span>ROLL FILM</span>}
+                  {theme === 'cyberpunk' && <span>EXECUTE</span>}
+                  {theme === 'music' && <span>TAPE PLAY</span>}
                 </>
               ) : (
                 <>
                   <Pause className="w-4 h-4 fill-current" />
                   {theme === 'anime' && <span>停止 PAUSE</span>}
+                  {theme === 'cinema' && <span>CUT TAKE</span>}
+                  {theme === 'cyberpunk' && <span>SUSPEND</span>}
+                  {theme === 'music' && <span>TAPE STOP</span>}
                 </>
               )}
             </button>
 
             <button
               onClick={() => handleSkip(-10)}
-              className={theme === 'anime'
-                ? "manga-btn p-2 bg-[#120c1f] text-white"
-                : "p-2.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"}
+              className={
+                theme === 'anime'
+                  ? "manga-btn p-2 bg-[#120c1f] text-white"
+                  : theme === 'cinema'
+                  ? "cinema-btn p-2 text-[#d4af37]"
+                  : theme === 'cyberpunk'
+                  ? "cyber-btn p-2"
+                  : "hifi-btn p-2 text-white/80"
+              }
               title="Rewind 10s"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleSkip(10)}
-              className={theme === 'anime'
-                ? "manga-btn p-2 bg-[#120c1f] text-white"
-                : "p-2.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"}
+              className={
+                theme === 'anime'
+                  ? "manga-btn p-2 bg-[#120c1f] text-white"
+                  : theme === 'cinema'
+                  ? "cinema-btn p-2 text-[#d4af37]"
+                  : theme === 'cyberpunk'
+                  ? "cyber-btn p-2"
+                  : "hifi-btn p-2 text-white/80"
+              }
               title="Fast-forward 10s"
             >
               <RotateCw className="w-4 h-4" />

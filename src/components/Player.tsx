@@ -10,6 +10,14 @@ import Reactions from './Reactions'
 import SubtitlesOverlay from './SubtitlesOverlay'
 import { parseSubtitles } from '../lib/SubtitleEngine'
 import { AnimeSpeedlines, MangaDoodles, AnimeMascot } from './AnimeElements'
+import {
+  CinemaClapperboard,
+  FilmstripBorder,
+  FilmLeaderCountdown,
+  NervTacticalCard,
+  AnalogVuMeter,
+  VacuumTubeGlow
+} from './ThemeDoodles'
 
 export default function Player() {
   const {
@@ -441,57 +449,154 @@ export default function Player() {
                 </div>
               )}
             </div>
-          ) : (
-            /* Classic Cinema / Standard Standby */
-            <div className="relative z-10 text-center max-w-lg px-6 select-none animate-fade-in flex flex-col items-center">
-              {/* Projector Lens Hologram */}
-              <div className="relative w-28 h-28 mb-5 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[var(--primary)] to-amber-400 opacity-25 blur-2xl animate-pulse" />
-                <div className="w-24 h-24 rounded-full border border-white/15 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_var(--primary-glow)]">
-                  <div className="w-16 h-16 rounded-full border border-[var(--primary)]/30 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full border border-white/20 bg-gradient-to-tr from-[var(--primary)] to-rose-500 flex items-center justify-center shadow-lg shadow-[var(--primary)]/40">
-                      <Film className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                </div>
+          ) : theme === 'cinema' ? (
+            /* 35mm Panavision Director's Atelier Standby */
+            <div className="relative z-10 text-center max-w-xl px-6 select-none animate-fade-in flex flex-col items-center">
+              <FilmstripBorder />
+
+              <div className="my-5 flex items-center justify-center gap-6">
+                <FilmLeaderCountdown />
+                <CinemaClapperboard title={mediaTitle || "PREMIERE SCREENING"} />
               </div>
 
-              <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[var(--primary)] font-bold mb-1.5 block">
-                SCREEN AUDITORIUM // READY
-              </span>
-              <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-white mb-2 font-cinema uppercase">
-                Theater Standby
+              <div className="mb-3 px-3 py-1 bg-[#1a1722] border border-[#d4af37] text-[10px] font-mono tracking-widest text-[#e5b869] font-bold uppercase">
+                ★ CANNES // 35MM PANAVISION ANAMORPHIC PROJECTION READY ★
+              </div>
+
+              <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#f8f6f0] mb-2 font-cinema uppercase">
+                Panavision Projection Atelier
               </h2>
-              <p className="text-xs text-white/50 leading-relaxed font-light max-w-sm mb-6">
+              <p className="text-xs text-[#e5b869]/70 leading-relaxed font-light max-w-sm mb-6 font-cinema">
                 {isHost
-                  ? 'Select a source from the Media Deck to begin your shared screening. Direct torrents, 4K local files, or web streams.'
-                  : 'Connected to the encrypted peer link. Waiting for the Host Director to initiate playback...'}
+                  ? 'Director console standing by. Select celluloid reel, digital master stream, or P2P torrent.'
+                  : 'Auditorium doors locked. Synchronizing with projection booth...'}
               </p>
 
               {isHost && (
-                <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <div className="flex flex-wrap items-center justify-center gap-3">
                   <button
                     onClick={() => {
                       setActiveSidebarTab('media')
                       setSidebarOpen(true)
                     }}
-                    className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-white flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl font-syne"
+                    className="cinema-btn px-5 py-2.5 text-xs font-bold uppercase tracking-widest font-cinema flex items-center gap-2"
                   >
-                    <Upload className="w-3.5 h-3.5 text-[var(--primary)]" />
-                    <span>Open Media Deck</span>
+                    <Upload className="w-4 h-4 text-[#d4af37]" />
+                    <span>LOAD 35MM REEL</span>
                   </button>
                   <button
                     onClick={() => {
                       setActiveSidebarTab('media')
                       setSidebarOpen(true)
                     }}
-                    className="px-4 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-xs font-bold text-cyan-300 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    className="cinema-btn px-5 py-2.5 text-xs font-bold uppercase tracking-widest font-cinema flex items-center gap-2"
                   >
-                    <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Stream BitTorrent</span>
+                    <HardDrive className="w-4 h-4 text-[#d4af37]" />
+                    <span>P2P SWARM RELAY</span>
                   </button>
                 </div>
               )}
+
+              <div className="mt-5 w-full">
+                <FilmstripBorder />
+              </div>
+            </div>
+          ) : theme === 'cyberpunk' ? (
+            /* NERV MAGI Cyberpunk Tactical Terminal */
+            <div className="relative z-10 text-center max-w-lg px-6 select-none animate-fade-in flex flex-col items-center font-mono">
+              <div className="w-full mb-4">
+                <NervTacticalCard title="TACTICAL STREAM RELAY // MAGI-01" status={isHost ? "HOST ACTIVE" : "P2P SYNCED"} />
+              </div>
+
+              <div className="h-1 w-full hazard-stripes mb-4" />
+
+              <h2 className="text-2xl lg:text-3xl font-black tracking-widest text-cyan-400 mb-2 uppercase cyber-chamfer bg-black px-4 py-1 border border-cyan-500">
+                NERV // TACTICAL TERMINAL
+              </h2>
+              <p className="text-[11px] text-cyan-300/70 leading-relaxed max-w-sm mb-5">
+                {isHost
+                  ? 'MILITARY-GRADE P2P UPLINK ESTABLISHED. SELECT DIRECT DATASTREAM FOR SYNCHRONIZED BROADCAST.'
+                  : 'CLIENT TERMINAL CONNECTED. LISTENING FOR HOST QUANTUM BROADCAST KEY.'}
+              </p>
+
+              {isHost && (
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setActiveSidebarTab('media')
+                      setSidebarOpen(true)
+                    }}
+                    className="cyber-btn px-5 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>INJECT DATASTREAM</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSidebarTab('media')
+                      setSidebarOpen(true)
+                    }}
+                    className="cyber-btn px-5 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                  >
+                    <HardDrive className="w-4 h-4" />
+                    <span>TORRENT SWARM UPLINK</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Sonic Space / Hi-Fi Analog Console Standby */
+            <div className="relative z-10 text-center max-w-xl px-6 select-none animate-fade-in flex flex-col items-center">
+              {/* Studio Rackmount Console Faceplate */}
+              <div className="hifi-faceplate p-6 w-full max-w-md border-2 border-[#383e4a] shadow-2xl flex flex-col items-center">
+                <div className="flex items-center justify-between w-full border-b border-white/10 pb-2 mb-4 font-mono text-[10px] text-white/50">
+                  <span className="text-[#a8926b] font-bold">STUDER A800 // 24-TRACK TAPE</span>
+                  <span>15 IPS • DSD 96kHz</span>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <AnalogVuMeter />
+                  <div className="flex flex-col items-center gap-2">
+                    <VacuumTubeGlow />
+                    <span className="text-[8px] font-mono text-[#a8926b] font-bold">PREAMP</span>
+                  </div>
+                  <AnalogVuMeter />
+                </div>
+
+                <h3 className="text-xl font-black text-[#e2e8f0] uppercase tracking-wider font-mono mb-1">
+                  Master Tape Console
+                </h3>
+                <p className="text-xs text-white/50 mb-5 font-mono">
+                  {isHost
+                    ? 'Analog bus ready. Mount master FLAC, audio-visual stream, or P2P swarm.'
+                    : 'Monitoring analog feed. Waiting for master tape roll...'}
+                </p>
+
+                {isHost && (
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      onClick={() => {
+                        setActiveSidebarTab('media')
+                        setSidebarOpen(true)
+                      }}
+                      className="hifi-btn px-4 py-2 text-xs font-bold uppercase tracking-wider font-mono flex items-center gap-2"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-[#a8926b]" />
+                      <span>MOUNT TAPE</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveSidebarTab('media')
+                        setSidebarOpen(true)
+                      }}
+                      className="hifi-btn px-4 py-2 text-xs font-bold uppercase tracking-wider font-mono flex items-center gap-2"
+                    >
+                      <HardDrive className="w-3.5 h-3.5 text-[#a8926b]" />
+                      <span>SWARM FEED</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </>
