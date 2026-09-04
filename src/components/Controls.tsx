@@ -76,7 +76,9 @@ export default function Controls({
     toggleSubtitles,
     nudgeSubtitleOffset,
     setSubtitleFontSize,
-    clearSubtitles
+    clearSubtitles,
+    filmGrain,
+    toggleFilmGrain
   } = useStore()
 
   const [showAudioStudio, setShowAudioStudio] = useState(false)
@@ -443,6 +445,16 @@ export default function Controls({
                   }`}
                 >
                   2.39:1 Cinemascope: {cinemascopeMode ? 'ENGAGED' : 'OFF'}
+                </button>
+                <button
+                  onClick={toggleFilmGrain}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    filmGrain
+                      ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-500/20'
+                      : 'bg-white/5 text-white/50 border-white/10'
+                  }`}
+                >
+                  35mm Film Grain: {filmGrain ? 'ACTIVE' : 'OFF'}
                 </button>
               </>
             )}

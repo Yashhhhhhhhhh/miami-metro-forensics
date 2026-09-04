@@ -27,14 +27,30 @@ export default function Theater() {
     theme,
     setTheme,
     ping,
-    syncDrift
+    syncDrift,
+    chatMessages
   } = useStore()
 
   const [copied, setCopied] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [hudToast, setHudToast] = useState<string | null>(null)
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const lastMsgCountRef = useRef(chatMessages.length)
+
+  // Listen to system room events for Floating HUD notifications
+  useEffect(() => {
+    if (chatMessages.length > lastMsgCountRef.current) {
+      const latest = chatMessages[chatMessages.length - 1]
+      if (latest && latest.isSystem) {
+        setHudToast(latest.text)
+        const timer = setTimeout(() => setHudToast(null), 3500)
+        return () => clearTimeout(timer)
+      }
+    }
+    lastMsgCountRef.current = chatMessages.length
+  }, [chatMessages])
 
   const copyRoomCode = () => {
     if (roomCode) {
@@ -132,7 +148,7 @@ export default function Theater() {
         >
           {/* Left: Host/Viewer Badge & Room Code */}
           <div className="flex items-center gap-3 pointer-events-auto">
-            <div className="px-4 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 backdrop-blur-xl shadow-xl flex items-center gap-3">
+            <div className="px-4 py-2 rounded-2xl bg-zinc-950/85 border border-white/10 backdrop-blur-xl shadow-xl flex items-center gap-3">
               <span className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
                 {isHost ? 'Host Director' : 'Viewer'}
@@ -143,10 +159,20 @@ export default function Theater() {
               </span>
               <button
                 onClick={copyRoomCode}
-                className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                title="Copy Room Code"
+                className="px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white/70 hover:text-white transition-all flex items-center gap-1.5"
+                title="Copy Direct Invite Link"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">COPIED</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-mono font-bold">INVITE</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -158,6 +184,17 @@ export default function Theater() {
               <span className="text-white/50">{Math.abs(syncDrift)}ms drift</span>
             </div>
           </div>
+
+          {/* Floating Ambient HUD Notification */}
+          {hudToast && (
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-fade-in">
+              <div className="px-4 py-2 rounded-2xl bg-zinc-950/90 border border-[var(--primary)]/50 backdrop-blur-2xl text-xs font-mono text-white shadow-[0_0_30px_var(--primary-glow)] flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-ping" />
+                <span className="text-[10px] text-white/50 uppercase tracking-widest font-bold">EVENT //</span>
+                <span className="font-semibold text-white/90">{hudToast}</span>
+              </div>
+            </div>
+          )}
 
           {/* Right: Media Title & Quick Actions */}
           <div className="flex items-center gap-3 pointer-events-auto">

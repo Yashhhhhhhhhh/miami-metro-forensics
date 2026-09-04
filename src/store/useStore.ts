@@ -43,6 +43,8 @@ interface AppState {
   toggleCinemascopeMode: () => void
   showTelemetry: boolean
   toggleTelemetry: () => void
+  filmGrain: boolean
+  toggleFilmGrain: () => void
 
   // User & Room
   alias: string
@@ -144,6 +146,8 @@ export const useStore = create<AppState>((set, get) => ({
   toggleCinemascopeMode: () => set((s) => ({ cinemascopeMode: !s.cinemascopeMode })),
   showTelemetry: false,
   toggleTelemetry: () => set((s) => ({ showTelemetry: !s.showTelemetry })),
+  filmGrain: true,
+  toggleFilmGrain: () => set((s) => ({ filmGrain: !s.filmGrain })),
 
   alias: localStorage.getItem('lum_alias') || 'Director',
   setAlias: (a) => {

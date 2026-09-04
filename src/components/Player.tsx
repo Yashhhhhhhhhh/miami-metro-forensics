@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore'
 import { peerEngine } from '../lib/PeerEngine'
 import { audioEngine } from '../lib/AudioEngine'
 import { torrentEngine } from '../lib/TorrentEngine'
+import { Film, HardDrive, Upload } from 'lucide-react'
 import Ambilight from './Ambilight'
 import Reactions from './Reactions'
 import SubtitlesOverlay from './SubtitlesOverlay'
@@ -28,7 +29,10 @@ export default function Player() {
     syncDrift,
     torrentStats,
     setTorrentStats,
-    setSubtitles
+    setSubtitles,
+    filmGrain,
+    setSidebarOpen,
+    setActiveSidebarTab
   } = useStore()
 
   const nativeVideoRef = useRef<HTMLVideoElement>(null)
@@ -292,6 +296,9 @@ export default function Player() {
       {/* Synchronized Subtitles Overlay */}
       <SubtitlesOverlay />
 
+      {/* 35mm Analog Film Grain Filter */}
+      {filmGrain && <div className="film-grain" />}
+
       {/* Cyberpunk CRT Scanline Layer */}
       {theme === 'cyberpunk' && crtScanlines && (
         <div className="absolute inset-0 z-20 pointer-events-none crt-scanlines opacity-50" />
@@ -394,18 +401,59 @@ export default function Player() {
 
       {/* Idle Standby Screen */}
       {playMode === 'idle' && (
-        <div className="relative z-10 text-center max-w-md px-6 select-none animate-fade-in">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[var(--primary)] to-rose-400 p-[1px] mx-auto mb-6 shadow-[0_0_50px_var(--primary)] animate-pulse">
-            <div className="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center">
-              <span className="w-4 h-4 rounded-full bg-[var(--primary)] shadow-[0_0_20px_var(--primary)]" />
+        <div className="relative z-10 text-center max-w-lg px-6 select-none animate-fade-in flex flex-col items-center">
+          {/* Projector Lens Hologram */}
+          <div className="relative w-28 h-28 mb-5 flex items-center justify-center">
+            {/* Outer Ray Blur */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[var(--primary)] to-amber-400 opacity-25 blur-2xl animate-pulse" />
+            
+            {/* Concentric Lens Rings */}
+            <div className="w-24 h-24 rounded-full border border-white/15 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_var(--primary-glow)]">
+              <div className="w-16 h-16 rounded-full border border-[var(--primary)]/30 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full border border-white/20 bg-gradient-to-tr from-[var(--primary)] to-rose-500 flex items-center justify-center shadow-lg shadow-[var(--primary)]/40">
+                  <Film className="w-4 h-4 text-white" />
+                </div>
+              </div>
             </div>
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-white mb-2">Theater Standby</h2>
-          <p className="text-xs text-white/50 leading-relaxed font-light">
+
+          <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[var(--primary)] font-bold mb-1.5 block">
+            SCREEN AUDITORIUM // READY
+          </span>
+          <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-white mb-2 font-cinema uppercase">
+            Theater Standby
+          </h2>
+          <p className="text-xs text-white/50 leading-relaxed font-light max-w-sm mb-6">
             {isHost
-              ? 'Choose a movie to broadcast via WebRTC, paste a YouTube link, or mount a local file for bit-perfect sync.'
-              : 'Connected to the encrypted peer link. Waiting for the Host to initiate playback...'}
+              ? 'Select a source from the Media Deck to begin your shared screening. Direct torrents, 4K local files, or web streams.'
+              : 'Connected to the encrypted peer link. Waiting for the Host Director to initiate playback...'}
           </p>
+
+          {/* Host Quick-Action Chips */}
+          {isHost && (
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              <button
+                onClick={() => {
+                  setActiveSidebarTab('media')
+                  setSidebarOpen(true)
+                }}
+                className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-white flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl font-syne"
+              >
+                <Upload className="w-3.5 h-3.5 text-[var(--primary)]" />
+                <span>Open Media Deck</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveSidebarTab('media')
+                  setSidebarOpen(true)
+                }}
+                className="px-4 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-xs font-bold text-cyan-300 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg"
+              >
+                <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Stream BitTorrent</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

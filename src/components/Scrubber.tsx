@@ -95,21 +95,21 @@ export default function Scrubber({ onSeek }: ScrubberProps) {
         />
         {/* Playback Progress */}
         <div
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-[var(--primary)] to-rose-400 rounded-full shadow-[0_0_12px_var(--primary)] transition-all duration-75"
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-[var(--primary)] to-rose-400 rounded-full shadow-[0_0_15px_var(--primary-glow)] transition-all duration-75"
           style={{ width: `${Math.min(100, progressPercent)}%` }}
         />
       </div>
 
-      {/* Scrubber Thumb */}
+      {/* Halo Scrubber Thumb */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] opacity-0 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all duration-150 pointer-events-none"
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-[var(--primary)] shadow-[0_0_18px_var(--primary-glow)] opacity-0 group-hover:opacity-100 scale-0 group-hover:scale-110 transition-all duration-150 pointer-events-none"
         style={{ left: `${progressPercent}%` }}
       />
 
-      {/* Hover Time Tooltip */}
+      {/* Hover Time Tooltip with Caret */}
       {hoverTime !== null && (
         <div
-          className="absolute -top-7 -translate-x-1/2 px-2 py-1 rounded-md bg-zinc-900/95 border border-white/20 text-white font-mono text-[11px] font-bold shadow-xl pointer-events-none backdrop-blur-md"
+          className="absolute -top-8 -translate-x-1/2 px-2.5 py-1 rounded-xl bg-zinc-950/95 border border-[var(--primary)]/40 text-white font-mono text-[10px] font-bold tracking-wider shadow-2xl pointer-events-none backdrop-blur-xl animate-fade-in"
           style={{ left: `${hoverPos}%` }}
         >
           {formatTime(hoverTime)}
