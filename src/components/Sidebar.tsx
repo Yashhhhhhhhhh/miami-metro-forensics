@@ -12,10 +12,13 @@ import {
   Activity,
   HardDrive,
   Smartphone,
-  Laptop
+  Laptop,
+  Subtitles,
+  Trash2
 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { peerEngine } from '../lib/PeerEngine'
+import { parseSubtitles } from '../lib/SubtitleEngine'
 
 export default function Sidebar() {
   const {
@@ -31,7 +34,15 @@ export default function Sidebar() {
     roomCode,
     ping,
     syncDrift,
-    setMedia
+    setMedia,
+    subtitles,
+    subtitleFileName,
+    subtitlesEnabled,
+    subtitleOffset,
+    setSubtitles,
+    toggleSubtitles,
+    nudgeSubtitleOffset,
+    clearSubtitles
   } = useStore()
 
   const [chatInput, setChatInput] = useState('')
@@ -41,6 +52,28 @@ export default function Sidebar() {
   const localFileInputRef = useRef<HTMLInputElement>(null)
   const dualSyncInputRef = useRef<HTMLInputElement>(null)
   const torrentFileInputRef = useRef<HTMLInputElement>(null)
+  const subtitleInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSubtitleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      const cues = parseSubtitles(text)
+      if (cues.length > 0) {
+        setSubtitles(cues, file.name)
+        if (isHost) {
+          peerEngine.broadcast({
+            type: 'SUBTITLES_LOAD',
+            cues,
+            fileName: file.name
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('Subtitle upload error:', err)
+    }
+  }
 
   const handleTorrentSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -475,6 +508,82 @@ export default function Sidebar() {
               >
                 <Monitor className="w-4 h-4" /> Start Screen Share
               </button>
+            </div>
+
+            <div className="w-full border-t border-white/10" />
+
+            {/* Subtitles Synchronizer */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-rose-400 flex items-center gap-2">
+                <Subtitles className="w-4 h-4" /> Subtitles Synchronizer (.srt / .vtt)
+              </label>
+              <p className="text-[11px] text-white/50">
+                Synchronizes subtitle tracks across all room peers. Drag & drop or browse.
+              </p>
+              <input
+                ref={subtitleInputRef}
+                type="file"
+                accept=".srt,.vtt,.txt"
+                onChange={handleSubtitleUpload}
+                className="hidden"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => subtitleInputRef.current?.click()}
+                  className="flex-1 py-2.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span className="truncate">
+                    {subtitleFileName ? subtitleFileName : 'Load .srt / .vtt File'}
+                  </span>
+                </button>
+                {subtitles.length > 0 && (
+                  <button
+                    onClick={clearSubtitles}
+                    className="p-2.5 rounded-2xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 transition-colors"
+                    title="Clear Subtitles"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {subtitles.length > 0 && (
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-emerald-400 font-mono font-bold flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {subtitles.length} cues active
+                    </span>
+                    <button
+                      onClick={toggleSubtitles}
+                      className={`px-2 py-0.5 rounded font-bold uppercase ${
+                        subtitlesEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-white/40'
+                      }`}
+                    >
+                      {subtitlesEnabled ? 'Active' : 'Muted'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                    <span className="text-[10px] text-white/50">
+                      Offset: {subtitleOffset > 0 ? `+${subtitleOffset}s` : `${subtitleOffset}s`}
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => nudgeSubtitleOffset(-0.5)}
+                        className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white font-mono"
+                      >
+                        -0.5s
+                      </button>
+                      <button
+                        onClick={() => nudgeSubtitleOffset(0.5)}
+                        className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white font-mono"
+                      >
+                        +0.5s
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

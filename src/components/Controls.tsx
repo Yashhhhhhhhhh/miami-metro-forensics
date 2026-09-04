@@ -13,12 +13,19 @@ import {
   Tv,
   Sliders,
   Radio,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Subtitles,
+  PictureInPicture,
+  Plus,
+  Minus,
+  Trash2,
+  Upload
 } from 'lucide-react'
 import { useStore, type AspectRatio } from '../store/useStore'
 import { formatTime } from '../lib/utils'
 import { peerEngine } from '../lib/PeerEngine'
 import { type EQPreset } from '../lib/AudioEngine'
+import { parseSubtitles } from '../lib/SubtitleEngine'
 import Scrubber from './Scrubber'
 import AudioVisualizer from './AudioVisualizer'
 
@@ -59,10 +66,55 @@ export default function Controls({
     cinemascopeMode,
     toggleCinemascopeMode,
     showTelemetry,
-    toggleTelemetry
+    toggleTelemetry,
+    subtitles,
+    subtitlesEnabled,
+    subtitleOffset,
+    subtitleFontSize,
+    subtitleFileName,
+    setSubtitles,
+    toggleSubtitles,
+    nudgeSubtitleOffset,
+    setSubtitleFontSize,
+    clearSubtitles
   } = useStore()
 
   const [showAudioStudio, setShowAudioStudio] = useState(false)
+  const [showSubtitleStudio, setShowSubtitleStudio] = useState(false)
+
+  const handleSubtitleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      const cues = parseSubtitles(text)
+      if (cues.length > 0) {
+        setSubtitles(cues, file.name)
+        if (isHost) {
+          peerEngine.broadcast({
+            type: 'SUBTITLES_LOAD',
+            cues,
+            fileName: file.name
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('Subtitle parse error:', err)
+    }
+  }
+
+  const togglePiP = async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture()
+      } else {
+        const video = document.querySelector('video')
+        if (video) await video.requestPictureInPicture()
+      }
+    } catch (err) {
+      console.warn('Picture-in-picture error:', err)
+    }
+  }
 
   const themeEmojis = {
     anime: ['🌸', '⚡', '🍙', '💢', '✨', '🦊'],
@@ -148,6 +200,147 @@ export default function Controls({
                   }`}
                 />
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Subtitles Studio Modal Popover */}
+      {showSubtitleStudio && (
+        <div className="mb-3 p-5 rounded-3xl bg-zinc-950/90 border border-white/10 backdrop-blur-2xl shadow-2xl animate-fade-in max-w-md mx-auto relative z-50">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
+              <Subtitles className="w-4 h-4" /> Subtitles Studio & Sync
+            </h4>
+            <button
+              onClick={() => setShowSubtitleStudio(false)}
+              className="text-xs text-white/50 hover:text-white px-2 py-1"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {/* Upload or Active Status */}
+            <div>
+              <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider block mb-2">
+                Subtitle File (.srt / .vtt)
+              </span>
+              <div className="flex items-center gap-2">
+                <label className="flex-1 cursor-pointer py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white flex items-center justify-center gap-2 transition-all">
+                  <Upload className="w-3.5 h-3.5 text-[var(--primary)]" />
+                  <span className="truncate">
+                    {subtitleFileName ? subtitleFileName : 'Choose .srt or .vtt File'}
+                  </span>
+                  <input
+                    type="file"
+                    accept=".srt,.vtt,.txt"
+                    onChange={handleSubtitleUpload}
+                    className="hidden"
+                  />
+                </label>
+                {subtitles.length > 0 && (
+                  <button
+                    onClick={clearSubtitles}
+                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors"
+                    title="Clear Subtitles"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              {subtitles.length > 0 && (
+                <p className="text-[10px] text-emerald-400 font-mono mt-1.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {subtitles.length} synchronized cues loaded
+                </p>
+              )}
+            </div>
+
+            {/* Subtitles Enabled Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
+              <div>
+                <p className="text-xs font-bold text-white">Display Captions</p>
+                <p className="text-[10px] text-white/50">Overlay cinematic subtitles during playback</p>
+              </div>
+              <button
+                onClick={toggleSubtitles}
+                className={`w-12 h-6 rounded-full transition-colors relative p-1 ${
+                  subtitlesEnabled && subtitles.length > 0 ? 'bg-[var(--primary)]' : 'bg-white/20'
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    subtitlesEnabled && subtitles.length > 0 ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Subtitle Sync Offset */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider">
+                  Sync Timing Offset
+                </span>
+                <span className="text-[10px] font-mono font-bold text-cyan-400">
+                  {subtitleOffset > 0 ? `+${subtitleOffset}s` : `${subtitleOffset}s`}
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1.5">
+                <button
+                  onClick={() => nudgeSubtitleOffset(-0.5)}
+                  className="py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono font-bold text-white/80 transition-colors"
+                >
+                  -0.5s
+                </button>
+                <button
+                  onClick={() => nudgeSubtitleOffset(-0.1)}
+                  className="py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono font-bold text-white/80 transition-colors"
+                >
+                  -0.1s
+                </button>
+                <button
+                  onClick={() => useStore.getState().setSubtitleOffset(0)}
+                  className="py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono font-bold text-white/50 transition-colors"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => nudgeSubtitleOffset(0.1)}
+                  className="py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono font-bold text-white/80 transition-colors"
+                >
+                  +0.1s
+                </button>
+                <button
+                  onClick={() => nudgeSubtitleOffset(0.5)}
+                  className="py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono font-bold text-white/80 transition-colors"
+                >
+                  +0.5s
+                </button>
+              </div>
+            </div>
+
+            {/* Subtitle Font Size */}
+            <div>
+              <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider block mb-2">
+                Font Size
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                {(['sm', 'md', 'lg'] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSubtitleFontSize(s)}
+                    className={`py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${
+                      subtitleFontSize === s
+                        ? 'bg-[var(--primary)] text-white shadow-md shadow-[var(--primary)]/30'
+                        : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {s === 'sm' ? 'Standard' : s === 'md' ? 'Cinematic' : 'Large'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -377,6 +570,31 @@ export default function Controls({
               title="Toggle 360° Ambilight Glow"
             >
               <Sparkles className="w-4 h-4" />
+            </button>
+
+            {/* Subtitles Studio Toggle */}
+            <button
+              onClick={() => setShowSubtitleStudio(!showSubtitleStudio)}
+              className={`p-2 rounded-xl transition-all relative ${
+                showSubtitleStudio || (subtitlesEnabled && subtitles.length > 0)
+                  ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/30'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`}
+              title="Subtitles & Closed Captions (.srt / .vtt)"
+            >
+              <Subtitles className="w-4 h-4" />
+              {subtitles.length > 0 && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              )}
+            </button>
+
+            {/* Picture-in-Picture Toggle */}
+            <button
+              onClick={togglePiP}
+              className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              title="Picture-in-Picture (PiP)"
+            >
+              <PictureInPicture className="w-4 h-4" />
             </button>
 
             {/* Aspect Ratio */}

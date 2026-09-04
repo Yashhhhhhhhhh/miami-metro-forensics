@@ -6,6 +6,8 @@ import { audioEngine } from '../lib/AudioEngine'
 import { torrentEngine } from '../lib/TorrentEngine'
 import Ambilight from './Ambilight'
 import Reactions from './Reactions'
+import SubtitlesOverlay from './SubtitlesOverlay'
+import { parseSubtitles } from '../lib/SubtitleEngine'
 
 export default function Player() {
   const {
@@ -25,7 +27,8 @@ export default function Player() {
     ping,
     syncDrift,
     torrentStats,
-    setTorrentStats
+    setTorrentStats,
+    setSubtitles
   } = useStore()
 
   const nativeVideoRef = useRef<HTMLVideoElement>(null)
@@ -247,13 +250,47 @@ export default function Player() {
 
   const PlayerComponent = ReactPlayer as any
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file && (file.name.endsWith('.srt') || file.name.endsWith('.vtt') || file.name.endsWith('.txt'))) {
+      try {
+        const text = await file.text()
+        const cues = parseSubtitles(text)
+        if (cues.length > 0) {
+          setSubtitles(cues, file.name)
+          if (isHost) {
+            peerEngine.broadcast({
+              type: 'SUBTITLES_LOAD',
+              cues,
+              fileName: file.name
+            })
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to parse dropped subtitle file:', err)
+      }
+    }
+  }
+
   return (
-    <div className="absolute inset-0 z-10 bg-black flex items-center justify-center overflow-hidden">
+    <div
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      className="absolute inset-0 z-10 bg-black flex items-center justify-center overflow-hidden"
+    >
       {/* 360° Dynamic Ambilight Lighting */}
       <Ambilight videoRef={nativeVideoRef} />
 
       {/* Floating Reactions Burst Layer */}
       <Reactions />
+
+      {/* Synchronized Subtitles Overlay */}
+      <SubtitlesOverlay />
 
       {/* Cyberpunk CRT Scanline Layer */}
       {theme === 'cyberpunk' && crtScanlines && (

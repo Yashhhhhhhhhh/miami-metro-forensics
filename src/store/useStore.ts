@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { audioEngine, type EQPreset } from '../lib/AudioEngine'
 import { type TorrentStats } from '../lib/TorrentEngine'
+import { type SubtitleCue } from '../lib/SubtitleEngine'
 
 export type Theme = 'cinema' | 'anime' | 'music' | 'cyberpunk'
 export type PlayMode = 'idle' | 'youtube' | 'url' | 'local_stream' | 'local_sync' | 'screenshare' | 'torrent'
@@ -90,8 +91,17 @@ interface AppState {
   removeReaction: (id: string) => void
 
   // Subtitles
-  subtitleText: string
-  setSubtitleText: (text: string) => void
+  subtitles: SubtitleCue[]
+  subtitlesEnabled: boolean
+  subtitleOffset: number
+  subtitleFontSize: 'sm' | 'md' | 'lg'
+  subtitleFileName: string
+  setSubtitles: (cues: SubtitleCue[], fileName?: string) => void
+  toggleSubtitles: () => void
+  setSubtitleOffset: (offset: number) => void
+  nudgeSubtitleOffset: (delta: number) => void
+  setSubtitleFontSize: (size: 'sm' | 'md' | 'lg') => void
+  clearSubtitles: () => void
 
   // UI Panels
   sidebarOpen: boolean
@@ -227,8 +237,24 @@ export const useStore = create<AppState>((set, get) => ({
     reactions: s.reactions.filter((r) => r.id !== id)
   })),
 
-  subtitleText: '',
-  setSubtitleText: (text) => set({ subtitleText: text }),
+  subtitles: [],
+  subtitlesEnabled: true,
+  subtitleOffset: 0,
+  subtitleFontSize: 'md',
+  subtitleFileName: '',
+  setSubtitles: (cues, fileName = '') =>
+    set({
+      subtitles: cues,
+      subtitlesEnabled: true,
+      subtitleFileName: fileName,
+      subtitleOffset: 0
+    }),
+  toggleSubtitles: () => set((s) => ({ subtitlesEnabled: !s.subtitlesEnabled })),
+  setSubtitleOffset: (offset) => set({ subtitleOffset: offset }),
+  nudgeSubtitleOffset: (delta) =>
+    set((s) => ({ subtitleOffset: parseFloat((s.subtitleOffset + delta).toFixed(2)) })),
+  setSubtitleFontSize: (size) => set({ subtitleFontSize: size }),
+  clearSubtitles: () => set({ subtitles: [], subtitleFileName: '', subtitleOffset: 0 }),
 
   sidebarOpen: false,
   activeSidebarTab: 'chat',

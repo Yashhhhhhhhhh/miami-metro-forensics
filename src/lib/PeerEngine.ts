@@ -14,6 +14,7 @@ type PeerMessage =
   | { type: 'REACTION'; emoji: string }
   | { type: 'CHAT'; text: string; name: string }
   | { type: 'LOCAL_FILE_OFFER'; fileName: string; fileSize: number }
+  | { type: 'SUBTITLES_LOAD'; cues: any[]; fileName?: string }
 
 class PeerEngine {
   private peer: Peer | null = null
@@ -198,6 +199,17 @@ class PeerEngine {
 
         case 'ACTION_SEEK':
           if (!store.isHost && this.onSeek) this.onSeek(msg.time)
+          if (store.isHost) this.broadcast(msg, c.peer)
+          break
+
+        case 'SUBTITLES_LOAD':
+          store.setSubtitles(msg.cues, msg.fileName)
+          store.addMessage({
+            id: Math.random().toString(36),
+            sender: 'System',
+            text: `Subtitles synchronized: ${msg.fileName || 'SRT/VTT'}`,
+            isSystem: true
+          })
           if (store.isHost) this.broadcast(msg, c.peer)
           break
 
